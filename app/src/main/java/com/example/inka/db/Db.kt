@@ -8,22 +8,24 @@ import kotlinx.serialization.json.Json
 
 class Converters {
     @TypeConverter
-    fun fromList(value: List<Int>) = Json.encodeToString(value)
-
+    fun fromListInt(value: List<Int>) = Json.encodeToString(value)
     @TypeConverter
-    fun toList(value: String) = Json.decodeFromString<List<Int>>(value)
+    fun toListInt(value: String) = Json.decodeFromString<List<Int>>(value)
+    @TypeConverter
+    fun fromListPoint(value: List<StrokePoint>) = Json.encodeToString(value)
+    @TypeConverter
+    fun toListPoint(value: String) = Json.decodeFromString<List<StrokePoint>>(value)
 }
 
 @Database(
-    entities = [Notebook::class, Page::class, Stroke::class, Point::class],
-    version = 13
+    entities = [Notebook::class, Page::class, Stroke::class],
+    version = 15
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun notebookDao(): NotebookDao
     abstract fun pageDao(): PageDao
     abstract fun strokeDao(): StrokeDao
-    abstract fun pointDao(): PointDao
 
     companion object {
         private var INSTANCE: AppDatabase? = null

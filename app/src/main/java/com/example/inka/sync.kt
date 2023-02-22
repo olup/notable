@@ -50,7 +50,7 @@ fun exportPageToPdf(context: Context, bookId: Int, pageId: Int) {
         }
 
         drawStroke(
-            canvas, it.stroke.pen, it.stroke.size, points
+            canvas, it.pen, it.size, points
         )
     }
     pdfDocument.finishPage(pdfPage)

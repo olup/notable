@@ -3,13 +3,13 @@ package com.example.inka
 import android.content.Context
 import android.graphics.Rect
 import android.graphics.RectF
-import com.example.inka.db.StrokeWithPoints
+import com.example.inka.db.Stroke
 import com.onyx.android.sdk.utils.BroadcastHelper.App
 
 
 sealed class Operation {
     data class DeleteStroke(val strokeId: Int) : Operation()
-    data class AddStroke(val stroke: StrokeWithPoints) : Operation()
+    data class AddStroke(val stroke: Stroke) : Operation()
 }
 
 typealias OperationBlock = List<Operation>
@@ -22,23 +22,22 @@ fun treatOperation(context: Context, operation: Operation): Pair<Operation, Rect
     val appRepository = AppRepository(context)
     return when (operation) {
         is Operation.AddStroke -> {
-            appRepository.strokeRepository.create(operation.stroke.stroke)
-            appRepository.pointRepository.create(operation.stroke.points)
-            return Operation.DeleteStroke(strokeId = operation.stroke.stroke.id) to RectF(
-                operation.stroke.stroke.left,
-                operation.stroke.stroke.top,
-                operation.stroke.stroke.right,
-                operation.stroke.stroke.bottom
+            appRepository.strokeRepository.create(operation.stroke)
+            return Operation.DeleteStroke(strokeId = operation.stroke.id) to RectF(
+                operation.stroke.left,
+                operation.stroke.top,
+                operation.stroke.right,
+                operation.stroke.bottom
             )
         }
         is Operation.DeleteStroke -> {
             val stroke = appRepository.strokeRepository.getStrokeWithPointsById(operation.strokeId)
             appRepository.strokeRepository.deleteAll(listOf(operation.strokeId))
             return Operation.AddStroke(stroke = stroke) to RectF(
-                stroke.stroke.left,
-                stroke.stroke.top,
-                stroke.stroke.right,
-                stroke.stroke.bottom
+                stroke.left,
+                stroke.top,
+                stroke.right,
+                stroke.bottom
             )
         }
         else -> {

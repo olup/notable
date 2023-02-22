@@ -7,7 +7,7 @@ import android.view.SurfaceView
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.unit.dp
 import com.example.inka.db.Stroke
-import com.example.inka.db.StrokeWithPoints
+import com.example.inka.db.StrokePoint
 import com.onyx.android.sdk.api.device.epd.EpdController
 import com.onyx.android.sdk.api.device.epd.UpdateMode
 import com.onyx.android.sdk.data.note.TouchPoint
@@ -40,16 +40,11 @@ class DrawCanvas(
     appRepository: AppRepository,
     state: EditorState
 ) : SurfaceView(context) {
-
-    // State. This replicates the app's state
     val state = state
     var restartCount = 0
-
     var offScreenBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
     var offScreenCanvas = Canvas(offScreenBitmap)
-
     val coroutineScope = coroutineScope
-
 
     fun getActualState(): EditorState {
         return this.state
@@ -69,53 +64,50 @@ class DrawCanvas(
         override fun onRawDrawingTouchPointListReceived(plist: TouchPointList) {
             // TODO refactor to use single addStrokeToPage function - requires passing a point type without strokeId or pageId
             thread(start = true) {
-                val stroke = Stroke(
-                    size = getActualState().strokeSize,
-                    pen = getActualState().pen,
-                    pageId = getActualState().pageId,
-                    top = plist.points[0].y + state.scroll,
-                    bottom = plist.points[0].y + state.scroll,
-                    left = 0f,
-                    right = 0f,
-                )
-                val boundingBox = RectF(plist.points[0].x, plist.points[0].y, plist.points[0].x, plist.points[0].y)
-                val strokeId = appRepository.strokeRepository.create(
-                    stroke
+                val thisState = getActualState()
+                val boundingBox = RectF(
+                    plist.points[0].x,
+                    plist.points[0].y,
+                    plist.points[0].x,
+                    plist.points[0].y
                 )
 
                 val points = plist.points.map {
                     boundingBox.union(it.x, it.y)
 
-                    com.example.inka.db.Point(
+                    StrokePoint(
                         x = it.x,
-                        y = it.y + state.scroll,
+                        y = it.y + thisState.scroll,
                         pressure = it.pressure,
                         size = it.size,
                         tiltX = it.tiltX,
                         tiltY = it.tiltY,
                         timestamp = it.timestamp,
-                        pageId = getActualState().pageId,
-                        strokeId = strokeId.toInt()
                     )
                 }
-                appRepository.pointRepository.create(points)
 
-                // update stroke to include its bounding box
-                stroke.apply {
-                    boundingBox.inset(-this.size, -this.size)
+                boundingBox.inset(-thisState.strokeSize, -thisState.strokeSize)
 
-                    id = strokeId.toInt()
-                    top = boundingBox.top
-                    left = boundingBox.left
-                    bottom = boundingBox.bottom
-                    right = boundingBox.right
-                }
-                println(stroke)
-                appRepository.strokeRepository.update(stroke)
+                val stroke = Stroke(
+                    size = thisState.strokeSize,
+                    pen = thisState.pen,
+                    pageId = thisState.pageId,
+                    top = boundingBox.top,
+                    bottom = boundingBox.bottom,
+                    left = boundingBox.left,
+                    right = boundingBox.right,
+                    points = points
+                )
+
+                val strokeId = appRepository.strokeRepository.create(
+                    stroke
+                )
+
+                stroke.id = strokeId.toInt()
 
                 // add stroke to cache. TODO refacto in central cache
-                if (StrokeCache.pageId == getActualState().pageId) {
-                    StrokeCache.strokes += StrokeWithPoints(stroke = stroke, points = points)
+                if (StrokeCache.pageId == thisState.pageId) {
+                    StrokeCache.strokes += stroke
                 }
 
                 drawStroke(
@@ -225,7 +217,10 @@ class DrawCanvas(
                         zoneAffected.left, zoneAffected.top, zoneAffected.right, zoneAffected.bottom
                     ),
                     canvasSection = RectF(
-                        zoneAffected.left, zoneAffected.top - state.scroll, zoneAffected.right, zoneAffected.bottom - state.scroll
+                        zoneAffected.left,
+                        zoneAffected.top - state.scroll,
+                        zoneAffected.right,
+                        zoneAffected.bottom - state.scroll
                     ),
                 )
                 refreshUi()

@@ -9,7 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.unit.Dp
-import com.example.inka.db.StrokeWithPoints
+import com.example.inka.db.Stroke
 import com.onyx.android.sdk.data.note.TouchPoint
 import com.onyx.android.sdk.pen.NeoBrushPen
 import com.onyx.android.sdk.pen.NeoCharcoalPen
@@ -120,7 +120,7 @@ fun drawSquaredBg(canvas: Canvas, scroll: Int) {
 
 object StrokeCache {
     var pageId: Int? = null
-    var strokes: List<StrokeWithPoints> = listOf()
+    var strokes: List<Stroke> = listOf()
 }
 
 fun loadStrokeCache(context: Context) {
@@ -156,10 +156,10 @@ fun renderPageFromDbToCanvas(
         StrokeCache.strokes.forEach { stroke ->
 
             // if stroke is inside page section
-            if (stroke.stroke.top <= pageSection.bottom &&
-                stroke.stroke.bottom >= pageSection.top &&
-                stroke.stroke.left <= pageSection.right &&
-                stroke.stroke.right >= pageSection.left) {
+            if (stroke.top <= pageSection.bottom &&
+                stroke.bottom >= pageSection.top &&
+                stroke.left <= pageSection.right &&
+                stroke.right >= pageSection.left) {
                 println("Stroke identifed for rendering")
 
                 val points = stroke.points.map {
@@ -167,14 +167,14 @@ fun renderPageFromDbToCanvas(
                         it.x - pageSection.left + canvasSection.left,
                         it.y - pageSection.top + canvasSection.top,
                         it.pressure,
-                        stroke.stroke.size,
+                        stroke.size,
                         it.tiltX,
                         it.tiltY,
                         it.timestamp
                     )
                 }
                 drawStroke(
-                    canvas, stroke.stroke.pen, stroke.stroke.size, points
+                    canvas, stroke.pen, stroke.size, points
                 )
             }
         }

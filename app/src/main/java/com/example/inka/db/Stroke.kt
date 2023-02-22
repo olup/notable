@@ -4,6 +4,17 @@ import android.content.Context
 import androidx.room.*
 import com.example.inka.Pen
 
+@kotlinx.serialization.Serializable
+data class StrokePoint(
+    val x: Float,
+    val y: Float,
+    val pressure: Float,
+    val size: Float,
+    val tiltX: Int,
+    val tiltY: Int,
+    val timestamp: Long,
+)
+
 @Entity(
     foreignKeys = [ForeignKey(
         entity = Page::class,
@@ -15,13 +26,15 @@ import com.example.inka.Pen
 data class Stroke(
     @PrimaryKey(autoGenerate = true)
     var id: Int = 0,
-    val size : Float,
-    val pen : Pen,
+    val size: Float,
+    val pen: Pen,
 
     var top: Float,
     var bottom: Float,
     var left: Float,
     var right: Float,
+
+    val points: List<StrokePoint>,
 
     @ColumnInfo(index = true)
     val pageId: Int
@@ -31,7 +44,7 @@ data class Stroke(
 @Dao
 interface StrokeDao {
     @Insert
-    fun create(stroke: Stroke):Long
+    fun create(stroke: Stroke): Long
 
     @Insert
     fun create(strokes: List<Stroke>)
@@ -44,30 +57,30 @@ interface StrokeDao {
 
     @Transaction
     @Query("SELECT * FROM stroke WHERE id =:strokeId")
-    fun getStrokeWithPointsById(strokeId : Int): StrokeWithPoints
+    fun getById(strokeId: Int): Stroke
 }
 
 class StrokeRepository(context: Context) {
     var db = AppDatabase.getDatabase(context)?.strokeDao()!!
 
-    fun create(stroke: Stroke):Long {
-       return  db.create(stroke)
+    fun create(stroke: Stroke): Long {
+        return db.create(stroke)
     }
 
     fun create(strokes: List<Stroke>) {
-        return  db.create(strokes)
+        return db.create(strokes)
     }
 
     fun update(stroke: Stroke) {
-        return  db.update(stroke)
+        return db.update(stroke)
     }
 
-    fun deleteAll(ids : List<Int>) {
-        return  db.deleteAll(ids)
+    fun deleteAll(ids: List<Int>) {
+        return db.deleteAll(ids)
     }
 
-    fun getStrokeWithPointsById(strokeId : Int) : StrokeWithPoints{
-        return db.getStrokeWithPointsById(strokeId)
+    fun getStrokeWithPointsById(strokeId: Int): Stroke {
+        return db.getById(strokeId)
     }
 
 }

@@ -14,15 +14,6 @@ data class Page(
     val notebookId: Int?
 )
 
-data class StrokeWithPoints(
-    @Embedded val stroke: Stroke,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "strokeId"
-    )
-    val points: List<Point>
-)
-
 data class PageWithStrokes(
     @Embedded val page: Page,
     @Relation(
@@ -30,7 +21,7 @@ data class PageWithStrokes(
         entityColumn = "pageId",
         entity = Stroke::class
     )
-    val strokes: List<StrokeWithPoints>
+    val strokes: List<Stroke>
 )
 
 // DAO
