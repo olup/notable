@@ -16,7 +16,7 @@ class Converters {
 
 @Database(
     entities = [Notebook::class, Page::class, Stroke::class, Point::class],
-    version = 12
+    version = 13
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {

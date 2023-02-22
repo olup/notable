@@ -14,7 +14,10 @@ import com.onyx.android.sdk.data.note.TouchPoint
 import com.onyx.android.sdk.pen.NeoBrushPen
 import com.onyx.android.sdk.pen.NeoCharcoalPen
 import com.onyx.android.sdk.pen.NeoFountainPen
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.BufferedOutputStream
@@ -133,13 +136,12 @@ fun loadStrokeCache(context: Context, pageId: Int) {
 }
 
 fun renderPageFromDbToCanvas(
-    context: Context, canvas: Canvas, pageId: Int, pageSection: Rect, canvasSection: Rect
+    context: Context, canvas: Canvas, pageId: Int, pageSection: RectF, canvasSection: RectF
 ) {
     canvas.save();
     canvas.clipRect(canvasSection);
-
     val timeToBg = measureTimeMillis {
-        drawDottedBg(canvas, pageSection.top - canvasSection.top)
+        drawDottedBg(canvas, (pageSection.top - canvasSection.top).toInt())
     }
     println("Took $timeToBg to draw the BG")
 
@@ -152,24 +154,25 @@ fun renderPageFromDbToCanvas(
 
     val timeToDraw = measureTimeMillis {
         StrokeCache.strokes.forEach { stroke ->
-            var shouldDraw = false
-            val points = stroke.points.map {
-                if (it.y > pageSection.top && it.y < pageSection.bottom && it.x > pageSection.left && it.x < pageSection.right) {
-                    shouldDraw = true
+
+            // if stroke is inside page section
+            if (stroke.stroke.top <= pageSection.bottom &&
+                stroke.stroke.bottom >= pageSection.top &&
+                stroke.stroke.left <= pageSection.right &&
+                stroke.stroke.right >= pageSection.left) {
+                println("Stroke identifed for rendering")
+
+                val points = stroke.points.map {
+                    TouchPoint(
+                        it.x - pageSection.left + canvasSection.left,
+                        it.y - pageSection.top + canvasSection.top,
+                        it.pressure,
+                        stroke.stroke.size,
+                        it.tiltX,
+                        it.tiltY,
+                        it.timestamp
+                    )
                 }
-                TouchPoint(
-                    it.x - pageSection.left + canvasSection.left,
-                    it.y - pageSection.top + canvasSection.top,
-                    it.pressure,
-                    stroke.stroke.size,
-                    it.tiltX,
-                    it.tiltY,
-                    it.timestamp
-                )
-            }
-
-
-            if (shouldDraw) {
                 drawStroke(
                     canvas, stroke.stroke.pen, stroke.stroke.size, points
                 )
@@ -358,5 +361,12 @@ fun deleteBook(context: Context, bookId: Int) {
                 deletePage(context, pageId)
             }
         }
+    }
+}
+fun <T: Any> Flow<T>.withPrevious(): Flow<Pair<T?, T>> = flow {
+    var prev: T? = null
+    this@withPrevious.collect {
+        emit(prev to it)
+        prev = it
     }
 }

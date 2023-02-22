@@ -1,5 +1,7 @@
 package com.example.inka
 
+import android.graphics.Rect
+import android.graphics.RectF
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -26,27 +28,31 @@ enum class Pen {
     FOUNTAIN
 }
 
-class EditorState {
-
+class EditorState(pageId : Int, bookId: Int?) {
+    var pen by mutableStateOf(Pen.BALLPEN)
+    var strokeSize by mutableStateOf( 10f)
+    var isDrawing by mutableStateOf(true)
+    var isToolbarOpen by mutableStateOf(false)
+    var scroll by mutableStateOf(0)
+    var forceUpdate by mutableStateOf(0 to RectF())
+    var pageId by mutableStateOf(pageId)
+    var bookId by mutableStateOf(bookId)
 }
 
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun BookUi(navController: NavController, restartCount: Int, bookId: Int?, pageId: Int) {
-    var pen by remember { mutableStateOf(Pen.BALLPEN) }
-    var strokeSize by remember { mutableStateOf(penSizes[pen] ?: 10f) }
-    var isDrawing by remember { mutableStateOf(true) }
-    var isToolbarOpen by remember { mutableStateOf(false) }
-    var scroll by remember { mutableStateOf(0) }
-    var forceUpdate by remember { mutableStateOf(0) }
+
+    val state = remember {
+        EditorState(pageId, bookId)
+    }
 
     val appRepository = AppRepository(LocalContext.current)
-    var pageId by remember { mutableStateOf(pageId) }
 
     // update opened page
-    LaunchedEffect(pageId) {
-        println("PageId chnaged")
+    LaunchedEffect(state.pageId) {
+        println("PageId changed")
         if (bookId != null) {
             appRepository.bookRepository.setOpenPageId(bookId, pageId)
         }
@@ -54,58 +60,42 @@ fun BookUi(navController: NavController, restartCount: Int, bookId: Int?, pageId
         clearHistory()
     }
 
-    LaunchedEffect(scroll) {
-        appRepository.pageRepository.updateScroll(pageId, scroll)
+    LaunchedEffect(state.scroll) {
+        appRepository.pageRepository.updateScroll(pageId, state.scroll)
     }
 
     fun goToNextPage() {
-        if (bookId != null) {
-            pageId = appRepository.getNextPageIdFromBookAndPage(
-                pageId = pageId,
-                notebookId = bookId
+        if (state.bookId != null) {
+            state.pageId = appRepository.getNextPageIdFromBookAndPage(
+                pageId = state.pageId,
+                notebookId = state.bookId!!
             )
         }
     }
 
     fun goToPreviousPage() {
-        if (bookId != null) {
+        if (state.bookId != null) {
             val newPageId = appRepository.getPreviousPageIdFromBookAndPage(
-                pageId = pageId,
-                notebookId = bookId
+                pageId = state.pageId,
+                notebookId = state.bookId!!
             )
-            if (newPageId != null) pageId = newPageId
+            if (newPageId != null) state.pageId = newPageId
         }
     }
 
     InkaTheme {
         EditorSurface(
-            pen = pen,
-            strokeSize = strokeSize,
             restartCount = restartCount,
-            isDrawing = isDrawing,
-            pageId = pageId,
-            isToolbarOpen = isToolbarOpen,
-            scroll = scroll,
-            forceUpdate = forceUpdate
+            state= state
         )
         EditorGestureReceiver(
-            pageId = pageId,
+            state = state,
             goToNextPage = ::goToNextPage,
             goToPreviousPage = ::goToPreviousPage,
-            scroll = scroll,
-            updateScroll = { scroll = it },
-            forceUpdate = { forceUpdate++ }
         )
         Toolbar(
             navController = navController,
-            pen = pen,
-            onChangePen = { pen = it },
-            _strokeSize = strokeSize,
-            onChangeStrokeSize = { strokeSize = it },
-            onChangeIsDrawing = { isDrawing = it },
-            onChangeIsToolbarOpen = { isToolbarOpen = it },
-            bookId = bookId,
-            isToolbarOpen = isToolbarOpen
+            state = state
         )
     }
 }

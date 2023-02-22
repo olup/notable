@@ -32,36 +32,29 @@ val penSizes = hashMapOf<Pen, Float>(
 @ExperimentalComposeUiApi
 fun Toolbar(
     navController: NavController,
-    pen: Pen,
-    onChangePen: (Pen) -> Unit,
-    _strokeSize: Float,
-    onChangeStrokeSize: (Float) -> Unit,
-    onChangeIsDrawing: (Boolean) -> Unit,
-    bookId: Int?,
-    isToolbarOpen : Boolean,
-    onChangeIsToolbarOpen: (Boolean) -> Unit
+    state : EditorState
 ) {
     var isStrokeSelectionOpen by remember { mutableStateOf(false) }
-    var strokeSize by remember { mutableStateOf(_strokeSize) }
+    var strokeSize by remember { mutableStateOf(state.strokeSize) }
     val context = LocalContext.current
 
     LaunchedEffect(isStrokeSelectionOpen) {
         if (isStrokeSelectionOpen) {
-            onChangeIsDrawing(false)
+            state.isDrawing = false
         } else {
-            onChangeIsDrawing(true)
-            onChangeStrokeSize(strokeSize)
+            state.isDrawing = true
+            state.strokeSize = strokeSize
         }
     }
 
     fun handleChangeStrokeSize(size: Float) {
         strokeSize = size
-        penSizes[pen] = size
+        penSizes[state.pen] = size
     }
 
     fun handleChangePen(pen: Pen) {
-        onChangePen(pen)
-        onChangeStrokeSize(penSizes[pen]!!)
+        state.pen = pen
+        state.strokeSize = penSizes[pen]!!
         strokeSize = penSizes[pen]!!
     }
 
@@ -78,7 +71,7 @@ fun Toolbar(
             Modifier
                 .background(Color.White)
                 .height(40.dp)
-                .ifTrue(isToolbarOpen) {
+                .ifTrue(state.isToolbarOpen) {
                     Modifier.width(LocalConfiguration.current.screenWidthDp.dp)
                 }
 
@@ -86,12 +79,12 @@ fun Toolbar(
             Box(
                 Modifier
                     .noRippleClickable {
-                        onChangeIsToolbarOpen(!isToolbarOpen)
+                        state.isToolbarOpen = ! state.isToolbarOpen
                     }
                     .size(40.dp)
                     .padding(ICON_PADDING)) {
                 Icon(
-                    painter = if (!isToolbarOpen) painterResource(id = R.drawable.topbar_close) else painterResource(
+                    painter = if (!state.isToolbarOpen) painterResource(id = R.drawable.topbar_close) else painterResource(
                         id = R.drawable.topbar_open
                     ), "toolbar switch", Modifier, Color.Gray
                 )
@@ -102,17 +95,17 @@ fun Toolbar(
                     .width(1.dp)
                     .background(Color.Black)
             )
-            if (isToolbarOpen) {
+            if (state.isToolbarOpen) {
                 Box(
                     Modifier
                         .noRippleClickable {
-                            if (pen == Pen.BALLPEN) {
+                            if (state.pen == Pen.BALLPEN) {
                                 isStrokeSelectionOpen = !isStrokeSelectionOpen
                             }
                             handleChangePen(
                                 Pen.BALLPEN
                             )
-                            onChangeStrokeSize(penSizes[Pen.BALLPEN]!!)
+                            state.strokeSize = penSizes[Pen.BALLPEN]!!
                         }
                         .size(40.dp)
                         .padding(ICON_PADDING)) {
@@ -120,19 +113,19 @@ fun Toolbar(
                         painter = painterResource(id = R.drawable.ballpen),
                         "ballpen",
                         Modifier,
-                        if (pen == Pen.BALLPEN) Color.Black else Color.Gray
+                        if (state.pen == Pen.BALLPEN) Color.Black else Color.Gray
                     )
                 }
                 Box(
                     Modifier
                         .noRippleClickable {
-                            if (pen == Pen.PENCIL) {
+                            if (state.pen == Pen.PENCIL) {
                                 isStrokeSelectionOpen = !isStrokeSelectionOpen
                             }
                             handleChangePen(
                                 Pen.PENCIL
                             )
-                            onChangeStrokeSize(penSizes[Pen.PENCIL]!!)
+                            state.strokeSize = penSizes[Pen.PENCIL]!!
                         }
                         .size(40.dp)
                         .padding(ICON_PADDING)) {
@@ -140,19 +133,19 @@ fun Toolbar(
                         painter = painterResource(id = R.drawable.pencil),
                         "pencil",
                         Modifier,
-                        if (pen == Pen.PENCIL) Color.Black else Color.Gray
+                        if (state.pen == Pen.PENCIL) Color.Black else Color.Gray
                     )
                 }
                 Box(
                     Modifier
                         .noRippleClickable {
-                            if (pen == Pen.BRUSH) {
+                            if (state.pen == Pen.BRUSH) {
                                 isStrokeSelectionOpen = !isStrokeSelectionOpen
                             }
                             handleChangePen(
                                 Pen.BRUSH
                             )
-                            onChangeStrokeSize(penSizes[Pen.BRUSH]!!)
+                            state.strokeSize = penSizes[Pen.BRUSH]!!
                         }
                         .size(40.dp)
                         .padding(ICON_PADDING)) {
@@ -160,19 +153,19 @@ fun Toolbar(
                         painter = painterResource(id = R.drawable.brush),
                         "brush",
                         Modifier,
-                        if (pen == Pen.BRUSH) Color.Black else Color.Gray
+                        if (state.pen == Pen.BRUSH) Color.Black else Color.Gray
                     )
                 }
                 Box(
                     Modifier
                         .noRippleClickable {
-                            if (pen == Pen.MARKER) {
+                            if (state.pen == Pen.MARKER) {
                                 isStrokeSelectionOpen = !isStrokeSelectionOpen
                             }
                             handleChangePen(
                                 Pen.MARKER
                             )
-                            onChangeStrokeSize(penSizes[Pen.MARKER]!!)
+                            state.strokeSize = penSizes[Pen.MARKER]!!
                         }
                         .size(40.dp)
                         .padding(ICON_PADDING)) {
@@ -180,19 +173,19 @@ fun Toolbar(
                         painter = painterResource(id = R.drawable.marker),
                         "marker",
                         Modifier,
-                        if (pen == Pen.MARKER) Color.Black else Color.Gray
+                        if (state.pen == Pen.MARKER) Color.Black else Color.Gray
                     )
                 }
                 Box(
                     Modifier
                         .noRippleClickable {
-                            if (pen == Pen.FOUNTAIN) {
+                            if (state.pen == Pen.FOUNTAIN) {
                                 isStrokeSelectionOpen = !isStrokeSelectionOpen
                             }
                             handleChangePen(
                                 Pen.FOUNTAIN
                             )
-                            onChangeStrokeSize(penSizes[Pen.FOUNTAIN]!!)
+                            state.strokeSize = penSizes[Pen.FOUNTAIN]!!
                         }
                         .size(40.dp)
                         .padding(ICON_PADDING)) {
@@ -200,7 +193,7 @@ fun Toolbar(
                         painter = painterResource(id = R.drawable.fountain),
                         "fountain",
                         Modifier,
-                        if (pen == Pen.FOUNTAIN) Color.Black else Color.Gray
+                        if (state.pen == Pen.FOUNTAIN) Color.Black else Color.Gray
                     )
                 }
                 Box(
@@ -254,11 +247,11 @@ fun Toolbar(
                         .width(1.dp)
                         .background(Color.Black)
                 )
-                if (bookId != null) {
+                if (state.bookId != null) {
                     Box(
                         Modifier
                             .noRippleClickable {
-                                navController.navigate("book/${bookId}/pages")
+                                navController.navigate("book/${state.bookId}/pages")
                             }
                             .size(40.dp)
                             .padding(ICON_PADDING)) {

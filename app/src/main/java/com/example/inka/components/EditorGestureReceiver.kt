@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerInputChange
@@ -18,20 +19,15 @@ import kotlin.math.max
 
 @Composable
 fun EditorGestureReceiver(
-    pageId: Int,
     goToNextPage: () -> Unit,
     goToPreviousPage: () -> Unit,
-    scroll: Int,
-
-    updateScroll: (Int) -> Unit,
-    forceUpdate: () -> Unit
-
+    state: EditorState
     ) {
 
     val context = LocalContext.current
     Box(
         modifier = Modifier
-            .pointerInput(pageId) {
+            .pointerInput(state.pageId) {
                 forEachGesture {
                     awaitPointerEventScope {
                         val down = awaitFirstDown(false)
@@ -66,7 +62,7 @@ fun EditorGestureReceiver(
                     }
                 }
             }
-            .pointerInput(pageId, scroll) {
+            .pointerInput(state.pageId, state.scroll) {
                 forEachGesture {
                     awaitPointerEventScope {
                         val down = awaitFirstDown(requireUnconsumed = false)
@@ -103,12 +99,12 @@ fun EditorGestureReceiver(
 
                         if (verticalDrag < -200) {
                             if (inputNumber == 1) {
-                                updateScroll(scroll - verticalDrag.toInt())
+                                state.scroll = state.scroll - verticalDrag.toInt()
                             }
                         }
                         if (verticalDrag > 200) {
                             if (inputNumber == 1) {
-                                updateScroll(max(scroll - verticalDrag.toInt(), 0))
+                                state.scroll = max(state.scroll - verticalDrag.toInt(), 0)
                             }
 
                         }
@@ -117,8 +113,8 @@ fun EditorGestureReceiver(
                                 goToNextPage()
                             } else if (inputNumber == 2) {
                                 println("Redo")
-                                undoRedo(context, UndoRedoType.Redo)
-                                forceUpdate()
+                                val zoneAffected = undoRedo(context, UndoRedoType.Redo)
+                                state.forceUpdate = state.forceUpdate.first+1 to zoneAffected
                             }
 
 
@@ -128,8 +124,8 @@ fun EditorGestureReceiver(
                                 goToPreviousPage()
                             } else if (inputNumber == 2) {
                                 println("Undo")
-                                undoRedo(context, UndoRedoType.Undo)
-                                forceUpdate()
+                                val zoneAffected = undoRedo(context, UndoRedoType.Undo)
+                                state.forceUpdate = state.forceUpdate.first+1 to zoneAffected
                             }
                         }
                     }
