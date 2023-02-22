@@ -3,7 +3,6 @@ package com.example.inka.db
 import android.content.Context
 import androidx.room.*
 import com.example.inka.Pen
-import java.util.UUID
 
 @Entity(
     foreignKeys = [ForeignKey(
@@ -34,6 +33,10 @@ interface StrokeDao {
 
     @Query("DELETE FROM stroke WHERE id IN (:ids)")
     fun deleteAll(ids: List<Int>)
+
+    @Transaction
+    @Query("SELECT * FROM stroke WHERE id =:strokeId")
+    fun getStrokeWithPointsById(strokeId : Int): StrokeWithPoints
 }
 
 class StrokeRepository(context: Context) {
@@ -49,6 +52,10 @@ class StrokeRepository(context: Context) {
 
     fun deleteAll(ids : List<Int>) {
         return  db.deleteAll(ids)
+    }
+
+    fun getStrokeWithPointsById(strokeId : Int) : StrokeWithPoints{
+        return db.getStrokeWithPointsById(strokeId)
     }
 
 }

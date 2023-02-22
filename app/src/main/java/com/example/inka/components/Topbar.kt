@@ -12,6 +12,12 @@ fun Topbar(content: @Composable() () -> Unit){
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color.Black)
+        )
         Row(Modifier.height(40.dp)) {
             content()
         }

@@ -3,7 +3,6 @@ package com.example.inka.db
 import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.room.*
-import java.util.UUID
 
 @Entity
 data class Notebook(
@@ -21,7 +20,10 @@ interface NotebookDao {
     fun getAll(): LiveData<List<Notebook>>
 
     @Query("SELECT * FROM notebook WHERE id = (:notebookId)")
-    fun getById(notebookId: Int): Notebook
+    fun getByIdLive(notebookId: Int): LiveData<Notebook>
+
+    @Query("SELECT * FROM notebook WHERE id = (:notebookId)")
+    fun getById(notebookId: Int): Notebook?
 
     @Query("UPDATE notebook SET openPageId=:pageId WHERE id=:notebookId")
     fun setOpenPageId(notebookId: Int, pageId: Int)
@@ -59,8 +61,12 @@ class BookRepository(context: Context) {
         return db.getAll()
     }
 
-    fun getById(notebookId: Int): Notebook {
+    fun getById(notebookId: Int): Notebook? {
         return db.getById(notebookId)
+    }
+
+    fun getByIdLive(notebookId: Int): LiveData<Notebook> {
+        return db.getByIdLive(notebookId)
     }
 
     fun setOpenPageId(id: Int, pageId: Int) {
@@ -68,7 +74,7 @@ class BookRepository(context: Context) {
     }
 
     fun addPage(id: Int, pageId: Int) {
-        var pageIds = db.getById(id).pageIds
+        var pageIds = (db.getById(id)?: return).pageIds
         db.setPageIds(id, pageIds + pageId)
     }
 

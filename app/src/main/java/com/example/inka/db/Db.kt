@@ -8,13 +8,16 @@ import kotlinx.serialization.json.Json
 
 class Converters {
     @TypeConverter
-    fun fromList(value : List<Int>) = Json.encodeToString(value)
+    fun fromList(value: List<Int>) = Json.encodeToString(value)
 
     @TypeConverter
     fun toList(value: String) = Json.decodeFromString<List<Int>>(value)
 }
 
-@Database(entities = [Notebook::class, Page::class, Stroke::class, Point::class], version = 11)
+@Database(
+    entities = [Notebook::class, Page::class, Stroke::class, Point::class],
+    version = 12
+)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun notebookDao(): NotebookDao

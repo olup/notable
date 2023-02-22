@@ -4,15 +4,17 @@ import android.content.Context
 import android.graphics.*
 import android.view.SurfaceHolder
 import android.view.SurfaceView
-import androidx.compose.ui.platform.LocalContext
-import com.example.inka.db.*
+import androidx.compose.ui.unit.dp
+import com.example.inka.db.Stroke
+import com.example.inka.db.StrokeWithPoints
 import com.onyx.android.sdk.api.device.epd.EpdController
 import com.onyx.android.sdk.api.device.epd.UpdateMode
 import com.onyx.android.sdk.data.note.TouchPoint
 import com.onyx.android.sdk.pen.*
 import com.onyx.android.sdk.pen.data.TouchPointList
 import com.onyx.android.sdk.pen.style.StrokeStyle
-import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlin.concurrent.thread
 import kotlin.math.abs
 
@@ -28,50 +30,10 @@ fun penToStroke(pen: Pen): Int {
     }
 }
 
-fun drawBallPenStroke(
-    canvas: Canvas, paint: Paint, strokeSize: Float, points: List<TouchPoint>
-) {
-    val copyPaint = Paint(paint).apply {
-        this.strokeWidth = strokeSize
-        this.style = Paint.Style.STROKE
-        this.isAntiAlias = true
-    }
-
-    val path = Path()
-    val prePoint = PointF(points[0].x, points[0].y)
-    path.moveTo(prePoint.x, prePoint.y)
-
-    for (point in points) {
-        // skip strange jump point.
-        if (abs(prePoint.y - point.y) >= 30) continue
-        path.quadTo(prePoint.x, prePoint.y, point.x, point.y)
-        prePoint.x = point.x
-        prePoint.y = point.y
-    }
-
-    canvas.drawPath(path, copyPaint)
-}
-
-fun drawStroke(canvas: Canvas, pen: Pen, strokeSize: Float, points: List<TouchPoint>) {
-    val paint = Paint()
-    paint.color = Color.BLACK
-
-    when (pen) {
-        Pen.BALLPEN -> drawBallPenStroke(canvas, paint, strokeSize, points)
-        Pen.PENCIL -> NeoCharcoalPen.drawNormalStroke(
-            null, canvas, paint, points, -16777216, strokeSize, pressure, 90, false
-        )
-        Pen.BRUSH -> NeoBrushPen.drawStroke(canvas, paint, points, strokeSize, pressure, false)
-        Pen.MARKER -> NeoMarkerPen.drawStroke(canvas, paint, points, strokeSize, false)
-        Pen.FOUNTAIN -> NeoFountainPen.drawStroke(
-            canvas, paint, points, 1f, strokeSize, pressure, false
-        )
-    }
-}
-
 
 class DrawCanvas(
     context: Context,
+    coroutineScope: CoroutineScope,
     appRepository: AppRepository,
     pageId: Int
 ) : SurfaceView(context) {
@@ -92,9 +54,7 @@ class DrawCanvas(
     var offScreenBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
     var offScreenCanvas = Canvas(offScreenBitmap)
 
-    var strokeCache = listOf<StrokeWithPoints>()
-
-
+    val coroutineScope = coroutineScope
 
 
     fun getActualPageId(): Int {
@@ -136,17 +96,20 @@ class DrawCanvas(
                 }
                 appRepository.pointRepository.create(points)
 
+                // add stroke to cache. TODO refacto in central cache
+                if (StrokeCache.pageId == getActualPageId()) {
+                    StrokeCache.strokes += StrokeWithPoints(stroke = stroke, points = points)
+                }
+
                 drawStroke(
                     offScreenCanvas, stroke.pen, stroke.size, plist.points
                 )
 
-                // TODO clean undo ?
-                AppRepository.clearUndo()
+                // add cancel operation to the undo list
+                addOperationsToHistory(listOf(Operation.DeleteStroke(strokeId.toInt())))
 
-                thread(true) {
-                    pageBitmapToFile(context, offScreenBitmap, getActualPageId())
-                }
-
+                // emit to the snapshot debounced flow
+                coroutineScope.launch { debouncedSavedBitmapFlow.emit(Unit)}
             }
         }
 
@@ -170,7 +133,7 @@ class DrawCanvas(
         canvas.drawColor(android.graphics.Color.WHITE)
     }
 
-    fun init(pageId: Int, scroll:Int) {
+    fun init(pageId: Int, scroll: Int) {
         println("Initializing")
         this.pageId = pageId
         this.scroll = scroll
@@ -185,7 +148,15 @@ class DrawCanvas(
                         android.graphics.Rect(
                             0, 0, surfaceView.width, surfaceView.height
                         )
-                    ), mutableListOf(android.graphics.Rect(0, 0, surfaceView.width, 40))
+                    ),
+                    mutableListOf(
+                        android.graphics.Rect(
+                            0,
+                            0,
+                            surfaceView.width,
+                            convertDpToPixel(40.dp, context).toInt()
+                        )
+                    )
                 ).openRawDrawing()
 
                 // setting up offscreen canvas
@@ -201,15 +172,8 @@ class DrawCanvas(
                 holder: SurfaceHolder, format: Int, width: Int, height: Int
             ) {
                 println("surface changed")
-                thread(true) {
-                    strokeCache = appRepository.pageRepository.getWithStrokeById(pageId).strokes
-                }
-                drawDottedBg(offScreenCanvas, scroll)
-                if(!renderCachedPageToCanvas(context, offScreenCanvas,pageId)) {
-                    drawPage(context, offScreenCanvas,0,pageId, scroll, offScreenCanvas.height, null)
-                }
-
-                refreshUi()
+                updatePageId(getActualPageId(), scroll)
+                updatePenAndStroke(pen, strokeSize)
             }
 
             override fun surfaceDestroyed(holder: SurfaceHolder) {
@@ -225,21 +189,32 @@ class DrawCanvas(
     }
 
     fun refreshUi() {
-        updateIsDrawing(false)
-        drawCanvasToView()
-        updateIsDrawing(true)
+        if(isDrawing){
+            touchHelper.setRawDrawingEnabled(false)
+            drawCanvasToView()
+            touchHelper.setRawDrawingEnabled(true)
+        }
     }
 
     fun pageFullRefresh() {
         thread(start = true) {
             clearPage(offScreenCanvas)
-            refreshUi()
-            drawPage(context, offScreenCanvas, 0, pageId, scroll, offScreenCanvas.height, strokeCache)
+            renderPageFromDbToCanvas(
+                context = context,
+                canvas = offScreenCanvas,
+                pageId = pageId,
+                pageSection = Rect(
+                    0,
+                    scroll,
+                    offScreenCanvas.width,
+                    scroll + offScreenCanvas.height
+                ),
+                canvasSection = Rect(0, 0, offScreenCanvas.width, offScreenCanvas.height),
+            )
             refreshUi()
 
-            // cache bitmap to file
-            pageBitmapToFile(context, offScreenBitmap, getActualPageId())
-       }
+            coroutineScope.launch { debouncedSavedBitmapFlow.emit(Unit) }
+        }
     }
 
     fun drawCanvasToView() {
@@ -248,49 +223,94 @@ class DrawCanvas(
         this.holder.unlockCanvasAndPost(canvas)
     }
 
-    fun updateIsDrawing(isDrawingBool: Boolean) {
-        isDrawing = isDrawingBool
-        touchHelper.setRawDrawingEnabled(isDrawingBool)
+    fun updateIsDrawing(isDrawing: Boolean) {
+        this.isDrawing = isDrawing
+        if (isDrawing) {
+            touchHelper.setRawDrawingEnabled(true)
+        } else {
+            touchHelper.setRawDrawingEnabled(false)
+        }
     }
 
     fun updatePageId(pageId: Int, scroll: Int) {
+        if (pageId != this.pageId) {
+            // save bitmmap to disk before changing page
+            val targetPageId = this.pageId
+            val targetBitmap = offScreenBitmap.copy(offScreenBitmap.config, false)
+            coroutineScope.launch {
+                pageBitmapToFile(
+                    context,
+                    targetBitmap,
+                    targetPageId
+                )
+            }
+        }
         this.pageId = pageId
         this.scroll = scroll
 
+        println("Update page id")
+
         clearPage(offScreenCanvas)
         // try to render cache or render from db
-        if(!renderCachedPageToCanvas(context, offScreenCanvas,pageId)) {
-            drawPage(context, offScreenCanvas,0,pageId, scroll, offScreenCanvas.height, null)
+        if (!renderCachedPageToCanvas(context, offScreenCanvas, pageId)) {
+            renderPageFromDbToCanvas(
+                context = context,
+                canvas = offScreenCanvas,
+                pageId = pageId,
+                pageSection = Rect(
+                    0,
+                    scroll,
+                    offScreenCanvas.width,
+                    scroll + offScreenCanvas.height
+                ),
+                canvasSection = Rect(0, 0, offScreenCanvas.width, offScreenCanvas.height),
+            )
+            coroutineScope.launch { debouncedSavedBitmapFlow.emit(Unit) }
         }
 
         refreshUi()
-
-        thread(true) {
-            strokeCache = appRepository.pageRepository.getWithStrokeById(pageId).strokes
-        }
-
     }
 
     fun updateScroll(scroll: Int) {
+        // scroll delta
         val delta = scroll - this.scroll
 
+        // scroll bitmap
         val tmp = offScreenBitmap.copy(offScreenBitmap.config, false)
         drawDottedBg(offScreenCanvas, scroll)
         offScreenCanvas.drawBitmap(tmp, 0f, -delta.toFloat(), Paint())
         tmp.recycle()
 
-        val canvasOffset = if(delta > 0) offScreenCanvas.height-delta else 0
-        //drawCanvasToView()
+        // where is the new rendering area starting ?
+        val canvasOffset = if (delta > 0) offScreenCanvas.height - delta else 0
 
-        drawPage(context, offScreenCanvas, canvasOffset, pageId, scroll+canvasOffset, Math.abs(delta), strokeCache)
-        drawCanvasToView()
+        // do we want to show progressive updates ?
+        //refreshUi()
+
+        renderPageFromDbToCanvas(
+            context = context,
+            canvas = offScreenCanvas,
+            pageId = pageId,
+            pageSection = Rect(
+                0,
+                scroll + canvasOffset,
+                offScreenCanvas.width,
+                scroll + canvasOffset + Math.abs(delta)
+            ),
+            canvasSection = Rect(
+                0,
+                canvasOffset,
+                offScreenCanvas.width,
+                canvasOffset + Math.abs(delta)
+            ),
+        )
+
+        // display update
+        refreshUi()
 
         this.scroll = scroll
 
-        // cache bitmap to file
-        pageBitmapToFile(context, offScreenBitmap, getActualPageId())
-
-        refreshUi()
+        coroutineScope.launch { debouncedSavedBitmapFlow.emit(Unit) }
     }
 
     fun updateForceUpdate(forceUpdate: Int) {
@@ -302,5 +322,33 @@ class DrawCanvas(
         this.pen = pen
         this.strokeSize = strokeSize
         touchHelper.setStrokeStyle(penToStroke(pen))?.setStrokeWidth(strokeSize)
+    }
+
+    fun updateIsToolbarOpen(isToolbarOpen: Boolean) {
+        this.isToolbarOpen = isToolbarOpen
+        val exclusionWidth =
+            if (isToolbarOpen) this.width else convertDpToPixel(40.dp, context).toInt()
+
+      //  touchHelper.setRawDrawingEnabled(false)
+       // touchHelper.closeRawDrawing()
+
+        touchHelper.setLimitRect(
+            mutableListOf(
+                android.graphics.Rect(
+                    0, 0, this.width, this.height
+                )
+            ),
+            mutableListOf(
+                android.graphics.Rect(
+                    0,
+                    0,
+                    exclusionWidth,
+                    convertDpToPixel(40.dp, context).toInt()
+                )
+            )
+        )
+
+        refreshUi()
+
     }
 }

@@ -3,13 +3,11 @@ package com.example.inka
 import android.content.Context
 import android.graphics.pdf.PdfDocument
 import android.os.Environment
-import com.example.inka.db.PageRepository
 import com.onyx.android.sdk.api.device.epd.EpdController
 import com.onyx.android.sdk.data.note.TouchPoint
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Files
-import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.math.max
 
@@ -17,7 +15,7 @@ import kotlin.math.max
 fun exportPageToPdf(context: Context, bookId: Int, pageId: Int) {
     val appRepository = AppRepository(context)
     val page = appRepository.pageRepository.getWithStrokeById(pageId)
-    val book = appRepository.bookRepository.getById(bookId)
+    val book = appRepository.bookRepository.getById(bookId)?:return
 
     val pageWidth = EpdController.getEpdHeight() // TODO get page width
     var maxPointY = 0f

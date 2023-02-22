@@ -1,33 +1,31 @@
 package com.example.inka
 
-import android.content.res.Configuration
-import android.widget.Space
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.Icon
+import androidx.compose.material.Slider
+import androidx.compose.material.SliderDefaults
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import kotlin.concurrent.thread
 
-
+val ICON_PADDING = 7.dp
 inline fun Modifier.ifTrue(predicate: Boolean, builder: () -> Modifier) =
     then(if (predicate) builder() else Modifier)
 
 val penSizes = hashMapOf<Pen, Float>(
-    Pen.BRUSH to 10f, Pen.BALLPEN to 10f, Pen.PENCIL to 10f, Pen.MARKER to 10f, Pen.FOUNTAIN to 10f
+    Pen.BRUSH to 5f,
+    Pen.BALLPEN to 5f,
+    Pen.PENCIL to 5f,
+    Pen.MARKER to 5f,
+    Pen.FOUNTAIN to 5f
 )
 
 @Composable
@@ -38,27 +36,26 @@ fun Toolbar(
     onChangePen: (Pen) -> Unit,
     _strokeSize: Float,
     onChangeStrokeSize: (Float) -> Unit,
-    onChangeIsDrawing:(Boolean)->Unit,
-    pageId : Int,
-    bookId : Int,
+    onChangeIsDrawing: (Boolean) -> Unit,
+    bookId: Int?,
+    isToolbarOpen : Boolean,
+    onChangeIsToolbarOpen: (Boolean) -> Unit
 ) {
-    var isToolbarOpen by remember { mutableStateOf(true) }
     var isStrokeSelectionOpen by remember { mutableStateOf(false) }
     var strokeSize by remember { mutableStateOf(_strokeSize) }
     val context = LocalContext.current
 
     LaunchedEffect(isStrokeSelectionOpen) {
-        if(isStrokeSelectionOpen) {
+        if (isStrokeSelectionOpen) {
             onChangeIsDrawing(false)
-        }
-        else {
+        } else {
             onChangeIsDrawing(true)
             onChangeStrokeSize(strokeSize)
         }
     }
 
     fun handleChangeStrokeSize(size: Float) {
-        strokeSize=size
+        strokeSize = size
         penSizes[pen] = size
     }
 
@@ -80,24 +77,23 @@ fun Toolbar(
         Row(
             Modifier
                 .background(Color.White)
-                .height(IntrinsicSize.Max)
+                .height(40.dp)
                 .ifTrue(isToolbarOpen) {
                     Modifier.width(LocalConfiguration.current.screenWidthDp.dp)
                 }
 
         ) {
-            Box(Modifier
-                .clickable(indication = null,
-                    interactionSource = remember { MutableInteractionSource() }) {
-                    isToolbarOpen = !isToolbarOpen
-                }
-                .size(40.dp)
-                .padding(10.dp)) {
+            Box(
+                Modifier
+                    .noRippleClickable {
+                        onChangeIsToolbarOpen(!isToolbarOpen)
+                    }
+                    .size(40.dp)
+                    .padding(ICON_PADDING)) {
                 Icon(
-                    painter= if (!isToolbarOpen) painterResource(id = R.drawable.topbar_close) else painterResource(id = R.drawable.topbar_open),
-                    "toolbar switch",
-                    Modifier,
-                    Color.Gray
+                    painter = if (!isToolbarOpen) painterResource(id = R.drawable.topbar_close) else painterResource(
+                        id = R.drawable.topbar_open
+                    ), "toolbar switch", Modifier, Color.Gray
                 )
             }
             Box(
@@ -107,19 +103,19 @@ fun Toolbar(
                     .background(Color.Black)
             )
             if (isToolbarOpen) {
-                Box(Modifier
-                    .clickable(indication = null,
-                        interactionSource = remember { MutableInteractionSource() }) {
-                        if (pen == Pen.BALLPEN) {
-                            isStrokeSelectionOpen = !isStrokeSelectionOpen
+                Box(
+                    Modifier
+                        .noRippleClickable {
+                            if (pen == Pen.BALLPEN) {
+                                isStrokeSelectionOpen = !isStrokeSelectionOpen
+                            }
+                            handleChangePen(
+                                Pen.BALLPEN
+                            )
+                            onChangeStrokeSize(penSizes[Pen.BALLPEN]!!)
                         }
-                        handleChangePen(
-                            Pen.BALLPEN
-                        )
-                        onChangeStrokeSize(penSizes[Pen.BALLPEN]!!)
-                    }
-                    .size(40.dp)
-                    .padding(10.dp)) {
+                        .size(40.dp)
+                        .padding(ICON_PADDING)) {
                     Icon(
                         painter = painterResource(id = R.drawable.ballpen),
                         "ballpen",
@@ -127,19 +123,19 @@ fun Toolbar(
                         if (pen == Pen.BALLPEN) Color.Black else Color.Gray
                     )
                 }
-                Box(Modifier
-                    .clickable(indication = null,
-                        interactionSource = remember { MutableInteractionSource() }) {
-                        if (pen == Pen.PENCIL) {
-                            isStrokeSelectionOpen = !isStrokeSelectionOpen
+                Box(
+                    Modifier
+                        .noRippleClickable {
+                            if (pen == Pen.PENCIL) {
+                                isStrokeSelectionOpen = !isStrokeSelectionOpen
+                            }
+                            handleChangePen(
+                                Pen.PENCIL
+                            )
+                            onChangeStrokeSize(penSizes[Pen.PENCIL]!!)
                         }
-                        handleChangePen(
-                            Pen.PENCIL
-                        )
-                        onChangeStrokeSize(penSizes[Pen.PENCIL]!!)
-                    }
-                    .size(40.dp)
-                    .padding(10.dp)) {
+                        .size(40.dp)
+                        .padding(ICON_PADDING)) {
                     Icon(
                         painter = painterResource(id = R.drawable.pencil),
                         "pencil",
@@ -147,19 +143,19 @@ fun Toolbar(
                         if (pen == Pen.PENCIL) Color.Black else Color.Gray
                     )
                 }
-                Box(Modifier
-                    .clickable(indication = null,
-                        interactionSource = remember { MutableInteractionSource() }) {
-                        if (pen == Pen.BRUSH) {
-                            isStrokeSelectionOpen = !isStrokeSelectionOpen
+                Box(
+                    Modifier
+                        .noRippleClickable {
+                            if (pen == Pen.BRUSH) {
+                                isStrokeSelectionOpen = !isStrokeSelectionOpen
+                            }
+                            handleChangePen(
+                                Pen.BRUSH
+                            )
+                            onChangeStrokeSize(penSizes[Pen.BRUSH]!!)
                         }
-                        handleChangePen(
-                            Pen.BRUSH
-                        )
-                        onChangeStrokeSize(penSizes[Pen.BRUSH]!!)
-                    }
-                    .size(40.dp)
-                    .padding(10.dp)) {
+                        .size(40.dp)
+                        .padding(ICON_PADDING)) {
                     Icon(
                         painter = painterResource(id = R.drawable.brush),
                         "brush",
@@ -167,19 +163,19 @@ fun Toolbar(
                         if (pen == Pen.BRUSH) Color.Black else Color.Gray
                     )
                 }
-                Box(Modifier
-                    .clickable(indication = null,
-                        interactionSource = remember { MutableInteractionSource() }) {
-                        if (pen == Pen.MARKER) {
-                            isStrokeSelectionOpen = !isStrokeSelectionOpen
+                Box(
+                    Modifier
+                        .noRippleClickable {
+                            if (pen == Pen.MARKER) {
+                                isStrokeSelectionOpen = !isStrokeSelectionOpen
+                            }
+                            handleChangePen(
+                                Pen.MARKER
+                            )
+                            onChangeStrokeSize(penSizes[Pen.MARKER]!!)
                         }
-                        handleChangePen(
-                            Pen.MARKER
-                        )
-                        onChangeStrokeSize(penSizes[Pen.MARKER]!!)
-                    }
-                    .size(40.dp)
-                    .padding(10.dp)) {
+                        .size(40.dp)
+                        .padding(ICON_PADDING)) {
                     Icon(
                         painter = painterResource(id = R.drawable.marker),
                         "marker",
@@ -187,19 +183,19 @@ fun Toolbar(
                         if (pen == Pen.MARKER) Color.Black else Color.Gray
                     )
                 }
-                Box(Modifier
-                    .clickable(indication = null,
-                        interactionSource = remember { MutableInteractionSource() }) {
-                        if (pen == Pen.FOUNTAIN) {
-                            isStrokeSelectionOpen = !isStrokeSelectionOpen
+                Box(
+                    Modifier
+                        .noRippleClickable {
+                            if (pen == Pen.FOUNTAIN) {
+                                isStrokeSelectionOpen = !isStrokeSelectionOpen
+                            }
+                            handleChangePen(
+                                Pen.FOUNTAIN
+                            )
+                            onChangeStrokeSize(penSizes[Pen.FOUNTAIN]!!)
                         }
-                        handleChangePen(
-                            Pen.FOUNTAIN
-                        )
-                        onChangeStrokeSize(penSizes[Pen.FOUNTAIN]!!)
-                    }
-                    .size(40.dp)
-                    .padding(10.dp)) {
+                        .size(40.dp)
+                        .padding(ICON_PADDING)) {
                     Icon(
                         painter = painterResource(id = R.drawable.fountain),
                         "fountain",
@@ -213,17 +209,16 @@ fun Toolbar(
                         .width(1.dp)
                         .background(Color.Black)
                 )
-                Box(Modifier
-                    .clickable(indication = null,
-                        interactionSource = remember { MutableInteractionSource() }) {
-                        thread(start = true) {
-                            exportPageToPdf(context, bookId = bookId, pageId = pageId)
-                        }
-                    }
-                    .size(40.dp)
-                    .padding(10.dp)) {
+                Box(
+                    Modifier
+                        .size(40.dp)
+                        .padding(ICON_PADDING)
+                ) {
                     Icon(
-                        painter= painterResource(id = R.drawable.eraser), "eraser", Modifier, Color.Gray
+                        painter = painterResource(id = R.drawable.eraser),
+                        "eraser",
+                        Modifier,
+                        Color.Gray
                     )
                 }
                 Box(
@@ -232,19 +227,20 @@ fun Toolbar(
                         .width(1.dp)
                         .background(Color.Black)
                 )
-                Box(Modifier
-                    .clickable(indication = null,
-                        interactionSource = remember { MutableInteractionSource() }) {
-                        thread(start = true) {
-                            exportPageToPdf(context, bookId = bookId, pageId = pageId)
-                        }
-                    }
-                    .size(40.dp)
-                    .padding(10.dp)) {
+
+                Box(
+                    Modifier
+                        .size(40.dp)
+                        .padding(ICON_PADDING)
+                ) {
                     Icon(
-                        painter= painterResource(id = R.drawable.lasso), "lasoo", Modifier, Color.Gray
+                        painter = painterResource(id = R.drawable.lasso),
+                        "lasoo",
+                        Modifier,
+                        Color.Gray
                     )
                 }
+
                 Box(
                     Modifier
                         .fillMaxHeight()
@@ -258,26 +254,34 @@ fun Toolbar(
                         .width(1.dp)
                         .background(Color.Black)
                 )
-                Box(Modifier
-                    .clickable(indication = null,
-                        interactionSource = remember { MutableInteractionSource() }) {
-                        navController.navigate("book/${bookId}/pages")
+                if (bookId != null) {
+                    Box(
+                        Modifier
+                            .noRippleClickable {
+                                navController.navigate("book/${bookId}/pages")
+                            }
+                            .size(40.dp)
+                            .padding(ICON_PADDING)) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.pages),
+                            "library",
+                            Modifier,
+                            Color.Gray
+                        )
                     }
-                    .size(40.dp)
-                    .padding(10.dp)) {
-                    Icon(
-                        painter= painterResource(id = R.drawable.pages), "library", Modifier, Color.Gray
-                    )
                 }
-                Box(Modifier
-                    .clickable(indication = null,
-                        interactionSource = remember { MutableInteractionSource() }) {
-                        navController.popBackStack(route = "library", inclusive = false)
-                    }
-                    .size(40.dp)
-                    .padding(10.dp)) {
+                Box(
+                    Modifier
+                        .noRippleClickable {
+                            navController.popBackStack(route = "library", inclusive = false)
+                        }
+                        .size(40.dp)
+                        .padding(ICON_PADDING)) {
                     Icon(
-                        painter= painterResource(id = R.drawable.library), "library", Modifier, Color.Gray
+                        painter = painterResource(id = R.drawable.library),
+                        "library",
+                        Modifier,
+                        Color.Gray
                     )
                 }
             }
@@ -293,7 +297,7 @@ fun Toolbar(
                 Modifier
                     .fillMaxWidth()
                     .background(Color.White)
-                    .padding(10.dp)
+                    .padding(ICON_PADDING)
             ) {
                 Row(
                     Modifier
@@ -326,10 +330,7 @@ fun Toolbar(
             )
             Box(modifier = Modifier
                 .fillMaxSize()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) { isStrokeSelectionOpen = false })
+                .noRippleClickable { isStrokeSelectionOpen = false })
         }
     }
 }

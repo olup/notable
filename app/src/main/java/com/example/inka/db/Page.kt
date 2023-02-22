@@ -1,6 +1,7 @@
 package com.example.inka.db
 
 import android.content.Context
+import androidx.lifecycle.LiveData
 import androidx.room.*
 
 @Entity
@@ -10,7 +11,7 @@ data class Page(
     val scroll: Int = 0,
 
     @ColumnInfo(index = true)
-    val notebookId: Int
+    val notebookId: Int?
 )
 
 data class StrokeWithPoints(
@@ -39,7 +40,7 @@ interface PageDao {
     fun getMany(ids : List<Int>): List<Page>
 
     @Query("SELECT * FROM page WHERE id = (:pageId)")
-    fun getById(pageId: Int): Page
+    fun getById(pageId: Int): Page?
 
     @Transaction
     @Query("SELECT * FROM page WHERE id =:pageId")
@@ -47,6 +48,9 @@ interface PageDao {
 
     @Query("UPDATE page SET scroll=:scroll WHERE id =:pageId")
     fun updateScroll(pageId: Int, scroll:Int)
+
+    @Query("SELECT * FROM page WHERE notebookId is null")
+    fun getSinglePages() : LiveData<List<Page>>
 
     @Insert
     fun create(page: Page):Long
@@ -66,11 +70,19 @@ class PageRepository(context: Context) {
         return db.updateScroll(id, scroll)
     }
 
-    fun getById(pageId: Int):Page {
+    fun getById(pageId: Int):Page? {
         return db.getById(pageId)
     }
 
     fun getWithStrokeById(pageId: Int):PageWithStrokes {
         return db.getPageWithStrokesById(pageId)
+    }
+
+    fun getSinglePages():LiveData<List<Page>> {
+        return db.getSinglePages()
+    }
+
+    fun delete(page:Page) {
+        return db.delete(page)
     }
 }
