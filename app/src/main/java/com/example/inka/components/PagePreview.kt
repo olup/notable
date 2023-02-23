@@ -17,7 +17,7 @@ import com.example.inka.noRippleClickable
 import java.io.File
 
 @Composable
-fun PagePreview(modifier: Modifier, pageId: Int){
+fun PagePreview(modifier: Modifier, pageId: String){
     val imgFile = File(LocalContext.current.filesDir, "pages/previews/thumbs/$pageId")
 
     var imgBitmap: Bitmap? = null

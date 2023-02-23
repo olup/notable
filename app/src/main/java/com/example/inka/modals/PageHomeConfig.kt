@@ -24,7 +24,7 @@ import java.io.File
 
 
 @Composable
-fun PageHomeConfigDialog(navController: NavController, pageId: Int) {
+fun PageHomeConfigDialog(navController: NavController, pageId: String) {
     val appRepository = AppRepository(LocalContext.current)
     val page = appRepository.pageRepository.getById(pageId)
     val context = LocalContext.current

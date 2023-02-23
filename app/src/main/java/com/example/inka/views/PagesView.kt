@@ -25,7 +25,7 @@ import java.io.File
 
 @ExperimentalFoundationApi
 @Composable
-fun PagesView(navController: NavController, bookId: Int) {
+fun PagesView(navController: NavController, bookId: String) {
     val appRepository = AppRepository(LocalContext.current)
     val book by appRepository.bookRepository.getByIdLive(bookId).observeAsState()
     if(book == null) return

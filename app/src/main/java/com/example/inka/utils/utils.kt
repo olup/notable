@@ -119,7 +119,7 @@ fun drawSquaredBg(canvas: Canvas, scroll: Int) {
 }
 
 object StrokeCache {
-    var pageId: Int? = null
+    var pageId: String? = null
     var strokes: List<Stroke> = listOf()
 }
 
@@ -129,14 +129,14 @@ fun loadStrokeCache(context: Context) {
     StrokeCache.strokes = appRepository.pageRepository.getWithStrokeById(StrokeCache.pageId!!).strokes
 }
 
-fun loadStrokeCache(context: Context, pageId: Int) {
+fun loadStrokeCache(context: Context, pageId: String) {
     val appRepository = AppRepository(context)
     StrokeCache.pageId = pageId
     StrokeCache.strokes = appRepository.pageRepository.getWithStrokeById(pageId).strokes
 }
 
 fun renderPageFromDbToCanvas(
-    context: Context, canvas: Canvas, pageId: Int, pageSection: RectF, canvasSection: RectF
+    context: Context, canvas: Canvas, pageId: String, pageSection: RectF, canvasSection: RectF
 ) {
     canvas.save();
     canvas.clipRect(canvasSection);
@@ -185,7 +185,7 @@ fun renderPageFromDbToCanvas(
     canvas.restore();
 }
 
-fun pageBitmapToFile(context: Context, bitmap: Bitmap, pageId: Int) {
+fun pageBitmapToFile(context: Context, bitmap: Bitmap, pageId: String) {
     println("Saving page bitmap to disk")
     runBlocking {
         launch {
@@ -211,7 +211,7 @@ fun pageBitmapToFile(context: Context, bitmap: Bitmap, pageId: Int) {
     }
 }
 
-fun renderCachedPageToCanvas(context: Context, canvas: Canvas, pageId: Int): Boolean {
+fun renderCachedPageToCanvas(context: Context, canvas: Canvas, pageId: String): Boolean {
     // Optim - load cached page on disk as jpeg
     val imgFile = File(context.filesDir, "pages/previews/full/$pageId")
     // on below line we are checking if the image file exist or not.
@@ -323,7 +323,7 @@ fun convertDpToPixel(dp: Dp, context: Context): Float {
 }
 
 // TODO move this to repository
-fun deletePage(context: Context, pageId: Int) {
+fun deletePage(context: Context, pageId: String) {
     val appRepository = AppRepository(context)
     val page = appRepository.pageRepository.getById(pageId)?: return
 
@@ -348,7 +348,7 @@ fun deletePage(context: Context, pageId: Int) {
 }
 
 // TODO move this to repository
-fun deleteBook(context: Context, bookId: Int) {
+fun deleteBook(context: Context, bookId: String) {
     val appRepository = AppRepository(context)
     val book = appRepository.bookRepository.getById(bookId)?:return
 

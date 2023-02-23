@@ -8,9 +8,9 @@ import kotlinx.serialization.json.Json
 
 class Converters {
     @TypeConverter
-    fun fromListInt(value: List<Int>) = Json.encodeToString(value)
+    fun fromListString(value: List<String>) = Json.encodeToString(value)
     @TypeConverter
-    fun toListInt(value: String) = Json.decodeFromString<List<Int>>(value)
+    fun toListString(value: String) = Json.decodeFromString<List<String>>(value)
     @TypeConverter
     fun fromListPoint(value: List<StrokePoint>) = Json.encodeToString(value)
     @TypeConverter
@@ -19,7 +19,7 @@ class Converters {
 
 @Database(
     entities = [Notebook::class, Page::class, Stroke::class],
-    version = 15
+    version = 16
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {

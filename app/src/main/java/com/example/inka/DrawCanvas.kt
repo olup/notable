@@ -99,11 +99,9 @@ class DrawCanvas(
                     points = points
                 )
 
-                val strokeId = appRepository.strokeRepository.create(
+                appRepository.strokeRepository.create(
                     stroke
                 )
-
-                stroke.id = strokeId.toInt()
 
                 // add stroke to cache. TODO refacto in central cache
                 if (StrokeCache.pageId == thisState.pageId) {
@@ -115,7 +113,7 @@ class DrawCanvas(
                 )
 
                 // add cancel operation to the undo list
-                addOperationsToHistory(listOf(Operation.DeleteStroke(strokeId.toInt())))
+                addOperationsToHistory(listOf(Operation.DeleteStroke(stroke.id)))
 
                 // emit to the snapshot debounced flow
                 coroutineScope.launch { debouncedSavedBitmapFlow.emit(Unit) }

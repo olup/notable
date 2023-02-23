@@ -3,6 +3,7 @@ package com.example.inka.db
 import android.content.Context
 import androidx.room.*
 import com.example.inka.Pen
+import java.util.UUID
 
 @kotlinx.serialization.Serializable
 data class StrokePoint(
@@ -24,8 +25,8 @@ data class StrokePoint(
     )]
 )
 data class Stroke(
-    @PrimaryKey(autoGenerate = true)
-    var id: Int = 0,
+    @PrimaryKey
+    val id: String = UUID.randomUUID().toString(),
     val size: Float,
     val pen: Pen,
 
@@ -37,7 +38,7 @@ data class Stroke(
     val points: List<StrokePoint>,
 
     @ColumnInfo(index = true)
-    val pageId: Int
+    val pageId: String
 )
 
 // DAO
@@ -53,11 +54,11 @@ interface StrokeDao {
     fun update(stroke: Stroke)
 
     @Query("DELETE FROM stroke WHERE id IN (:ids)")
-    fun deleteAll(ids: List<Int>)
+    fun deleteAll(ids: List<String>)
 
     @Transaction
     @Query("SELECT * FROM stroke WHERE id =:strokeId")
-    fun getById(strokeId: Int): Stroke
+    fun getById(strokeId: String): Stroke
 }
 
 class StrokeRepository(context: Context) {
@@ -75,11 +76,11 @@ class StrokeRepository(context: Context) {
         return db.update(stroke)
     }
 
-    fun deleteAll(ids: List<Int>) {
+    fun deleteAll(ids: List<String>) {
         return db.deleteAll(ids)
     }
 
-    fun getStrokeWithPointsById(strokeId: Int): Stroke {
+    fun getStrokeWithPointsById(strokeId: String): Stroke {
         return db.getById(strokeId)
     }
 

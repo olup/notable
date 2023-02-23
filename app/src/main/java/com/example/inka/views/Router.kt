@@ -48,63 +48,63 @@ fun Router(restartCount: Int) {
             route = "book/{bookId}/pages/{pageId}",
             arguments = listOf(navArgument("bookId") {
                 /* configuring arguments for navigation */
-                type = NavType.IntType
+                type = NavType.StringType
             }, navArgument("pageId") {
-                type = NavType.IntType
+                type = NavType.StringType
             })
         ) {
             BookUi(
                 navController = navController,
                 restartCount = restartCount,
-                bookId = it.arguments?.getInt("bookId")!!,
-                pageId = it.arguments?.getInt("pageId")!!
+                bookId = it.arguments?.getString("bookId")!!,
+                pageId = it.arguments?.getString("pageId")!!
             )
         }
         composable(
             route = "pages/{pageId}",
             arguments = listOf(navArgument("pageId") {
-                type = NavType.IntType
+                type = NavType.StringType
             })
         ) {
             BookUi(
                 navController = navController,
                 restartCount = restartCount,
                 bookId = null,
-                pageId = it.arguments?.getInt("pageId")!!
+                pageId = it.arguments?.getString("pageId")!!
             )
         }
         composable(
             route = "book/{bookId}/pages",
             arguments = listOf(navArgument("bookId") {
                 /* configuring arguments for navigation */
-                type = NavType.IntType
+                type = NavType.StringType
             })
         ) {
             PagesView(
                 navController = navController,
-                bookId = it.arguments?.getInt("bookId")!!
+                bookId = it.arguments?.getString("bookId")!!
             )
         }
         dialog(
             route = "book/{bookId}/modal-settings",
             arguments = listOf(navArgument("bookId") {
-                type = NavType.IntType
+                type = NavType.StringType
             })
         ) {
             NotebookConfigDialog(
                 navController = navController,
-                bookId = it.arguments?.getInt("bookId")!!
+                bookId = it.arguments?.getString("bookId")!!
             )
         }
         dialog(
             route = "pages/{pageId}/modal-settings",
             arguments = listOf(navArgument("pageId") {
-                type = NavType.IntType
+                type = NavType.StringType
             })
         ) {
             PageHomeConfigDialog(
                 navController = navController,
-                pageId = it.arguments?.getInt("pageId")!!
+                pageId = it.arguments?.getString("pageId")!!
             )
         }
 

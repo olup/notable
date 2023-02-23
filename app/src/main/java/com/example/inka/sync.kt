@@ -12,7 +12,7 @@ import kotlin.io.path.Path
 import kotlin.math.max
 
 // export page
-fun exportPageToPdf(context: Context, bookId: Int, pageId: Int) {
+fun exportPageToPdf(context: Context, bookId: String, pageId: String) {
     val appRepository = AppRepository(context)
     val page = appRepository.pageRepository.getWithStrokeById(pageId)
     val book = appRepository.bookRepository.getById(bookId)?:return

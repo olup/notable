@@ -28,7 +28,7 @@ enum class Pen {
     FOUNTAIN
 }
 
-class EditorState(pageId : Int, bookId: Int?) {
+class EditorState(pageId : String, bookId: String?) {
     var pen by mutableStateOf(Pen.BALLPEN)
     var strokeSize by mutableStateOf( 10f)
     var isDrawing by mutableStateOf(true)
@@ -42,7 +42,7 @@ class EditorState(pageId : Int, bookId: Int?) {
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun BookUi(navController: NavController, restartCount: Int, bookId: Int?, pageId: Int) {
+fun BookUi(navController: NavController, restartCount: Int, bookId: String?, pageId: String) {
 
     val state = remember {
         EditorState(pageId, bookId)

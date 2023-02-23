@@ -11,25 +11,26 @@ class AppRepository(context: Context) {
     val strokeRepository = StrokeRepository(context)
 
     fun getNextPageIdFromBookAndPage(
-        notebookId: Int,
-        pageId: Int
-    ): Int {
+        notebookId: String,
+        pageId: String
+    ): String {
         val book = bookRepository.getById(notebookId = notebookId)
         val pages = book!!.pageIds
         val index = pages.indexOf(pageId)
         if (index == pages.size - 1) {
             // creating a new page
-            val pageId = pageRepository.create(Page(notebookId = notebookId))
-            bookRepository.addPage(notebookId, pageId.toInt())
-            return pageId.toInt()
+            val page = Page(notebookId = notebookId)
+             pageRepository.create(page)
+            bookRepository.addPage(notebookId, page.id)
+            return page.id
         }
         return pages[index + 1]
     }
 
     fun getPreviousPageIdFromBookAndPage(
-        notebookId: Int,
-        pageId: Int
-    ): Int? {
+        notebookId: String,
+        pageId: String
+    ): String? {
         val book = bookRepository.getById(notebookId = notebookId)
         val pages = book!!.pageIds
         val index = pages.indexOf(pageId)

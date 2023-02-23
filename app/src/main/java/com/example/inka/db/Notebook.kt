@@ -3,14 +3,15 @@ package com.example.inka.db
 import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.room.*
+import java.util.UUID
 
 @Entity
 data class Notebook(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    @PrimaryKey
+    val id: String = UUID.randomUUID().toString(),
     val title: String = "New notebook",
-    val openPageId: Int? = null,
-    val pageIds: List<Int> = listOf(),
+    val openPageId: String? = null,
+    val pageIds: List<String> = listOf(),
 )
 
 // DAO
@@ -20,16 +21,16 @@ interface NotebookDao {
     fun getAll(): LiveData<List<Notebook>>
 
     @Query("SELECT * FROM notebook WHERE id = (:notebookId)")
-    fun getByIdLive(notebookId: Int): LiveData<Notebook>
+    fun getByIdLive(notebookId: String): LiveData<Notebook>
 
     @Query("SELECT * FROM notebook WHERE id = (:notebookId)")
-    fun getById(notebookId: Int): Notebook?
+    fun getById(notebookId: String): Notebook?
 
     @Query("UPDATE notebook SET openPageId=:pageId WHERE id=:notebookId")
-    fun setOpenPageId(notebookId: Int, pageId: Int)
+    fun setOpenPageId(notebookId: String, pageId: String)
 
     @Query("UPDATE notebook SET pageIds=:pageIds WHERE id=:id")
-    fun setPageIds(id: Int, pageIds: List<Int>)
+    fun setPageIds(id: String, pageIds: List<String>)
 
     @Insert
     fun create(notebook: Notebook): Long
@@ -38,7 +39,7 @@ interface NotebookDao {
     fun update(notebook: Notebook)
 
     @Query("DELETE FROM notebook WHERE id=:id")
-    fun delete(id: Int)
+    fun delete(id: String)
 }
 
 class BookRepository(context: Context) {
@@ -46,11 +47,12 @@ class BookRepository(context: Context) {
     var pageDb = AppDatabase.getDatabase(context)?.pageDao()!!
 
     fun create(notebook: Notebook) {
-        val notebookId = db.create(notebook)
-        val pageId = pageDb.create(Page(notebookId = notebookId.toInt()))
+        db.create(notebook)
+        val page = Page(notebookId = notebook.id)
+        pageDb.create(page)
 
-        db.setPageIds(notebookId.toInt(), listOf(pageId.toInt()))
-        db.setOpenPageId(notebookId.toInt(), pageId.toInt())
+        db.setPageIds(notebook.id, listOf(page.id))
+        db.setOpenPageId(notebook.id, page.id)
     }
 
     fun update(notebook : Notebook) {
@@ -61,24 +63,24 @@ class BookRepository(context: Context) {
         return db.getAll()
     }
 
-    fun getById(notebookId: Int): Notebook? {
+    fun getById(notebookId: String): Notebook? {
         return db.getById(notebookId)
     }
 
-    fun getByIdLive(notebookId: Int): LiveData<Notebook> {
+    fun getByIdLive(notebookId: String): LiveData<Notebook> {
         return db.getByIdLive(notebookId)
     }
 
-    fun setOpenPageId(id: Int, pageId: Int) {
+    fun setOpenPageId(id: String, pageId: String) {
         db.setOpenPageId(id, pageId)
     }
 
-    fun addPage(id: Int, pageId: Int) {
+    fun addPage(id: String, pageId: String) {
         var pageIds = (db.getById(id)?: return).pageIds
         db.setPageIds(id, pageIds + pageId)
     }
 
-    fun delete(id: Int) {
+    fun delete(id: String) {
         db.delete(id)
     }
 

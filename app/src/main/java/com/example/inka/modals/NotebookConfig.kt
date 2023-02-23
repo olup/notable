@@ -20,7 +20,7 @@ import com.example.inka.db.BookRepository
 
 
 @Composable
-fun NotebookConfigDialog(navController: NavController, bookId: Int) {
+fun NotebookConfigDialog(navController: NavController, bookId: String) {
     val bookRepository = BookRepository(LocalContext.current)
     val book = bookRepository.getById(bookId)?:return
     val context = LocalContext.current

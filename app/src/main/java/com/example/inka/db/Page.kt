@@ -3,15 +3,16 @@ package com.example.inka.db
 import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.room.*
+import java.util.UUID
 
 @Entity
 data class Page(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    @PrimaryKey
+    val id: String = UUID.randomUUID().toString(),
     val scroll: Int = 0,
 
     @ColumnInfo(index = true)
-    val notebookId: Int?
+    val notebookId: String?
 )
 
 data class PageWithStrokes(
@@ -28,17 +29,17 @@ data class PageWithStrokes(
 @Dao
 interface PageDao {
     @Query("SELECT * FROM page WHERE id IN (:ids)")
-    fun getMany(ids : List<Int>): List<Page>
+    fun getMany(ids : List<String>): List<Page>
 
     @Query("SELECT * FROM page WHERE id = (:pageId)")
-    fun getById(pageId: Int): Page?
+    fun getById(pageId: String): Page?
 
     @Transaction
     @Query("SELECT * FROM page WHERE id =:pageId")
-    fun getPageWithStrokesById(pageId : Int): PageWithStrokes
+    fun getPageWithStrokesById(pageId : String): PageWithStrokes
 
     @Query("UPDATE page SET scroll=:scroll WHERE id =:pageId")
-    fun updateScroll(pageId: Int, scroll:Int)
+    fun updateScroll(pageId: String, scroll:Int)
 
     @Query("SELECT * FROM page WHERE notebookId is null")
     fun getSinglePages() : LiveData<List<Page>>
@@ -57,15 +58,15 @@ class PageRepository(context: Context) {
         return db.create(page)
     }
 
-    fun updateScroll(id:Int, scroll:Int) {
+    fun updateScroll(id:String, scroll:Int) {
         return db.updateScroll(id, scroll)
     }
 
-    fun getById(pageId: Int):Page? {
+    fun getById(pageId: String):Page? {
         return db.getById(pageId)
     }
 
-    fun getWithStrokeById(pageId: Int):PageWithStrokes {
+    fun getWithStrokeById(pageId: String):PageWithStrokes {
         return db.getPageWithStrokesById(pageId)
     }
 

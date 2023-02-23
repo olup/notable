@@ -8,7 +8,7 @@ import com.onyx.android.sdk.utils.BroadcastHelper.App
 
 
 sealed class Operation {
-    data class DeleteStroke(val strokeId: Int) : Operation()
+    data class DeleteStroke(val strokeId: String) : Operation()
     data class AddStroke(val stroke: Stroke) : Operation()
 }
 
