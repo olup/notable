@@ -7,10 +7,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEvent
-import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -21,7 +19,7 @@ import kotlin.math.max
 fun EditorGestureReceiver(
     goToNextPage: () -> Unit,
     goToPreviousPage: () -> Unit,
-    state: EditorState
+    state: PageEditorState
     ) {
 
     val context = LocalContext.current
@@ -32,32 +30,43 @@ fun EditorGestureReceiver(
                     awaitPointerEventScope {
                         val down = awaitFirstDown(false)
                         if (down.type == PointerType.Stylus) return@awaitPointerEventScope
+                        val touchCount = awaitPointerEvent().changes.size
+                        println("touch count ${touchCount}")
+
+
 
                         withTimeoutOrNull(100) {
                             waitForUpOrCancellation()
                             true
                         } ?: return@awaitPointerEventScope
 
+                        println("first tap tap")
+
+
                         val secondTap = withTimeoutOrNull(200) {
                             awaitFirstDown(false)
-                            withTimeoutOrNull(100) {
+                            withTimeoutOrNull(200) {
                                 waitForUpOrCancellation()
                                 true
                             } ?: return@withTimeoutOrNull null
 
                             // Double tap
-                            // mode = "breakBar"
-                            // breakBarPosition = down.position.y
+                            println("double tap")
+
 
                             true
                         }
 
                         if (secondTap != null) return@awaitPointerEventScope
                         // single tap
-                        /*if (mode == "breakBar") {
-                mode = "normal"
-                breakBarPosition = -1f
-            }*/
+
+                        println("singke tap")
+                        if(touchCount == 2) {
+                            if(state.mode == Mode.ERASE) state.mode = Mode.DRAW
+                            else state.mode = Mode.ERASE
+                        }
+
+
 
                     }
                 }
@@ -76,8 +85,6 @@ fun EditorGestureReceiver(
 
                         do {
                             val event: PointerEvent = awaitPointerEvent()
-                            event.changes.forEach { pointerInputChange: PointerInputChange ->
-                            }
 
                             val fingerChange = event.changes.filter { it.type == PointerType.Touch }
 

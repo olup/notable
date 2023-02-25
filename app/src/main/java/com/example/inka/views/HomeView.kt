@@ -120,11 +120,11 @@ fun Library(navController: NavController) {
                                 onClick = {
                                     val bookId = item.id
                                     val pageId = item.openPageId
-                                    navController.navigate("book/$bookId/pages/$pageId")
+                                    navController.navigate("books/$bookId/pages/$pageId")
                                 },
                                 onLongClick = {
                                     val bookId = item.id
-                                    navController.navigate("book/$bookId/modal-settings")
+                                    navController.navigate("books/$bookId/modal-settings")
                                 },
                             )
                     ) {

@@ -1,40 +1,32 @@
 package com.example.inka
 
-import android.graphics.Rect
 import android.graphics.RectF
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import com.example.inka.db.*
 import com.example.inka.ui.theme.InkaTheme
 import com.onyx.android.sdk.pen.*
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.launch
-import kotlin.concurrent.thread
 
-
-enum class Pen {
-    BALLPEN,
-    PENCIL,
-    BRUSH,
-    MARKER,
-    FOUNTAIN
+enum class Mode {
+    DRAW,
+    ERASE,
+    SELECT
 }
 
-class EditorState(pageId : String, bookId: String?) {
-    var pen by mutableStateOf(Pen.BALLPEN)
-    var strokeSize by mutableStateOf( 10f)
+class PageEditorState(pageId : String, scroll : Int, bookId: String?) {
+    var pen by mutableStateOf(Pen.BALLPEN) // should save
+    var strokeSize by mutableStateOf( 10f) // should save
     var isDrawing by mutableStateOf(true)
-    var isToolbarOpen by mutableStateOf(false)
-    var scroll by mutableStateOf(0)
+    var isToolbarOpen by mutableStateOf(false) // should save
+    var scroll by mutableStateOf(scroll)
     var forceUpdate by mutableStateOf(0 to RectF())
+    var mode by mutableStateOf(Mode.DRAW) // should save
     var pageId by mutableStateOf(pageId)
     var bookId by mutableStateOf(bookId)
 }
@@ -42,34 +34,46 @@ class EditorState(pageId : String, bookId: String?) {
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun BookUi(navController: NavController, restartCount: Int, bookId: String?, pageId: String) {
-
-    val state = remember {
-        EditorState(pageId, bookId)
-    }
+fun BookUi(navController: NavController, restartCount: Int, _bookId: String?, _pageId: String) {
 
     val appRepository = AppRepository(LocalContext.current)
+    val page = appRepository.pageRepository.getById(_pageId)
+
+    val state = remember {
+        PageEditorState(_pageId, page?.scroll!!, _bookId)
+    }
+
 
     // update opened page
-    LaunchedEffect(state.pageId) {
-        println("PageId changed")
-        if (bookId != null) {
-            appRepository.bookRepository.setOpenPageId(bookId, pageId)
+    LaunchedEffect(Unit) {
+        println("Initializing state")
+        if (_bookId != null) {
+            appRepository.bookRepository.setOpenPageId(_bookId, state.pageId)
+            println("Open page updated")
+
         }
         // clean history
         clearHistory()
     }
 
     LaunchedEffect(state.scroll) {
-        appRepository.pageRepository.updateScroll(pageId, state.scroll)
+        appRepository.pageRepository.updateScroll(state.pageId, state.scroll)
     }
+
+    val lastRoute = navController.previousBackStackEntry
+    println(lastRoute?.destination)
 
     fun goToNextPage() {
         if (state.bookId != null) {
-            state.pageId = appRepository.getNextPageIdFromBookAndPage(
+            val newPageId = appRepository.getNextPageIdFromBookAndPage(
                 pageId = state.pageId,
                 notebookId = state.bookId!!
             )
+            navController.navigate("books/${_bookId}/pages/${newPageId}"){
+                popUpTo(lastRoute!!.destination.id ){
+                    inclusive= false
+                }
+            }
         }
     }
 
@@ -79,7 +83,7 @@ fun BookUi(navController: NavController, restartCount: Int, bookId: String?, pag
                 pageId = state.pageId,
                 notebookId = state.bookId!!
             )
-            if (newPageId != null) state.pageId = newPageId
+            if (newPageId != null) navController.navigate("books/${_bookId}/pages/${newPageId}")
         }
     }
 

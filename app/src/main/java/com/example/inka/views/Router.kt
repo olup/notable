@@ -25,12 +25,6 @@ import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 @Composable
 fun Router(restartCount: Int) {
     val navController = rememberAnimatedNavController()
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(Color.Black)
-    )
     AnimatedNavHost(
         navController = navController,
         startDestination = "library",
@@ -45,7 +39,7 @@ fun Router(restartCount: Int) {
             Library(navController = navController)
         }
         composable(
-            route = "book/{bookId}/pages/{pageId}",
+            route = "books/{bookId}/pages/{pageId}",
             arguments = listOf(navArgument("bookId") {
                 /* configuring arguments for navigation */
                 type = NavType.StringType
@@ -56,8 +50,8 @@ fun Router(restartCount: Int) {
             BookUi(
                 navController = navController,
                 restartCount = restartCount,
-                bookId = it.arguments?.getString("bookId")!!,
-                pageId = it.arguments?.getString("pageId")!!
+                _bookId = it.arguments?.getString("bookId")!!,
+                _pageId = it.arguments?.getString("pageId")!!
             )
         }
         composable(
@@ -69,12 +63,12 @@ fun Router(restartCount: Int) {
             BookUi(
                 navController = navController,
                 restartCount = restartCount,
-                bookId = null,
-                pageId = it.arguments?.getString("pageId")!!
+                _bookId = null,
+                _pageId = it.arguments?.getString("pageId")!!
             )
         }
         composable(
-            route = "book/{bookId}/pages",
+            route = "books/{bookId}/pages",
             arguments = listOf(navArgument("bookId") {
                 /* configuring arguments for navigation */
                 type = NavType.StringType
@@ -86,7 +80,7 @@ fun Router(restartCount: Int) {
             )
         }
         dialog(
-            route = "book/{bookId}/modal-settings",
+            route = "books/{bookId}/modal-settings",
             arguments = listOf(navArgument("bookId") {
                 type = NavType.StringType
             })

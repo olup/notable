@@ -61,7 +61,7 @@ fun PagesView(navController: NavController, bookId: String) {
                         .border(if (isOpen) 2.dp else 1.dp, Color.Black, RectangleShape)
                         .combinedClickable(
                             onClick = {
-                                navController.navigate("book/$bookId/pages/$pageId")
+                                navController.navigate("books/$bookId/pages/$pageId")
                             },
                             onLongClick = {
                                 navController.navigate("pages/$pageId/modal-settings")

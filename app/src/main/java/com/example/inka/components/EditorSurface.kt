@@ -8,17 +8,15 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.launch
-import kotlin.concurrent.thread
 
 @Composable
 @ExperimentalComposeUiApi
 fun EditorSurface(
-    restartCount: Int, state: EditorState
+    restartCount: Int, state: PageEditorState
 ) {
     val appRepository = AppRepository(LocalContext.current)
     val couroutineScope = rememberCoroutineScope()
+    println("recompose surface")
 
     Box(
         modifier = Modifier

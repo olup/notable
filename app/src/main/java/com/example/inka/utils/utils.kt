@@ -10,13 +10,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.unit.Dp
 import com.example.inka.db.Stroke
+import com.example.inka.db.StrokePoint
 import com.onyx.android.sdk.data.note.TouchPoint
 import com.onyx.android.sdk.pen.NeoBrushPen
 import com.onyx.android.sdk.pen.NeoCharcoalPen
 import com.onyx.android.sdk.pen.NeoFountainPen
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -29,112 +29,28 @@ import kotlin.math.abs
 import kotlin.system.measureTimeMillis
 
 
-const val padding = 50
-const val lineHeight = 50
-const val dotSize = 4f
-
-fun drawLinedBg(canvas: Canvas, scroll: Int) {
-    val height = canvas.height
-    val width = canvas.width
-
-    // white bg
-    canvas.drawColor(android.graphics.Color.WHITE)
-
-    // paint
-    val paint = Paint().apply {
-        this.color = Color.GRAY
-        this.strokeWidth = 1f
-    }
-
-    // lines
-    for (y in 0..height) {
-        val line = scroll + y
-        if (line % lineHeight == 0) {
-            canvas.drawLine(
-                padding.toFloat(), y.toFloat(), (width - padding).toFloat(), y.toFloat(), paint
-            )
-        }
-    }
-}
-
-fun drawDottedBg(canvas: Canvas, offset: Int) {
-    val height = canvas.height
-    val width = canvas.width
-
-    // white bg
-    canvas.drawColor(android.graphics.Color.WHITE)
-
-    // paint
-    val paint = Paint().apply {
-        this.color = Color.GRAY
-        this.strokeWidth = 1f
-    }
-
-    // dots
-    for (y in 0..height) {
-        val line = offset + y
-        if (line % lineHeight == 0 && line >= padding) {
-            for (x in padding..width - padding step lineHeight) {
-                canvas.drawOval(
-                    x.toFloat() - dotSize / 2,
-                    y.toFloat() - dotSize / 2,
-                    x.toFloat() + dotSize / 2,
-                    y.toFloat() + dotSize / 2,
-                    paint
-                )
-            }
-        }
-    }
-}
-
-fun drawSquaredBg(canvas: Canvas, scroll: Int) {
-    println("Drawing BG")
-    val height = canvas.height
-    val width = canvas.width
-
-    // white bg
-    canvas.drawColor(android.graphics.Color.WHITE)
-
-    // paint
-    val paint = Paint().apply {
-        this.color = Color.GRAY
-        this.strokeWidth = 1f
-    }
-
-    // lines
-    for (y in 0..height) {
-        val line = scroll + y
-        if (line % lineHeight == 0) {
-            canvas.drawLine(
-                padding.toFloat(), y.toFloat(), (width - padding).toFloat(), y.toFloat(), paint
-            )
-        }
-    }
-
-    for (x in padding..width - padding step lineHeight) {
-        canvas.drawLine(
-            x.toFloat(), padding.toFloat(), x.toFloat(), height.toFloat(), paint
-        )
-    }
-}
-
+// TODO remove in profit of the page class
 object StrokeCache {
     var pageId: String? = null
     var strokes: List<Stroke> = listOf()
 }
 
+// TODO remove in profit of the page class
 fun loadStrokeCache(context: Context) {
-    if(StrokeCache.pageId == null) return
+    if (StrokeCache.pageId == null) return
     val appRepository = AppRepository(context)
-    StrokeCache.strokes = appRepository.pageRepository.getWithStrokeById(StrokeCache.pageId!!).strokes
+    StrokeCache.strokes =
+        appRepository.pageRepository.getWithStrokeById(StrokeCache.pageId!!).strokes
 }
 
+// TODO remove in profit of the page class
 fun loadStrokeCache(context: Context, pageId: String) {
     val appRepository = AppRepository(context)
     StrokeCache.pageId = pageId
     StrokeCache.strokes = appRepository.pageRepository.getWithStrokeById(pageId).strokes
 }
 
+// TODO remove in profit of the page class
 fun renderPageFromDbToCanvas(
     context: Context, canvas: Canvas, pageId: String, pageSection: RectF, canvasSection: RectF
 ) {
@@ -155,11 +71,10 @@ fun renderPageFromDbToCanvas(
     val timeToDraw = measureTimeMillis {
         StrokeCache.strokes.forEach { stroke ->
 
+            val bounds = RectF(stroke.left, stroke.top, stroke.right, stroke.bottom)
+
             // if stroke is inside page section
-            if (stroke.top <= pageSection.bottom &&
-                stroke.bottom >= pageSection.top &&
-                stroke.left <= pageSection.right &&
-                stroke.right >= pageSection.left) {
+            if (bounds.intersect(pageSection)) {
                 println("Stroke identifed for rendering")
 
                 val points = stroke.points.map {
@@ -185,6 +100,7 @@ fun renderPageFromDbToCanvas(
     canvas.restore();
 }
 
+// TODO remove in profit of the page class
 fun pageBitmapToFile(context: Context, bitmap: Bitmap, pageId: String) {
     println("Saving page bitmap to disk")
     runBlocking {
@@ -211,13 +127,11 @@ fun pageBitmapToFile(context: Context, bitmap: Bitmap, pageId: String) {
     }
 }
 
+// TODO remove in profit of the page class
 fun renderCachedPageToCanvas(context: Context, canvas: Canvas, pageId: String): Boolean {
-    // Optim - load cached page on disk as jpeg
     val imgFile = File(context.filesDir, "pages/previews/full/$pageId")
-    // on below line we are checking if the image file exist or not.
     var imgBitmap: Bitmap? = null
     if (imgFile.exists()) {
-        // TODO decode straight to given bitmap ?
         imgBitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
         if (imgBitmap != null) {
             canvas.drawBitmap(imgBitmap, 0f, 0f, Paint());
@@ -243,78 +157,6 @@ fun Modifier.noRippleClickable(
     }
 }
 
-fun drawBallPenStroke(
-    canvas: Canvas, paint: Paint, strokeSize: Float, points: List<TouchPoint>
-) {
-    val copyPaint = Paint(paint).apply {
-        this.strokeWidth = strokeSize
-        this.style = Paint.Style.STROKE
-        this.strokeCap = Paint.Cap.ROUND
-        this.strokeJoin = Paint.Join.ROUND
-
-        this.isAntiAlias = true
-    }
-
-    val path = Path()
-    val prePoint = PointF(points[0].x, points[0].y)
-    path.moveTo(prePoint.x, prePoint.y)
-
-    for (point in points) {
-        // skip strange jump point.
-        if (abs(prePoint.y - point.y) >= 30) continue
-        path.quadTo(prePoint.x, prePoint.y, point.x, point.y)
-        prePoint.x = point.x
-        prePoint.y = point.y
-    }
-
-    canvas.drawPath(path, copyPaint)
-}
-
-fun drawMarkerStroke(
-    canvas: Canvas, paint: Paint, strokeSize: Float, points: List<TouchPoint>
-) {
-    val copyPaint = Paint(paint).apply {
-        this.strokeWidth = strokeSize
-        this.style = Paint.Style.STROKE
-        this.strokeCap = Paint.Cap.ROUND
-        this.strokeJoin = Paint.Join.ROUND
-        this.isAntiAlias = true
-        this.alpha = 100
-    }
-
-    val path = Path()
-    val prePoint = PointF(points[0].x, points[0].y)
-    path.moveTo(prePoint.x, prePoint.y)
-
-    for (point in points) {
-        // skip strange jump point.
-        if (abs(prePoint.y - point.y) >= 30) continue
-        path.quadTo(prePoint.x, prePoint.y, point.x, point.y)
-        prePoint.x = point.x
-        prePoint.y = point.y
-    }
-
-    canvas.drawPath(path, copyPaint)
-}
-
-fun drawStroke(canvas: Canvas, pen: Pen, strokeSize: Float, points: List<TouchPoint>) {
-    val paint = Paint().apply {
-        color = Color.BLACK
-        this.strokeWidth = strokeSize
-    }
-
-    when (pen) {
-        Pen.BALLPEN -> drawBallPenStroke(canvas, paint, strokeSize, points)
-        Pen.PENCIL -> NeoCharcoalPen.drawNormalStroke(
-            null, canvas, paint, points, -16777216, strokeSize, pressure, 90, false
-        )
-        Pen.BRUSH -> NeoBrushPen.drawStroke(canvas, paint, points, strokeSize, pressure, false)
-        Pen.MARKER -> drawMarkerStroke(canvas, paint, strokeSize, points)
-        Pen.FOUNTAIN -> NeoFountainPen.drawStroke(
-            canvas, paint, points, 1f, strokeSize, pressure, false
-        )
-    }
-}
 
 fun convertDpToPixel(dp: Dp, context: Context): Float {
     val resources = context.resources
@@ -325,7 +167,7 @@ fun convertDpToPixel(dp: Dp, context: Context): Float {
 // TODO move this to repository
 fun deletePage(context: Context, pageId: String) {
     val appRepository = AppRepository(context)
-    val page = appRepository.pageRepository.getById(pageId)?: return
+    val page = appRepository.pageRepository.getById(pageId) ?: return
 
     runBlocking {
         launch {
@@ -350,23 +192,189 @@ fun deletePage(context: Context, pageId: String) {
 // TODO move this to repository
 fun deleteBook(context: Context, bookId: String) {
     val appRepository = AppRepository(context)
-    val book = appRepository.bookRepository.getById(bookId)?:return
+    val book = appRepository.bookRepository.getById(bookId) ?: return
 
     runBlocking {
         launch {
             appRepository.bookRepository.delete(bookId)
         }
-        for(pageId in book.pageIds){
+        for (pageId in book.pageIds) {
             launch {
                 deletePage(context, pageId)
             }
         }
     }
 }
-fun <T: Any> Flow<T>.withPrevious(): Flow<Pair<T?, T>> = flow {
+
+fun <T : Any> Flow<T>.withPrevious(): Flow<Pair<T?, T>> = flow {
     var prev: T? = null
     this@withPrevious.collect {
         emit(prev to it)
         prev = it
     }
 }
+
+fun pointsToPath(points: List<Pair<Float, Float>>): Path {
+    val path = Path()
+    val prePoint = PointF(points[0].first, points[0].second)
+    path.moveTo(prePoint.x, prePoint.y)
+
+    for (point in points) {
+        // skip strange jump point.
+        if (abs(prePoint.y - point.second) >= 30) continue
+        path.quadTo(prePoint.x, prePoint.y, point.first, point.second)
+        prePoint.x = point.first
+        prePoint.y = point.second
+    }
+    return path
+}
+
+fun handleErase(
+    context: Context,
+    canvas: Canvas,
+    pageId: String,
+    scroll: Int,
+    points: List<Pair<Float, Float>>
+) {
+    val paint = Paint().apply {
+        this.strokeWidth = 10f
+        this.style = Paint.Style.STROKE
+        this.strokeCap = Paint.Cap.ROUND
+        this.strokeJoin = Paint.Join.ROUND
+        this.isAntiAlias = true
+    }
+    val path = pointsToPath(points)
+
+    // lasso eraser
+    path.close()
+    val outPath = path
+
+
+// stroke erasaer
+//    val outPath = Path()
+//    paint.getFillPath(path, outPath)
+
+    val bounds = RectF()
+    outPath.computeBounds(bounds, true)
+
+    val region = Region()
+    region.setPath(
+        outPath,
+        Region(
+            bounds.left.toInt(),
+            bounds.top.toInt(),
+            bounds.right.toInt(),
+            bounds.bottom.toInt()
+        )
+    )
+
+    val affectedZone = RectF()
+    var deletedStrokes = listOf<Stroke>()
+    val appRepository = AppRepository(context)
+    StrokeCache.strokes.filter {
+        RectF(
+            it.left,
+            it.top,
+            it.right,
+            it.bottom
+        ).intersect(bounds)
+    }.forEach() {
+        for (point in it.points) {
+            if (region.contains(point.x.toInt(), point.y.toInt())) {
+                affectedZone.union(
+                    RectF(
+                        it.left,
+                        it.top,
+                        it.right,
+                        it.bottom
+                    )
+                )
+                deletedStrokes += it
+                break
+            }
+        }
+    }
+
+
+    val deletedStrokeIds = deletedStrokes.map { it.id }
+    StrokeCache.strokes = StrokeCache.strokes.filter {
+        !deletedStrokeIds.contains(it.id)
+    }
+    appRepository.strokeRepository.deleteAll(deletedStrokeIds)
+
+    addOperationsToHistory(deletedStrokes.map { Operation.AddStroke(it) })
+
+    renderPageFromDbToCanvas(
+        context = context,
+        canvas = canvas,
+        pageId = pageId,
+        pageSection = RectF(
+            affectedZone.left, affectedZone.top, affectedZone.right, affectedZone.bottom
+        ),
+        canvasSection = RectF(
+            affectedZone.left,
+            affectedZone.top - scroll,
+            affectedZone.right,
+            affectedZone.bottom - scroll
+        ),
+    )
+}
+
+fun handleDraw(
+    context: Context,
+    canvas: Canvas,
+    pageId: String,
+    scroll: Int,
+    strokeSize: Float,
+    pen: Pen,
+    touchPoints: List<TouchPoint>
+) {
+
+    val boundingBox = RectF()
+
+    val points = touchPoints.map {
+        boundingBox.union(it.x, it.y)
+
+        StrokePoint(
+            x = it.x,
+            y = it.y + scroll,
+            pressure = it.pressure,
+            size = it.size,
+            tiltX = it.tiltX,
+            tiltY = it.tiltY,
+            timestamp = it.timestamp,
+        )
+    }
+
+    boundingBox.inset(-strokeSize, -strokeSize)
+
+    val stroke = Stroke(
+        size = strokeSize,
+        pen = pen,
+        pageId = pageId,
+        top = boundingBox.top,
+        bottom = boundingBox.bottom,
+        left = boundingBox.left,
+        right = boundingBox.right,
+        points = points
+    )
+
+    // add stroke to DB and cache
+    AppRepository(context).strokeRepository.create(
+        stroke
+    )
+    if (StrokeCache.pageId == pageId) {
+        StrokeCache.strokes += stroke
+    }
+
+    // draw to page (could also call refresh page from region)
+    drawStroke(
+        canvas, stroke.pen, stroke.size, touchPoints
+    )
+    addOperationsToHistory(listOf(Operation.DeleteStroke(stroke.id)))
+
+}
+
+
+inline fun Modifier.ifTrue(predicate: Boolean, builder: () -> Modifier) =
+    then(if (predicate) builder() else Modifier)
