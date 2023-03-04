@@ -3,6 +3,7 @@ package com.example.inka.db
 import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.room.*
+import java.util.Date
 import java.util.UUID
 
 @Entity
@@ -12,6 +13,8 @@ data class Notebook(
     val title: String = "New notebook",
     val openPageId: String? = null,
     val pageIds: List<String> = listOf(),
+    val createdAt: Date = Date(),
+    val updatedAt: Date = Date()
 )
 
 // DAO

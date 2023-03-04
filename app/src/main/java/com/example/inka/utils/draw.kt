@@ -1,10 +1,14 @@
 package com.example.inka
 
 import android.graphics.*
+import androidx.compose.ui.graphics.TileMode
+import androidx.core.graphics.drawable.toBitmap
+import com.example.inka.db.Stroke
 import com.onyx.android.sdk.data.note.TouchPoint
 import com.onyx.android.sdk.pen.NeoBrushPen
 import com.onyx.android.sdk.pen.NeoCharcoalPen
 import com.onyx.android.sdk.pen.NeoFountainPen
+import com.onyx.android.sdk.utils.ResManager
 import kotlin.math.abs
 
 
@@ -47,26 +51,28 @@ fun drawMarkerStroke(
         this.alpha = 100
     }
 
-    val path = pointsToPath(points.map { Pair(it.x, it.y) })
+    val path = pointsToPath(points.map { SimplePointF(it.x, it.y) })
 
     canvas.drawPath(path, copyPaint)
 }
 
-fun drawStroke(canvas: Canvas, pen: Pen, strokeSize: Float, points: List<TouchPoint>) {
+fun drawStroke(canvas: Canvas, stroke: Stroke, scroll: Int) {
     val paint = Paint().apply {
         color = Color.BLACK
-        this.strokeWidth = strokeSize
+        this.strokeWidth = stroke.size
     }
 
-    when (pen) {
-        Pen.BALLPEN -> drawBallPenStroke(canvas, paint, strokeSize, points)
+    val points = strokeToTouchPoints(stroke, scroll)
+
+    when (stroke.pen) {
+        Pen.BALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
         Pen.PENCIL -> NeoCharcoalPen.drawNormalStroke(
-            null, canvas, paint, points, -16777216, strokeSize, pressure, 90, false
+            null, canvas, paint, points, -16777216, stroke.size, pressure, 90, false
         )
-        Pen.BRUSH -> NeoBrushPen.drawStroke(canvas, paint, points, strokeSize, pressure, false)
-        Pen.MARKER -> drawMarkerStroke(canvas, paint, strokeSize, points)
+        Pen.BRUSH -> NeoBrushPen.drawStroke(canvas, paint, points, stroke.size, pressure, false)
+        Pen.MARKER -> drawMarkerStroke(canvas, paint, stroke.size, points)
         Pen.FOUNTAIN -> NeoFountainPen.drawStroke(
-            canvas, paint, points, 1f, strokeSize, pressure, false
+            canvas, paint, points, 1f, stroke.size, pressure, false
         )
     }
 }
@@ -128,6 +134,7 @@ fun drawDottedBg(canvas: Canvas, offset: Int) {
             }
         }
     }
+
 }
 
 fun drawSquaredBg(canvas: Canvas, scroll: Int) {

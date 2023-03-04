@@ -9,145 +9,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.unit.Dp
+import androidx.core.graphics.toRect
 import com.example.inka.db.Stroke
 import com.example.inka.db.StrokePoint
 import com.onyx.android.sdk.data.note.TouchPoint
-import com.onyx.android.sdk.pen.NeoBrushPen
-import com.onyx.android.sdk.pen.NeoCharcoalPen
-import com.onyx.android.sdk.pen.NeoFountainPen
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.io.BufferedOutputStream
 import java.io.File
-import java.io.FileOutputStream
-import java.nio.file.Files
-import kotlin.io.path.Path
-import kotlin.math.abs
-import kotlin.system.measureTimeMillis
 
-
-// TODO remove in profit of the page class
-object StrokeCache {
-    var pageId: String? = null
-    var strokes: List<Stroke> = listOf()
-}
-
-// TODO remove in profit of the page class
-fun loadStrokeCache(context: Context) {
-    if (StrokeCache.pageId == null) return
-    val appRepository = AppRepository(context)
-    StrokeCache.strokes =
-        appRepository.pageRepository.getWithStrokeById(StrokeCache.pageId!!).strokes
-}
-
-// TODO remove in profit of the page class
-fun loadStrokeCache(context: Context, pageId: String) {
-    val appRepository = AppRepository(context)
-    StrokeCache.pageId = pageId
-    StrokeCache.strokes = appRepository.pageRepository.getWithStrokeById(pageId).strokes
-}
-
-// TODO remove in profit of the page class
-fun renderPageFromDbToCanvas(
-    context: Context, canvas: Canvas, pageId: String, pageSection: RectF, canvasSection: RectF
-) {
-    canvas.save();
-    canvas.clipRect(canvasSection);
-    val timeToBg = measureTimeMillis {
-        drawDottedBg(canvas, (pageSection.top - canvasSection.top).toInt())
-    }
-    println("Took $timeToBg to draw the BG")
-
-    if (StrokeCache.pageId != pageId) {
-        val timeToQuery = measureTimeMillis {
-            loadStrokeCache(context, pageId)
-        }
-        println("Took $timeToQuery to fetch all page's points")
-    }
-
-    val timeToDraw = measureTimeMillis {
-        StrokeCache.strokes.forEach { stroke ->
-
-            val bounds = RectF(stroke.left, stroke.top, stroke.right, stroke.bottom)
-
-            // if stroke is inside page section
-            if (bounds.intersect(pageSection)) {
-                println("Stroke identifed for rendering")
-
-                val points = stroke.points.map {
-                    TouchPoint(
-                        it.x - pageSection.left + canvasSection.left,
-                        it.y - pageSection.top + canvasSection.top,
-                        it.pressure,
-                        stroke.size,
-                        it.tiltX,
-                        it.tiltY,
-                        it.timestamp
-                    )
-                }
-                drawStroke(
-                    canvas, stroke.pen, stroke.size, points
-                )
-            }
-        }
-    }
-
-    println("Took $timeToDraw to draw all page's points")
-
-    canvas.restore();
-}
-
-// TODO remove in profit of the page class
-fun pageBitmapToFile(context: Context, bitmap: Bitmap, pageId: String) {
-    println("Saving page bitmap to disk")
-    runBlocking {
-        launch {
-            // full size
-            val file = File(context.filesDir, "pages/previews/full/$pageId")
-            Files.createDirectories(Path(file.absolutePath).parent)
-            val os = BufferedOutputStream(FileOutputStream(file))
-            bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSLESS, 50, os);
-            os.close()
-        }
-
-        launch {
-            // thumbs
-            val file = File(context.filesDir, "pages/previews/thumbs/$pageId")
-            Files.createDirectories(Path(file.absolutePath).parent)
-            val os = BufferedOutputStream(FileOutputStream(file))
-            val ratio = bitmap.height.toFloat() / bitmap.width.toFloat()
-            Bitmap.createScaledBitmap(bitmap, 500, (500 * ratio).toInt(), false)
-                .compress(Bitmap.CompressFormat.WEBP_LOSSY, 50, os);
-            os.close()
-        }
-
-    }
-}
-
-// TODO remove in profit of the page class
-fun renderCachedPageToCanvas(context: Context, canvas: Canvas, pageId: String): Boolean {
-    val imgFile = File(context.filesDir, "pages/previews/full/$pageId")
-    var imgBitmap: Bitmap? = null
-    if (imgFile.exists()) {
-        imgBitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
-        if (imgBitmap != null) {
-            canvas.drawBitmap(imgBitmap, 0f, 0f, Paint());
-            println("Page rendered from cache")
-            return true
-        } else {
-            println("Cannot read cache image")
-        }
-    } else {
-        println("Cannot find cache image")
-    }
-
-    return false
-}
-
-val debouncedSavedBitmapFlow = MutableSharedFlow<Unit>()
 
 fun Modifier.noRippleClickable(
     onClick: () -> Unit
@@ -214,35 +85,34 @@ fun <T : Any> Flow<T>.withPrevious(): Flow<Pair<T?, T>> = flow {
     }
 }
 
-fun pointsToPath(points: List<Pair<Float, Float>>): Path {
+fun pointsToPath(points: List<SimplePointF>): Path {
     val path = Path()
-    val prePoint = PointF(points[0].first, points[0].second)
+    val prePoint = PointF(points[0].x, points[0].y)
     path.moveTo(prePoint.x, prePoint.y)
 
     for (point in points) {
         // skip strange jump point.
-        if (abs(prePoint.y - point.second) >= 30) continue
-        path.quadTo(prePoint.x, prePoint.y, point.first, point.second)
-        prePoint.x = point.first
-        prePoint.y = point.second
+        //if (abs(prePoint.y - point.y) >= 30) continue
+        path.quadTo(prePoint.x, prePoint.y, point.x, point.y)
+        prePoint.x = point.x
+        prePoint.y = point.y
     }
     return path
 }
 
+// points is in page coordinates
 fun handleErase(
-    context: Context,
-    canvas: Canvas,
-    pageId: String,
-    scroll: Int,
-    points: List<Pair<Float, Float>>
+    page: PageModel,
+    history:History,
+    points: List<SimplePointF>,
 ) {
-    val paint = Paint().apply {
-        this.strokeWidth = 10f
-        this.style = Paint.Style.STROKE
-        this.strokeCap = Paint.Cap.ROUND
-        this.strokeJoin = Paint.Join.ROUND
-        this.isAntiAlias = true
-    }
+    /* val paint = Paint().apply {
+         this.strokeWidth = 10f
+         this.style = Paint.Style.STROKE
+         this.strokeCap = Paint.Cap.ROUND
+         this.strokeJoin = Paint.Join.ROUND
+         this.isAntiAlias = true
+     }*/
     val path = pointsToPath(points)
 
     // lasso eraser
@@ -254,90 +124,87 @@ fun handleErase(
 //    val outPath = Path()
 //    paint.getFillPath(path, outPath)
 
-    val bounds = RectF()
-    outPath.computeBounds(bounds, true)
-
-    val region = Region()
-    region.setPath(
-        outPath,
-        Region(
-            bounds.left.toInt(),
-            bounds.top.toInt(),
-            bounds.right.toInt(),
-            bounds.bottom.toInt()
-        )
-    )
-
-    val affectedZone = RectF()
-    var deletedStrokes = listOf<Stroke>()
-    val appRepository = AppRepository(context)
-    StrokeCache.strokes.filter {
-        RectF(
-            it.left,
-            it.top,
-            it.right,
-            it.bottom
-        ).intersect(bounds)
-    }.forEach() {
-        for (point in it.points) {
-            if (region.contains(point.x.toInt(), point.y.toInt())) {
-                affectedZone.union(
-                    RectF(
-                        it.left,
-                        it.top,
-                        it.right,
-                        it.bottom
-                    )
-                )
-                deletedStrokes += it
-                break
-            }
-        }
-    }
-
+    val deletedStrokes = selectStrokesFromPath(page.strokes, path)
 
     val deletedStrokeIds = deletedStrokes.map { it.id }
-    StrokeCache.strokes = StrokeCache.strokes.filter {
-        !deletedStrokeIds.contains(it.id)
-    }
-    appRepository.strokeRepository.deleteAll(deletedStrokeIds)
+    page.removeStrokes(deletedStrokeIds)
 
-    addOperationsToHistory(deletedStrokes.map { Operation.AddStroke(it) })
+    history.addOperationsToHistory(listOf(Operation.AddStroke(deletedStrokes)))
 
-    renderPageFromDbToCanvas(
-        context = context,
-        canvas = canvas,
-        pageId = pageId,
-        pageSection = RectF(
-            affectedZone.left, affectedZone.top, affectedZone.right, affectedZone.bottom
-        ),
-        canvasSection = RectF(
-            affectedZone.left,
-            affectedZone.top - scroll,
-            affectedZone.right,
-            affectedZone.bottom - scroll
-        ),
+    page.drawArea(
+        canvasArea = pageAreaToCanvasArea(strokeBounds(deletedStrokes), page.scroll)
     )
 }
 
+enum class SelectPointPosition {
+    LEFT,
+    RIGHT,
+    CENTER
+}
+
+// points is in page coodinates
+fun handleSelect(
+    page: PageModel,
+    state: SelectionState,
+    points: List<SimplePointF>
+) {
+
+    val firstPointPosition =
+        if (points.first().x < 50) SelectPointPosition.LEFT else if (points.first().x > page.pageWidth - 50) SelectPointPosition.RIGHT else SelectPointPosition.CENTER
+    val lastPointPosition =
+        if (points.last().x < 50) SelectPointPosition.LEFT else if (points.last().x > page.pageWidth - 50) SelectPointPosition.RIGHT else SelectPointPosition.CENTER
+
+    if (firstPointPosition != SelectPointPosition.CENTER && lastPointPosition != SelectPointPosition.CENTER && firstPointPosition != lastPointPosition){
+        // Page cut situation
+        val correctedPoints = if(firstPointPosition === SelectPointPosition.LEFT) points else points.reversed()
+        // lets make this end to end
+        val completePoints = listOf(SimplePointF(0f,correctedPoints.first().y)) +  correctedPoints + listOf(SimplePointF(page.pageWidth.toFloat(),correctedPoints.last().y))
+        if(state.firstPageCut == null) {
+            // this is the first page cut
+            state.firstPageCut = completePoints
+            println("Registered first curt")
+        }
+        else {
+            // this is the second page cut, we can also select the strokes
+            // first lets have the cuts in the right order
+            if(completePoints[0].y > state.firstPageCut!![0].y) state.secondPageCut = completePoints
+            else {
+                state.secondPageCut = state.firstPageCut
+                state.firstPageCut = completePoints
+            }
+            // let's get stroke selection from that
+            val (_, after) = divideStrokesFromCut(page.strokes, state.firstPageCut!!)
+            val (middle, _) = divideStrokesFromCut(after, state.secondPageCut!!)
+            state.selectedStrokes = middle
+        }
+    }else {
+        // random selection
+        val selectionPath = pointsToPath(points)
+        selectionPath.close()
+        state.selectedStrokes = selectStrokesFromPath(page.strokes, selectionPath)
+    }
+}
+
+// touchpoints is in wiew coordinates
 fun handleDraw(
-    context: Context,
-    canvas: Canvas,
-    pageId: String,
-    scroll: Int,
+    page: PageModel,
     strokeSize: Float,
     pen: Pen,
     touchPoints: List<TouchPoint>
 ) {
-
-    val boundingBox = RectF()
+    val initialPoint = touchPoints[0]
+    val boundingBox = RectF(
+        initialPoint.x,
+        initialPoint.y + page.scroll,
+        initialPoint.x,
+        initialPoint.y + page.scroll
+    )
 
     val points = touchPoints.map {
-        boundingBox.union(it.x, it.y)
-
+        boundingBox.union(it.x, it.y + page.scroll)
         StrokePoint(
             x = it.x,
-            y = it.y + scroll,
+            y = it.y + page.scroll,
             pressure = it.pressure,
             size = it.size,
             tiltX = it.tiltX,
@@ -351,30 +218,126 @@ fun handleDraw(
     val stroke = Stroke(
         size = strokeSize,
         pen = pen,
-        pageId = pageId,
+        pageId = page.pageId,
         top = boundingBox.top,
         bottom = boundingBox.bottom,
         left = boundingBox.left,
         right = boundingBox.right,
         points = points
     )
+    page.addStrokes(listOf(stroke))
+    page.drawArea(pageAreaToCanvasArea(strokeBounds(stroke).toRect(), page.scroll))
 
-    // add stroke to DB and cache
-    AppRepository(context).strokeRepository.create(
-        stroke
-    )
-    if (StrokeCache.pageId == pageId) {
-        StrokeCache.strokes += stroke
+    runBlocking {
+        History.registerHistoryOperationBlock(listOf(Operation.DeleteStroke(listOf(stroke.id))))
     }
-
-    // draw to page (could also call refresh page from region)
-    drawStroke(
-        canvas, stroke.pen, stroke.size, touchPoints
-    )
-    addOperationsToHistory(listOf(Operation.DeleteStroke(stroke.id)))
-
 }
 
 
 inline fun Modifier.ifTrue(predicate: Boolean, builder: () -> Modifier) =
     then(if (predicate) builder() else Modifier)
+
+fun strokeToTouchPoints(stroke: Stroke, scroll: Int): List<TouchPoint> {
+    return stroke.points.map {
+        TouchPoint(
+            it.x,
+            it.y - scroll,
+            it.pressure,
+            stroke.size,
+            it.tiltX,
+            it.tiltY,
+            it.timestamp
+        )
+    }
+}
+
+fun pageAreaToCanvasArea(pageArea: Rect, scroll: Int): Rect {
+    return Rect(
+        pageArea.left, pageArea.top - scroll, pageArea.right, pageArea.bottom - scroll
+    )
+}
+
+fun strokeBounds(stroke: Stroke): RectF {
+    return RectF(
+        stroke.left, stroke.top, stroke.right, stroke.bottom
+    )
+}
+
+fun strokeBounds(strokes: List<Stroke>): Rect {
+    if(strokes.size == 0) return Rect()
+    val stroke = strokes[0]
+    val rect = Rect(
+        stroke.left.toInt(), stroke.top.toInt(), stroke.right.toInt(), stroke.bottom.toInt()
+    )
+    strokes.forEach{
+        rect.union(Rect(
+            it.left.toInt(), it.top.toInt(), it.right.toInt(), it.bottom.toInt()
+        ))
+    }
+    return rect
+}
+
+data class SimplePoint(val x : Int, val y : Int)
+data class SimplePointF(val x : Float, val y : Float)
+
+fun pathToRegion(path: Path) : Region {
+    val bounds = RectF()
+    path.computeBounds(bounds, true)
+   val region =  Region()
+    region.setPath(
+        path,
+        Region(
+            bounds.left.toInt(),
+            bounds.top.toInt(),
+            bounds.right.toInt(),
+            bounds.bottom.toInt()
+        )
+    )
+    return region
+}
+
+fun divideStrokesFromCut(strokes : List<Stroke>, cutLine : List<SimplePointF>): Pair<List<Stroke>, List<Stroke>>{
+    val maxY = cutLine.maxOfOrNull { it.y }
+    val cutArea = listOf(SimplePointF(0f, maxY!!)) + cutLine + listOf(
+        SimplePointF(
+            cutLine.last().x,
+            maxY
+        )
+    )
+    val cutPath = pointsToPath(cutArea)
+    cutPath.close()
+
+    val bounds = RectF().apply {
+        cutPath.computeBounds(this, true)
+    }
+    val cutRegion = pathToRegion(cutPath)
+
+    val strokesOver : MutableList<Stroke> = mutableListOf()
+    val strokesUnder : MutableList<Stroke> = mutableListOf()
+
+    strokes.forEach{ stroke ->
+        if (stroke.top > bounds.bottom) strokesUnder.add(stroke)
+        else if (stroke.bottom < bounds.top) strokesOver.add(stroke)
+        else {
+            if(stroke.points.any { point ->
+                cutRegion.contains(
+                    point.x.toInt(),
+                    point.y.toInt()
+                )
+            }) strokesUnder.add(stroke)
+            else strokesOver.add(stroke)
+        }
+    }
+
+    return strokesOver to strokesUnder
+}
+
+fun selectStrokesFromPath(strokes: List<Stroke>, path : Path) : List<Stroke>{
+    val bounds = RectF()
+    path.computeBounds(bounds, true)
+    val region = pathToRegion(path)
+
+    return strokes.filter {
+        strokeBounds(it).intersect(bounds)
+    }.filter() {it.points.any{region.contains(it.x.toInt(), it.y.toInt())}}
+}

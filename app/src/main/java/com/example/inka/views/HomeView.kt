@@ -57,17 +57,16 @@ fun Library(navController: NavController) {
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .noRippleClickable {
-                        val pageId = appRepository.pageRepository.create(
-                            Page(notebookId = null)
-                        )
-                        navController.navigate("pages/$pageId")
+                        val page = Page(notebookId = null)
+                        appRepository.pageRepository.create(page)
+                        navController.navigate("pages/${page.id}")
                     }
                     .padding(10.dp))
         }
         Column(
             Modifier.padding(10.dp)
         ) {
-            if (singlePages != null && singlePages?.size!=0) {
+            if (singlePages != null && singlePages?.size != 0) {
                 Text(text = "Quick pages")
                 Spacer(Modifier.height(10.dp))
 

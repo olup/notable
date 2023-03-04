@@ -37,20 +37,8 @@ fun exportPageToPdf(context: Context, bookId: String, pageId: String) {
     drawDottedBg(canvas,0)
 
     page.strokes.forEach {
-        val points = it.points.map {
-            TouchPoint(
-                it.x,
-                it.y,
-                it.pressure,
-                it.size,
-                it.tiltX,
-                it.tiltY,
-                it.timestamp
-            )
-        }
-
         drawStroke(
-            canvas, it.pen, it.size, points
+            canvas, it, 0
         )
     }
     pdfDocument.finishPage(pdfPage)

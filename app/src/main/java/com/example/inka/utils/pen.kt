@@ -2,13 +2,15 @@ package com.example.inka
 
 import android.graphics.Color
 import com.onyx.android.sdk.pen.style.StrokeStyle
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
-enum class Pen {
-    BALLPEN,
-    PENCIL,
-    BRUSH,
-    MARKER,
-    FOUNTAIN
+enum class Pen (val penName : String) {
+    BALLPEN("BALLPEN"),
+    PENCIL("PENCIL"),
+    BRUSH("BRUSH"),
+    MARKER("MARKER"),
+    FOUNTAIN("FOUNTAIN")
 }
 
 fun penToStroke(pen: Pen): Int {
@@ -26,14 +28,4 @@ fun penToStroke(pen: Pen): Int {
 data class PenSetting(
     var strokeSize: Float,
     var color: Int
-)
-
-val penSettings = mapOf(
-    Pen.BALLPEN to PenSetting(7f, Color.BLACK),
-    Pen.PENCIL to PenSetting(7f, Color.BLACK),
-    Pen.BRUSH to PenSetting(7f, Color.BLACK),
-    Pen.MARKER to PenSetting(7f, Color.BLACK),
-    Pen.FOUNTAIN to PenSetting(7f, Color.BLACK)
-
-
 )

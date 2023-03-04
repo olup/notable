@@ -10,9 +10,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.NavController
 import com.example.inka.convertDpToPixel
 import com.example.inka.noRippleClickable
@@ -23,7 +25,8 @@ fun ToolbarMenu(navController: NavController, onClose: () -> Unit) {
     Popup(
         alignment = Alignment.TopEnd,
         onDismissRequest = { onClose() },
-        offset = IntOffset(0, convertDpToPixel(40.dp, context).toInt())
+        offset = IntOffset(0, convertDpToPixel(41.dp, context).toInt()),
+        properties = PopupProperties(focusable = true)
     ) {
         Column(
             Modifier

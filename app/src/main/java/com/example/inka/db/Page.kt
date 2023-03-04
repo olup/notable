@@ -3,7 +3,7 @@ package com.example.inka.db
 import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.room.*
-import java.util.UUID
+import java.util.*
 
 @Entity
 data class Page(
@@ -12,7 +12,10 @@ data class Page(
     val scroll: Int = 0,
 
     @ColumnInfo(index = true)
-    val notebookId: String?
+    val notebookId: String?,
+
+    val createdAt: Date = Date(),
+    val updatedAt: Date = Date()
 )
 
 data class PageWithStrokes(

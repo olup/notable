@@ -7,11 +7,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlin.math.max
 
 
@@ -19,128 +22,133 @@ import kotlin.math.max
 fun EditorGestureReceiver(
     goToNextPage: () -> Unit,
     goToPreviousPage: () -> Unit,
-    state: PageEditorState
-    ) {
+    controlTower: EditorControlTower,
+    state : EditorState
+) {
 
-    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     Box(
         modifier = Modifier
-            .pointerInput(state.pageId) {
-                forEachGesture {
-                    awaitPointerEventScope {
-                        val down = awaitFirstDown(false)
-                        if (down.type == PointerType.Stylus) return@awaitPointerEventScope
-                        val touchCount = awaitPointerEvent().changes.size
-                        println("touch count ${touchCount}")
+  /*.pointerInput(Unit) {
+       forEachGesture {
+           awaitPointerEventScope {
+               val down = awaitFirstDown(false)
+               if (down.type == PointerType.Stylus) return@awaitPointerEventScope
+               val touchCount = awaitPointerEvent().changes.size
+               println("touch count ${touchCount}")
 
 
 
-                        withTimeoutOrNull(100) {
-                            waitForUpOrCancellation()
-                            true
-                        } ?: return@awaitPointerEventScope
+               withTimeoutOrNull(100) {
+                   waitForUpOrCancellation()
+                   true
+               } ?: return@awaitPointerEventScope
 
-                        println("first tap tap")
-
-
-                        val secondTap = withTimeoutOrNull(200) {
-                            awaitFirstDown(false)
-                            withTimeoutOrNull(200) {
-                                waitForUpOrCancellation()
-                                true
-                            } ?: return@withTimeoutOrNull null
-
-                            // Double tap
-                            println("double tap")
+               println("first tap tap")
 
 
-                            true
-                        }
+               val secondTap = withTimeoutOrNull(200) {
+                   awaitFirstDown(false)
+                   withTimeoutOrNull(200) {
+                       waitForUpOrCancellation()
+                       true
+                   } ?: return@withTimeoutOrNull null
 
-                        if (secondTap != null) return@awaitPointerEventScope
-                        // single tap
-
-                        println("singke tap")
-                        if(touchCount == 2) {
-                            if(state.mode == Mode.ERASE) state.mode = Mode.DRAW
-                            else state.mode = Mode.ERASE
-                        }
+                   // Double tap
+                   println("double tap")
 
 
+                   true
+               }
 
-                    }
-                }
-            }
-            .pointerInput(state.pageId, state.scroll) {
-                forEachGesture {
-                    awaitPointerEventScope {
-                        val down = awaitFirstDown(requireUnconsumed = false)
+               if (secondTap != null) return@awaitPointerEventScope
+               // single tap
 
-                        val initialPosition = down.position
-                        var lastPosition = initialPosition
-                        var isCanceled = false
-                        var inputNumber = 0
-                        // ignore stylus
-                        if (down.type == PointerType.Stylus) return@awaitPointerEventScope
-
-                        do {
-                            val event: PointerEvent = awaitPointerEvent()
-
-                            val fingerChange = event.changes.filter { it.type == PointerType.Touch }
-
-                            if (fingerChange.size == 1) {
-                                if (inputNumber == 2) isCanceled = true
-                                else if (inputNumber == 0) inputNumber = 1
-                            } else if (fingerChange.size == 2) {
-                                if (inputNumber == 1 || inputNumber == 0) inputNumber = 2
-                            }
-
-                            if (fingerChange.size > 0) {
-                                lastPosition = fingerChange[0].position
-                            }
-                        } while (event.changes.any { it.pressed } && !isCanceled)
-
-                        val verticalDrag = lastPosition.y - initialPosition.y
-                        val horinzontalDrag = lastPosition.x - initialPosition.x
+               println("singke tap")
+               if (touchCount == 2) {
+                   if (state.mode == Mode.ERASE) state.mode = Mode.DRAW
+                   else state.mode = Mode.ERASE
+               }
 
 
-                        if (verticalDrag < -200) {
-                            if (inputNumber == 1) {
-                                state.scroll = state.scroll - verticalDrag.toInt()
-                            }
-                        }
-                        if (verticalDrag > 200) {
-                            if (inputNumber == 1) {
-                                state.scroll = max(state.scroll - verticalDrag.toInt(), 0)
-                            }
+           }
+       }
+   }*/
+   .pointerInput(Unit) {
+       forEachGesture {
+           awaitPointerEventScope {
+               val down = awaitFirstDown(requireUnconsumed = false)
 
-                        }
-                        if (horinzontalDrag < -200) {
-                            if (inputNumber == 1) {
-                                goToNextPage()
-                            } else if (inputNumber == 2) {
-                                println("Redo")
-                                val zoneAffected = undoRedo(context, UndoRedoType.Redo)
-                                state.forceUpdate = state.forceUpdate.first+1 to zoneAffected
-                            }
+               val initialPosition = down.position
+               var lastPosition = initialPosition
+               var isCanceled = false
+               var inputNumber = 0
+               // ignore stylus
+               if (down.type == PointerType.Stylus) return@awaitPointerEventScope
+
+               do {
+                   val event: PointerEvent = awaitPointerEvent()
+
+                   val fingerChange = event.changes.filter { it.type == PointerType.Touch }
+
+                   if (fingerChange.size == 1) {
+                       if (inputNumber == 2) isCanceled = true
+                       else if (inputNumber == 0) inputNumber = 1
+                   } else if (fingerChange.size == 2) {
+                       if (inputNumber == 1 || inputNumber == 0) inputNumber = 2
+                   }
+
+                   if (fingerChange.size > 0) {
+                       lastPosition = fingerChange[0].position
+                   }
+               } while (event.changes.any { it.pressed } && !isCanceled)
+
+               val verticalDrag = lastPosition.y - initialPosition.y
+               val horinzontalDrag = lastPosition.x - initialPosition.x
 
 
-                        }
-                        if (horinzontalDrag > 200) {
-                            if (inputNumber == 1) {
-                                goToPreviousPage()
-                            } else if (inputNumber == 2) {
-                                println("Undo")
-                                val zoneAffected = undoRedo(context, UndoRedoType.Undo)
-                                state.forceUpdate = state.forceUpdate.first+1 to zoneAffected
-                            }
-                        }
-                    }
-                }
+               if (verticalDrag < -200) {
+                   if (inputNumber == 1) {
+                       coroutineScope.launch {
+                           controlTower.onSingleFingerVerticalSwipe(SimplePointF(initialPosition.x, initialPosition.y), verticalDrag.toInt())
+                       }
+                   }
+               }
+               if (verticalDrag > 200) {
+                   if (inputNumber == 1) {
+                       coroutineScope.launch {
+                           controlTower.onSingleFingerVerticalSwipe(SimplePointF(initialPosition.x, initialPosition.y), verticalDrag.toInt())
+                       }
+                   }
+               }
+               if (horinzontalDrag < -200) {
+                   if (inputNumber == 1) {
+                       goToNextPage()
+                   } else if (inputNumber == 2) {
+                       println("Redo")
+                       coroutineScope.launch {
+                           History.moveHistory(UndoRedoType.Redo)
+                           DrawCanvas.refreshUi.emit(Unit)
+                       }
+                   }
+               }
+               if (horinzontalDrag > 200) {
+                   if (inputNumber == 1) {
+                       goToPreviousPage()
+                   } else if (inputNumber == 2) {
+                       println("Undo")
+                       coroutineScope.launch {
+                           History.moveHistory(UndoRedoType.Undo)
+                           DrawCanvas.refreshUi.emit(Unit)
+                       }
+                   }
+               }
+           }
+       }
 
-            }
+   }
 
-            .fillMaxWidth()
-            .fillMaxHeight()
-    )
+   .fillMaxWidth()
+   .fillMaxHeight()
+)
 }

@@ -12,9 +12,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 @Composable
 @ExperimentalComposeUiApi
 fun EditorSurface(
-    restartCount: Int, state: PageEditorState
+    restartCount: Int, state: EditorState, page : PageModel, history: History
 ) {
-    val appRepository = AppRepository(LocalContext.current)
     val couroutineScope = rememberCoroutineScope()
     println("recompose surface")
 
@@ -25,7 +24,7 @@ fun EditorSurface(
 
     ) {
         AndroidView(factory = { ctx ->
-            DrawCanvas(ctx, couroutineScope, appRepository, state).apply {
+            DrawCanvas(ctx, couroutineScope, state, page, history ).apply {
                 init()
                 registerObservers()
             }
@@ -34,7 +33,7 @@ fun EditorSurface(
                 println("restart count triggered")
                 it.restartCount = restartCount
                 it.init()
-                it.pageFullRefresh()
+                it.drawCanvasToView()
             }
         })
     }

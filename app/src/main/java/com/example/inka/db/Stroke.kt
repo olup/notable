@@ -3,12 +3,12 @@ package com.example.inka.db
 import android.content.Context
 import androidx.room.*
 import com.example.inka.Pen
-import java.util.UUID
+import java.util.*
 
 @kotlinx.serialization.Serializable
 data class StrokePoint(
     val x: Float,
-    val y: Float,
+    var y: Float,
     val pressure: Float,
     val size: Float,
     val tiltX: Int,
@@ -38,7 +38,10 @@ data class Stroke(
     val points: List<StrokePoint>,
 
     @ColumnInfo(index = true)
-    val pageId: String
+    val pageId: String,
+
+    val createdAt: Date = Date(),
+    val updatedAt: Date = Date()
 )
 
 // DAO

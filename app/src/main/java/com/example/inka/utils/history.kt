@@ -1,87 +1,106 @@
 package com.example.inka
 
-import android.content.Context
 import android.graphics.Rect
-import android.graphics.RectF
 import com.example.inka.db.Stroke
-import com.onyx.android.sdk.utils.BroadcastHelper.App
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 
 
 sealed class Operation {
-    data class DeleteStroke(val strokeId: String) : Operation()
-    data class AddStroke(val stroke: Stroke) : Operation()
+    data class DeleteStroke(val strokeIds: List<String>) : Operation()
+    data class AddStroke(val strokes: List<Stroke>) : Operation()
 }
 
 typealias OperationBlock = List<Operation>
 typealias OperationList = MutableList<OperationBlock>
-
-var undoList: OperationList = mutableListOf()
-var redoList: OperationList = mutableListOf()
-
-fun treatOperation(context: Context, operation: Operation): Pair<Operation, RectF> {
-    val appRepository = AppRepository(context)
-    return when (operation) {
-        is Operation.AddStroke -> {
-            appRepository.strokeRepository.create(operation.stroke)
-            return Operation.DeleteStroke(strokeId = operation.stroke.id) to RectF(
-                operation.stroke.left,
-                operation.stroke.top,
-                operation.stroke.right,
-                operation.stroke.bottom
-            )
-        }
-        is Operation.DeleteStroke -> {
-            val stroke = appRepository.strokeRepository.getStrokeWithPointsById(operation.strokeId)
-            appRepository.strokeRepository.deleteAll(listOf(operation.strokeId))
-            return Operation.AddStroke(stroke = stroke) to RectF(
-                stroke.left,
-                stroke.top,
-                stroke.right,
-                stroke.bottom
-            )
-        }
-        else -> {
-            throw (java.lang.Error("Unhandled history operation"))
-        }
-    }
-}
 
 enum class UndoRedoType {
     Undo,
     Redo
 }
 
-fun undoRedo(context: Context, type: UndoRedoType): RectF {
-    val originList =
-        if (type == UndoRedoType.Undo) undoList else redoList
-    val targetList =
-        if (type == UndoRedoType.Undo) redoList else undoList
+sealed class HistoryBusActions {
+    data class RegisterHistoryOperationBlock(val operationBlock: OperationBlock) : HistoryBusActions()
+    data class MoveHistory(val type: UndoRedoType) : HistoryBusActions()
+}
 
-    if (originList.size == 0) return RectF()
+class History(coroutineScope: CoroutineScope, pageModel: PageModel) {
 
-    val operationBlock = originList.removeLast()
-    val revertOperations = mutableListOf<Operation>()
-    val zoneAffected = RectF()
-    for (operation in operationBlock) {
-        val (cancelOperation, thisZoneAffected) = treatOperation(context, operation)
-        revertOperations.add(cancelOperation)
-        zoneAffected.union(thisZoneAffected)
+    private var undoList: OperationList = mutableListOf()
+    private var redoList: OperationList = mutableListOf()
+    val pageModel = pageModel
+
+    // TODO maybe not in a companion object ?
+    companion object {
+        val historyBus = MutableSharedFlow<HistoryBusActions>()
+        suspend fun registerHistoryOperationBlock(operationBlock : OperationBlock){
+            historyBus.emit(HistoryBusActions.RegisterHistoryOperationBlock(operationBlock))
+        }
+        suspend fun moveHistory(type: UndoRedoType){
+            historyBus.emit(HistoryBusActions.MoveHistory(type))
+        }
     }
-    targetList.add(revertOperations)
 
-    // reload stroke cache
-    loadStrokeCache(context)
 
-    // return the affected zone
-    return zoneAffected
-}
+    init {
+        coroutineScope.launch {
+            historyBus.collect {
+                when (it) {
+                    is HistoryBusActions.MoveHistory -> {
+                        val zoneAffected = undoRedo(type = it.type)
+                        if(zoneAffected != null) {
+                            pageModel.drawArea(pageAreaToCanvasArea(zoneAffected, pageModel.scroll))
+                        }
+                    }
+                    is HistoryBusActions.RegisterHistoryOperationBlock -> { addOperationsToHistory(it.operationBlock)}
+                    else -> {}
+                }
+            }
+        }
+    }
 
-fun clearHistory() {
-    undoList.clear()
-    redoList.clear()
-}
+    private fun treatOperation(operation: Operation): Pair<Operation, Rect> {
+        return when (operation) {
+            is Operation.AddStroke -> {
+                pageModel.addStrokes(operation.strokes)
+                return Operation.DeleteStroke(strokeIds = operation.strokes.map{it.id}) to strokeBounds(operation.strokes)
+            }
+            is Operation.DeleteStroke -> {
+                val strokes = pageModel.getStrokes(operation.strokeIds).filterNotNull()
+                pageModel.removeStrokes(operation.strokeIds)
+                return Operation.AddStroke(strokes = strokes) to strokeBounds(strokes)
+            }
+            else -> {
+                throw (java.lang.Error("Unhandled history operation"))
+            }
+        }
+    }
 
-fun addOperationsToHistory(operations: OperationBlock) {
-    undoList.add(operations)
-    redoList.clear()
+    private fun undoRedo(type: UndoRedoType): Rect? {
+        val originList =
+            if (type == UndoRedoType.Undo) undoList else redoList
+        val targetList =
+            if (type == UndoRedoType.Undo) redoList else undoList
+
+        if (originList.size == 0) return null
+
+        val operationBlock = originList.removeLast()
+        val revertOperations = mutableListOf<Operation>()
+        val zoneAffected = Rect()
+        for (operation in operationBlock) {
+            val (cancelOperation, thisZoneAffected) = treatOperation(operation = operation)
+            revertOperations.add(cancelOperation)
+            zoneAffected.union(thisZoneAffected)
+        }
+        targetList.add(revertOperations.reversed())
+
+        // update the affected zone
+        return zoneAffected
+    }
+
+    fun addOperationsToHistory(operations: OperationBlock) {
+        undoList.add(operations)
+        redoList.clear()
+    }
 }
