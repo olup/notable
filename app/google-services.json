@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "634526780078",
+    "project_id": "notable-8646f",
+    "storage_bucket": "notable-8646f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:634526780078:android:ba68346a8716b90e74bb3f",
+        "android_client_info": {
+          "package_name": "com.olup.notable"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "634526780078-ar9i7bnc56j6vga7hfcac2fi3oimfclv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjSDla-rTYvO_wuMBo2pFIjJTKWjQuAHk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "634526780078-ar9i7bnc56j6vga7hfcac2fi3oimfclv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

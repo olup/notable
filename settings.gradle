@@ -12,7 +12,7 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "Inka"
+rootProject.name = "Notable"
 include ':app'
 
 

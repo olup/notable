@@ -22,13 +22,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".Library"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.Inka">
-
-        </activity>
+        <provider
+            android:name="com.olup.notable.Provider"
+            android:authorities="com.olup.notable.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+        </provider>
     </application>
 
 </manifest>

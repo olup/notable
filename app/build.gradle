@@ -4,13 +4,14 @@ plugins {
     id 'com.google.devtools.ksp'
     id 'kotlinx-serialization'
     id 'kotlin-parcelize'
+    id 'com.google.gms.google-services'
 }
 
 android {
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.inka"
+        applicationId "com.olup.notable"
         minSdk 30
         targetSdk 33
         versionCode 1
@@ -46,7 +47,7 @@ android {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
-    namespace 'com.example.inka'
+    namespace 'com.olup.notable'
 }
 
 dependencies {
@@ -90,5 +91,7 @@ dependencies {
     implementation 'com.aventrix.jnanoid:jnanoid:2.0.0'
     implementation 'androidx.datastore:datastore-preferences:1.0.0'
 
+    implementation platform('com.google.firebase:firebase-bom:31.2.3')
+    implementation 'com.google.firebase:firebase-analytics-ktx'
 
 }
