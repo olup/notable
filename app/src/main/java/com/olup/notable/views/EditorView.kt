@@ -13,24 +13,27 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import com.olup.notable.db.*
 import com.olup.notable.ui.theme.InkaTheme
-import com.onyx.android.sdk.api.device.epd.EpdController
 import com.onyx.android.sdk.pen.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.IntOffset
-import com.olup.notable.PageModel
 
 enum class Mode {
     Draw, Erase, Select
 }
 
-class EditorState {
-    var mode by mutableStateOf(Mode.Draw) // should save
-    var pen by mutableStateOf(Pen.BALLPEN) // should save
+class EditorState(val bookId: String? = null, val pageId: String, val pageModel: PageModel) {
+
+    val persistedEditorSettings = DataStoreManager.getEditorSettings()
+
+    var mode by mutableStateOf(persistedEditorSettings?.mode ?: Mode.Draw) // should save
+    var pen by mutableStateOf(persistedEditorSettings?.pen ?: Pen.BALLPEN) // should save
     var isDrawing by mutableStateOf(true)
-    var isToolbarOpen by mutableStateOf(false) // should save
+    var isToolbarOpen by mutableStateOf(
+        persistedEditorSettings?.isToolbarOpen ?: false
+    ) // should save
     var penSettings by mutableStateOf(
-        mapOf(
+        persistedEditorSettings?.penSettings ?: mapOf(
             Pen.BALLPEN.penName to PenSetting(5f, android.graphics.Color.BLACK),
             Pen.PENCIL.penName to PenSetting(5f, android.graphics.Color.BLACK),
             Pen.BRUSH.penName to PenSetting(5f, android.graphics.Color.BLACK),
@@ -42,10 +45,11 @@ class EditorState {
     val selectionState = SelectionState()
 }
 
-enum class PlacementMode{
+enum class PlacementMode {
     Move,
     Paste
 }
+
 class SelectionState {
     var firstPageCut by mutableStateOf<List<SimplePointF>?>(null)
     var secondPageCut by mutableStateOf<List<SimplePointF>?>(null)
@@ -60,7 +64,7 @@ class SelectionState {
         selectedStrokes = null
         secondPageCut = null
         firstPageCut = null
-        selectedBitmap= null
+        selectedBitmap = null
         selectionStartOffset = null
         selectionRect = null
         selectionDisplaceOffset = null
@@ -77,14 +81,21 @@ fun BookUi(
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val width = EpdController.getEpdHeight()
-    val height = EpdController.getEpdWidth()
 
-    val editorState = remember { EditorState() }
 
     val page = remember {
-        PageModel(context, scope, _pageId, width.toInt(), height.toInt())
+        PageModel(
+            context = context,
+            coroutineScope = scope,
+            id = _pageId,
+            width = SCREEN_WIDTH,
+            viewWidth = SCREEN_WIDTH,
+            viewHeight = SCREEN_HEIGHT
+        )
     }
+
+    val editorState = remember { EditorState(bookId = _bookId, pageId = _pageId, pageModel = page) }
+
     val history = remember {
         History(scope, page)
     }
@@ -99,6 +110,24 @@ fun BookUi(
         if (_bookId != null) {
             appRepository.bookRepository.setOpenPageId(_bookId, _pageId)
         }
+    }
+
+    // TODO put in editorSetting class
+    LaunchedEffect(
+        editorState.isToolbarOpen,
+        editorState.pen,
+        editorState.penSettings,
+        editorState.mode
+    ) {
+        println("saving")
+        DataStoreManager.setEditorSettings(
+            DataStoreManager.EditorSettings(
+                isToolbarOpen = editorState.isToolbarOpen,
+                mode = editorState.mode,
+                pen = editorState.pen,
+                penSettings = editorState.penSettings
+            )
+        )
     }
 
     val lastRoute = navController.previousBackStackEntry
@@ -126,7 +155,6 @@ fun BookUi(
     }
 
     InkaTheme {
-
         EditorSurface(
             state = editorState, page = page, history = history
         )
@@ -137,8 +165,9 @@ fun BookUi(
             state = editorState
         )
         SelectedBitmap(editorState = editorState, controlTower = editorControlTower)
+        ScrollIndicator(context = context, state = editorState)
         Toolbar(
-            navController = navController, state = editorState, bookId = _bookId, page = page
+            navController = navController, state = editorState
         )
 
     }

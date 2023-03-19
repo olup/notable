@@ -7,7 +7,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
-import com.olup.notable.PageModel
 
 @Composable
 @ExperimentalComposeUiApi

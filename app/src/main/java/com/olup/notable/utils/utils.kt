@@ -3,7 +3,6 @@ package com.olup.notable
 import android.content.Context
 import android.content.Intent
 import android.graphics.*
-import android.graphics.pdf.PdfDocument
 import android.util.DisplayMetrics
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -17,10 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.graphics.toRect
 import androidx.core.graphics.toRegion
-import com.olup.notable.db.Notebook
-import com.olup.notable.db.Stroke
-import com.olup.notable.db.StrokePoint
-import com.olup.notable.PageModel
+import com.olup.notable.db.*
 import com.onyx.android.sdk.data.note.TouchPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -30,9 +26,6 @@ import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Paths
-import kotlin.io.path.absolutePathString
 
 
 fun Modifier.noRippleClickable(
@@ -47,7 +40,13 @@ fun Modifier.noRippleClickable(
 fun convertDpToPixel(dp: Dp, context: Context): Float {
     val resources = context.resources
     val metrics: DisplayMetrics = resources.getDisplayMetrics()
-    return dp.value * (metrics.densityDpi / 160f)
+    return dp.value * (metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT)
+}
+
+fun convertPixelToDp(px: Float, context: Context): Dp {
+    val resources = context.resources
+    val metrics: DisplayMetrics = resources.getDisplayMetrics()
+    return Dp(px / (metrics.densityDpi.toFloat() / DisplayMetrics.DENSITY_DEFAULT))
 }
 
 // TODO move this to repository
@@ -151,7 +150,7 @@ fun handleErase(
     history.addOperationsToHistory(listOf(Operation.AddStroke(deletedStrokes)))
 
     page.drawArea(
-        canvasArea = pageAreaToCanvasArea(strokeBounds(deletedStrokes), page.scroll)
+        area = pageAreaToCanvasArea(strokeBounds(deletedStrokes), page.scroll)
     )
 }
 
@@ -171,9 +170,9 @@ fun handleSelect(
     val state = editorState.selectionState
 
     val firstPointPosition =
-        if (points.first().x < 50) SelectPointPosition.LEFT else if (points.first().x > page.pageWidth - 50) SelectPointPosition.RIGHT else SelectPointPosition.CENTER
+        if (points.first().x < 50) SelectPointPosition.LEFT else if (points.first().x > page.width - 50) SelectPointPosition.RIGHT else SelectPointPosition.CENTER
     val lastPointPosition =
-        if (points.last().x < 50) SelectPointPosition.LEFT else if (points.last().x > page.pageWidth - 50) SelectPointPosition.RIGHT else SelectPointPosition.CENTER
+        if (points.last().x < 50) SelectPointPosition.LEFT else if (points.last().x > page.width - 50) SelectPointPosition.RIGHT else SelectPointPosition.CENTER
 
     if (firstPointPosition != SelectPointPosition.CENTER && lastPointPosition != SelectPointPosition.CENTER && firstPointPosition != lastPointPosition) {
         // Page cut situation
@@ -182,7 +181,7 @@ fun handleSelect(
         // lets make this end to end
         val completePoints =
             listOf(SimplePointF(0f, correctedPoints.first().y)) + correctedPoints + listOf(
-                SimplePointF(page.pageWidth.toFloat(), correctedPoints.last().y)
+                SimplePointF(page.width.toFloat(), correctedPoints.last().y)
             )
         if (state.firstPageCut == null) {
             // this is the first page cut
@@ -289,7 +288,7 @@ fun handleDraw(
     val stroke = Stroke(
         size = strokeSize,
         pen = pen,
-        pageId = page.pageId,
+        pageId = page.id,
         top = boundingBox.top,
         bottom = boundingBox.bottom,
         left = boundingBox.left,
@@ -417,8 +416,6 @@ fun offsetStroke(stroke: Stroke, offset: Offset): Stroke {
         bottom = stroke.bottom + offset.y,
         left = stroke.left + offset.x,
         right = stroke.right + offset.x,
-
-
         )
 }
 
@@ -470,21 +467,4 @@ fun shareBitmap(context: Context, bitmap: Bitmap) {
     ContextCompat.startActivity(context, Intent.createChooser(sendIntent, "Choose an app"), null)
 }
 
-fun exportPage(page: PageModel){
-    page.computeHeight()
 
-    println(android.os.Environment.DIRECTORY_DOCUMENTS)
-
-    var document = PdfDocument()
-    var documentPage = document.startPage(PdfDocument.PageInfo.Builder(page.pageWidth, page.pageHeight, 1).create())
-
-    page.drawArea(canvasArea = Rect(0,0,page.pageWidth, page.pageHeight), canvas = documentPage.canvas)
-    document.finishPage(documentPage)
-    val filePath = Paths.get(android.os.Environment.getExternalStorageDirectory().toString(), android.os.Environment.DIRECTORY_DOCUMENTS.toString(), "notable", "pages",  "notable-page-${page.pageId.takeLast(6)}.pdf")
-    Files.createDirectories(filePath.parent)
-    document.writeTo( FileOutputStream(filePath.absolutePathString()))
-    document.close()
-}
-
-fun exportBook(book: Notebook){
-}

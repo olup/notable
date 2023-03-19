@@ -12,7 +12,7 @@ fun Topbar(content: @Composable() () -> Unit){
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(Modifier.height(40.dp)) {
+        Row() {
             content()
         }
         Box(

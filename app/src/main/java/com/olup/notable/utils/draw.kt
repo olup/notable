@@ -1,7 +1,6 @@
 package com.olup.notable
 
 import android.graphics.*
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.toOffset
 import com.olup.notable.db.Stroke
@@ -91,7 +90,7 @@ fun drawLinedBg(canvas: Canvas, scroll: Int) {
     val width = canvas.width
 
     // white bg
-    canvas.drawColor(android.graphics.Color.WHITE)
+    canvas.drawColor(Color.WHITE)
 
     // paint
     val paint = Paint().apply {
@@ -115,7 +114,7 @@ fun drawDottedBg(canvas: Canvas, offset: Int) {
     val width = canvas.width
 
     // white bg
-    canvas.drawColor(android.graphics.Color.WHITE)
+    canvas.drawColor(Color.WHITE)
 
     // paint
     val paint = Paint().apply {
@@ -147,7 +146,7 @@ fun drawSquaredBg(canvas: Canvas, scroll: Int) {
     val width = canvas.width
 
     // white bg
-    canvas.drawColor(android.graphics.Color.WHITE)
+    canvas.drawColor(Color.WHITE)
 
     // paint
     val paint = Paint().apply {
@@ -170,6 +169,15 @@ fun drawSquaredBg(canvas: Canvas, scroll: Int) {
             x.toFloat(), padding.toFloat(), x.toFloat(), height.toFloat(), paint
         )
     }
+}
+
+fun drawBg(canvas: Canvas, nativeTemplate: String, scroll: Int){
+    when(nativeTemplate){
+        "blank" -> canvas.drawColor(Color.WHITE)
+        "dotted" -> drawDottedBg(canvas, scroll)
+        "lined" -> drawLinedBg(canvas, scroll)
+        "squared" -> drawSquaredBg(canvas, scroll)
+     }
 }
 
 val selectPaint = Paint().apply {

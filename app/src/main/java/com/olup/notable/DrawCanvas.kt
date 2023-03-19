@@ -6,7 +6,6 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.unit.dp
-import com.olup.notable.PageModel
 import com.onyx.android.sdk.api.device.epd.EpdController
 import com.onyx.android.sdk.data.note.TouchPoint
 import com.onyx.android.sdk.pen.RawInputCallback
@@ -38,7 +37,6 @@ class DrawCanvas(
     private val commitHistorySignal = MutableSharedFlow<Unit>()
 
 
-
     companion object {
         var forceUpdate = MutableSharedFlow<Rect?>()
         var refreshUi = MutableSharedFlow<Unit>()
@@ -64,8 +62,7 @@ class DrawCanvas(
         override fun onRawDrawingTouchPointListReceived(plist: TouchPointList) {
             thread(true) {
                 if (getActualState().mode == Mode.Erase) {
-                    handleErase(
-                        this@DrawCanvas.page,
+                    handleErase(this@DrawCanvas.page,
                         history,
                         plist.points.map { SimplePointF(it.x, it.y + page.scroll) })
                     drawCanvasToView()
@@ -85,12 +82,10 @@ class DrawCanvas(
                 }
 
                 if (getActualState().mode == Mode.Select) {
-                    handleSelect(
-                        coroutineScope,
+                    handleSelect(coroutineScope,
                         this@DrawCanvas.page,
                         getActualState(),
-                        plist.points.map { SimplePointF(it.x, it.y + page.scroll) }
-                    )
+                        plist.points.map { SimplePointF(it.x, it.y + page.scroll) })
                     drawCanvasToView()
                     refreshUi()
                 }
@@ -104,7 +99,13 @@ class DrawCanvas(
         override fun onEndRawErasing(p0: Boolean, p1: TouchPoint?) {
         }
 
-        override fun onRawErasingTouchPointListReceived(p0: TouchPointList?) {
+        override fun onRawErasingTouchPointListReceived(plist: TouchPointList?) {
+            if(plist == null) return
+            handleErase(this@DrawCanvas.page,
+                history,
+                plist.points.map { SimplePointF(it.x, it.y + page.scroll) })
+            drawCanvasToView()
+            refreshUi()
         }
 
         override fun onRawErasingTouchPointMoveReceived(p0: TouchPoint?) {
@@ -130,12 +131,8 @@ class DrawCanvas(
                         android.graphics.Rect(
                             0, 0, surfaceView.width, surfaceView.height
                         )
-                    ), mutableListOf(
-                        android.graphics.Rect(
-                            0, 0, surfaceView.width, convertDpToPixel(40.dp, context).toInt()
-                        )
                     )
-                ).openRawDrawing()
+                ).setExcludeRect(listOf(android.graphics.Rect(0, 0, 0, 0))).openRawDrawing()
                 println(history)
 
                 // This is supposed to let the ui update while the old surface is being unmounted
@@ -178,7 +175,7 @@ class DrawCanvas(
                 println("Force update zone $zoneAffected")
 
                 if (zoneAffected != null) page.drawArea(
-                    canvasArea = Rect(
+                    area = Rect(
                         zoneAffected.left,
                         zoneAffected.top - page.scroll,
                         zoneAffected.right,
@@ -240,10 +237,14 @@ class DrawCanvas(
         }
 
         coroutineScope.launch {
-            commitHistorySignal.debounce(500).collect{
+            commitHistorySignal.debounce(500).collect {
                 println("Commiting")
                 println(strokeHistoryBatch)
-                if(strokeHistoryBatch.size > 0) history.addOperationsToHistory(operations = listOf(Operation.DeleteStroke(strokeHistoryBatch.map{it})))
+                if (strokeHistoryBatch.size > 0) history.addOperationsToHistory(
+                    operations = listOf(
+                        Operation.DeleteStroke(strokeHistoryBatch.map { it })
+                    )
+                )
                 strokeHistoryBatch.clear()
             }
         }
@@ -271,8 +272,7 @@ class DrawCanvas(
 
                 val path = pointsToPath(getActualState().selectionState.firstPageCut!!.map {
                     SimplePointF(
-                        it.x,
-                        it.y - page.scroll
+                        it.x, it.y - page.scroll
                     )
                 })
                 canvas.drawPath(path, selectPaint)
@@ -293,29 +293,33 @@ class DrawCanvas(
     }
 
     fun updatePenAndStroke() {
-        when(state.mode){
-            Mode.Draw -> touchHelper.setStrokeStyle(penToStroke(state.pen))?.setStrokeWidth(state.penSettings[state.pen.penName]!!.strokeSize)?.setStrokeColor(state.penSettings[state.pen.penName]!!.color)
-            Mode.Erase -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))?.setStrokeWidth(3f)?.setStrokeColor(Color.GRAY)
-            Mode.Select -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))?.setStrokeWidth(3f)?.setStrokeColor(Color.GRAY)
+        when (state.mode) {
+            Mode.Draw -> touchHelper.setStrokeStyle(penToStroke(state.pen))
+                ?.setStrokeWidth(state.penSettings[state.pen.penName]!!.strokeSize)
+                ?.setStrokeColor(state.penSettings[state.pen.penName]!!.color)
+            Mode.Erase -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))?.setStrokeWidth(3f)
+                ?.setStrokeColor(Color.GRAY)
+            Mode.Select -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))?.setStrokeWidth(3f)
+                ?.setStrokeColor(Color.GRAY)
         }
     }
 
     fun updateIsToolbarOpen() {
-        val exclusionWidth =
-            if (state.isToolbarOpen) this.width else convertDpToPixel(40.dp, context).toInt()
-        //  touchHelper.setRawDrawingEnabled(false)
-        // touchHelper.closeRawDrawing()
+        val exclusionHeight =
+            if (state.isToolbarOpen) convertDpToPixel(40.dp, context).toInt() else 0
+
+        touchHelper.setRawDrawingEnabled(false)
+        touchHelper.closeRawDrawing()
+
         touchHelper.setLimitRect(
             mutableListOf(
                 android.graphics.Rect(
                     0, 0, this.width, this.height
                 )
-            ), mutableListOf(
-                android.graphics.Rect(
-                    0, 0, exclusionWidth, convertDpToPixel(40.dp, context).toInt()
-                )
             )
-        )
+        ).setExcludeRect(listOf(android.graphics.Rect(0, 0, this.width, exclusionHeight))).openRawDrawing()
+        touchHelper.setRawDrawingEnabled(true)
+
         refreshUi()
     }
 

@@ -19,8 +19,12 @@ class AppRepository(context: Context) {
         val pages = book!!.pageIds
         val index = pages.indexOf(pageId)
         if (index == pages.size - 1) {
+            // getting last page template
+            val lastPage = pageRepository.getById(bookRepository.getPageAtIndex(notebookId, pages.size - 1)!!)
+            val template = lastPage?.nativeTemplate ?: "blank"
+
             // creating a new page
-            val page = Page(notebookId = notebookId)
+            val page = Page(notebookId = notebookId, nativeTemplate = template)
             pageRepository.create(page)
             bookRepository.addPage(notebookId, page.id)
             return page.id

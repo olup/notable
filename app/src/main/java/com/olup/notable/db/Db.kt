@@ -43,9 +43,17 @@ val MIGRATION_16_17 = object : Migration(16, 17) {
     }
 }
 
+val MIGRATION_17_18 = object : Migration(17, 18) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE Page ADD COLUMN nativeTemplate TEXT NOT NULL DEFAULT 'blank'")
+    }
+}
+
 @Database(
     entities = [Notebook::class, Page::class, Stroke::class],
-    version = 17 ,
+    version = 19,
+    autoMigrations = [
+    ]
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -63,7 +71,7 @@ abstract class AppDatabase : RoomDatabase() {
                         Room.databaseBuilder(context, AppDatabase::class.java, "app_database")
                             .allowMainThreadQueries()
                             //.fallbackToDestructiveMigration()
-                            .addMigrations(MIGRATION_16_17)
+                            .addMigrations(MIGRATION_16_17, MIGRATION_17_18)
                             .build()
                 }
             }

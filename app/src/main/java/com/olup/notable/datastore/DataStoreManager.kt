@@ -1,47 +1,55 @@
-//package com.olup.notable
-//
-//import android.content.Context
-//import androidx.datastore.core.DataStore
-//import androidx.datastore.preferences.core.Preferences
-//import androidx.datastore.preferences.core.intPreferencesKey
-//import androidx.datastore.preferences.core.stringPreferencesKey
-//import androidx.datastore.preferences.preferencesDataStore
-//
-//
-//const val APP_DATASTORE ="app_datastore"
-//private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = APP_DATASTORE)
-//
-//class DataStoreManager (val context: Context) {
-//
-//    companion object {
-//        val OPENED_NOTEBOOK_ID = intPreferencesKey("OPENED_NOTEBOOK_ID")
-//        val OEPENED_PAGE_ID = intPreferencesKey("OEPENED_PAGE_ID")
-//        val SELECTED_PEN = stringPreferencesKey("SELECTED_PEN")
-//        val PEN_CONFIG = stringPreferencesKey("PEN_CONFIG")
-//    }
-//
-//    suspend fun saveToDataStore(merchantDetail: MerchantDetail) {
-//        context.dataStore.edit {
-//            it[EMAIL] = merchantDetail.emailAddress
-//            it[MOBILE_NUMBER] = merchantDetail.mobileNumber
-//            it[BUSINESS_NAME] = merchantDetail.businessName
-//            it[BUSINESS_ADDRESS] = merchantDetail.businessAddress
-//            it[BUSINESS_WEBSITE] = merchantDetail.businessWebsite
-//            it[BUSINESS_CATEGORY] = merchantDetail.businessCategory
-//            it[BUSINESS_LOCATION] = merchantDetail.businessLocation
-//        }
-//    }
-//
-//    fun getFromDataStore() = context.dataStore.data.map {
-//        MerchantDetail(
-//            emailAddress = it[EMAIL]?:"",
-//            mobileNumber = it[MOBILE_NUMBER]?:"",
-//            businessName = it[BUSINESS_NAME]?:""
-//        )
-//    }
-//
-//    suspend fun clearDataStore() = context.dataStore.edit {
-//        it.clear()
-//    }
-//
-//}
+package com.olup.notable
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.map
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+
+
+const val APP_DATASTORE ="app_datastore"
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = APP_DATASTORE)
+
+
+val persistVersion = 1
+
+class DataStoreManager (val context: Context) {
+
+
+    companion object {
+        val EDITOR_SETTINGS = stringPreferencesKey("EDITOR_SETTINGS")
+        private var editorSettings : EditorSettings? = null
+        fun getEditorSettings() : EditorSettings?{
+            return editorSettings
+        }
+
+        fun setEditorSettings(newEditorSettings: EditorSettings){
+            editorSettings = newEditorSettings
+        }
+    }
+    suspend fun saveEditorSettings(settings : EditorSettings) {
+        context.dataStore.edit {
+            it[EDITOR_SETTINGS] = Json.encodeToString(settings)
+        }
+    }
+
+    fun getEditorSettings() = context.dataStore.data.map {
+        val jsonSettings = it[EDITOR_SETTINGS]?:return@map null
+        val settings = Json.decodeFromString<EditorSettings>(jsonSettings)
+        if(settings.version == persistVersion) return@map settings
+        else return@map null
+    }
+
+    suspend fun clearDataStore() = context.dataStore.edit {
+        it.clear()
+    }
+
+    @kotlinx.serialization.Serializable
+    data class EditorSettings(val version : Int = persistVersion, val isToolbarOpen : Boolean, val pen : Pen, val penSettings : NamedSettings,val  mode : Mode)
+
+}

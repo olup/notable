@@ -2,14 +2,14 @@ package com.olup.notable
 
 import android.content.Context
 import android.graphics.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.IntOffset
 import androidx.core.graphics.toRect
-import com.olup.notable.AppRepository
 import com.olup.notable.db.AppDatabase
+import com.olup.notable.db.Page
 import com.olup.notable.db.Stroke
-import com.olup.notable.drawDottedBg
-import com.olup.notable.drawStroke
-import com.olup.notable.strokeBounds
 import com.onyx.android.sdk.api.device.epd.EpdController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,17 +26,20 @@ import kotlin.system.measureTimeMillis
 class PageModel(
     val context: Context,
     val coroutineScope: CoroutineScope,
-    val pageId: String,
+    val id: String,
+    val width: Int,
+    val viewWidth: Int,
+    val viewHeight: Int
 ) {
 
     val windowedBitmap = Bitmap.createBitmap(viewWidth, viewHeight, Bitmap.Config.ARGB_8888)
     val windowedCanvas = Canvas(windowedBitmap)
     var strokes = listOf<Stroke>()
     var strokesById: HashMap<String, Stroke> = hashMapOf()
-    var scroll = 0
+    var scroll by mutableStateOf(0) // is observed by ui
     val saveTopic = MutableSharedFlow<Unit>()
-    val pageWidth = EpdController.getEpdHeight()
-    var pageHeight = EpdController.getEpdWidth()
+    var height by mutableStateOf(SCREEN_HEIGHT) // is observed by ui
+    var pageFromDb = AppRepository(context).pageRepository.getById(id)
 
     var db = AppDatabase.getDatabase(context)?.strokeDao()!!
 
@@ -61,16 +64,18 @@ class PageModel(
     private fun initFromPersistLayer(isCached: Boolean) {
         // pageInfos
         // TODO page might not exists yet
-        val page = AppRepository(context).pageRepository.getById(pageId)
+        val page = AppRepository(context).pageRepository.getById(id)
         scroll = page!!.scroll
 
         if (!isCached) {
             // if not cached we work synchronously
-            val pageWithStrokes = AppRepository(context).pageRepository.getWithStrokeById(pageId)
+            val pageWithStrokes = AppRepository(context).pageRepository.getWithStrokeById(id)
             strokes = pageWithStrokes.strokes
             indexStrokes()
+            computeHeight()
 
-            drawDottedBg(windowedCanvas, scroll)
+            // we draw and cache
+            drawBg(windowedCanvas, page.nativeTemplate, scroll)
             drawArea(Rect(0, 0, windowedCanvas.width, windowedCanvas.height))
             persistBitmap()
             persistBitmapThumbnail()
@@ -78,9 +83,10 @@ class PageModel(
 
         // otherwise we can fetch this in the backgrond
         coroutineScope.launch {
-            val pageWithStrokes = AppRepository(context).pageRepository.getWithStrokeById(pageId)
+            val pageWithStrokes = AppRepository(context).pageRepository.getWithStrokeById(id)
             strokes = pageWithStrokes.strokes
             indexStrokes()
+            computeHeight()
         }
     }
 
@@ -88,7 +94,7 @@ class PageModel(
         strokes += strokesToAdd
         strokesToAdd.forEach {
             val bottomPlusPadding = it.bottom + 50
-            if (bottomPlusPadding > pageHeight) pageHeight = bottomPlusPadding.toInt()
+            if (bottomPlusPadding > height) height = bottomPlusPadding.toInt()
         }
 
         saveStrokesToPersistLayer(strokesToAdd)
@@ -116,11 +122,11 @@ class PageModel(
 
     fun computeHeight() {
         if (strokes.isEmpty()) {
-            pageHeight = viewHeight
+            height = viewHeight
             return
         }
         val maxStrokeBottom = strokes.maxOf { it.bottom }.plus(50) ?: 0
-        pageHeight = max(maxStrokeBottom.toInt(), viewHeight)
+        height = max(maxStrokeBottom.toInt(), viewHeight)
     }
 
     private fun removeStrokesFromPersistLayer(strokeIds: List<String>) {
@@ -128,7 +134,7 @@ class PageModel(
     }
 
     private fun loadBitmap(): Boolean {
-        val imgFile = File(context.filesDir, "pages/previews/full/$pageId")
+        val imgFile = File(context.filesDir, "pages/previews/full/$id")
         var imgBitmap: Bitmap? = null
         if (imgFile.exists()) {
             imgBitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
@@ -146,38 +152,38 @@ class PageModel(
     }
 
     private fun persistBitmap() {
-        val file = File(context.filesDir, "pages/previews/full/$pageId")
+        val file = File(context.filesDir, "pages/previews/full/$id")
         Files.createDirectories(Path(file.absolutePath).parent)
         val os = BufferedOutputStream(FileOutputStream(file))
-        windowedBitmap.compress(Bitmap.CompressFormat.WEBP_LOSSLESS, 50, os);
+        windowedBitmap.compress(Bitmap.CompressFormat.PNG, 100, os);
         os.close()
     }
 
     private fun persistBitmapThumbnail() {
-        val file = File(context.filesDir, "pages/previews/thumbs/$pageId")
+        val file = File(context.filesDir, "pages/previews/thumbs/$id")
         Files.createDirectories(Path(file.absolutePath).parent)
         val os = BufferedOutputStream(FileOutputStream(file))
         val ratio = windowedBitmap.height.toFloat() / windowedBitmap.width.toFloat()
         Bitmap.createScaledBitmap(windowedBitmap, 500, (500 * ratio).toInt(), false)
-            .compress(Bitmap.CompressFormat.WEBP_LOSSY, 50, os);
+            .compress(Bitmap.CompressFormat.JPEG, 80, os);
         os.close()
     }
 
-    fun drawArea(canvasArea: Rect, ignoredStrokeIds: List<String> = listOf(), canvas : Canvas? = null) {
+    fun drawArea(area: Rect, ignoredStrokeIds: List<String> = listOf(), canvas: Canvas? = null) {
         val activeCanvas = canvas ?: windowedCanvas
         val pageArea = Rect(
-            canvasArea.left,
-            canvasArea.top + scroll,
-            canvasArea.right,
-            canvasArea.bottom + scroll
+            area.left,
+            area.top + scroll,
+            area.right,
+            area.bottom + scroll
         )
 
         activeCanvas.save();
-        activeCanvas.clipRect(canvasArea);
+        activeCanvas.clipRect(area);
         activeCanvas.drawColor(Color.BLACK)
 
         val timeToBg = measureTimeMillis {
-            drawDottedBg(activeCanvas, scroll)
+            drawBg(activeCanvas, pageFromDb?.nativeTemplate ?: "blank", scroll)
         }
         println("Took $timeToBg to draw the BG")
 
@@ -206,7 +212,7 @@ class PageModel(
 
         // scroll bitmap
         val tmp = windowedBitmap.copy(windowedBitmap.config, false)
-        drawDottedBg(windowedCanvas, scroll)
+        drawBg(windowedCanvas, pageFromDb?.nativeTemplate ?: "blank", scroll)
 
         windowedCanvas.drawBitmap(tmp, 0f, -delta.toFloat(), Paint())
         tmp.recycle()
@@ -215,7 +221,7 @@ class PageModel(
         val canvasOffset = if (delta > 0) windowedCanvas.height - delta else 0
 
         drawArea(
-            canvasArea = Rect(
+            area = Rect(
                 0,
                 canvasOffset,
                 windowedCanvas.width,
@@ -227,6 +233,13 @@ class PageModel(
         saveToPersistLayer()
     }
 
+    fun updatePageSettings(page: Page) {
+        AppRepository(context).pageRepository.update(page)
+        pageFromDb = AppRepository(context).pageRepository.getById(id)
+        drawArea(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
+        persistBitmapDebounced()
+    }
+
     private fun persistBitmapDebounced() {
         coroutineScope.launch {
             saveTopic.emit(Unit)
@@ -235,7 +248,8 @@ class PageModel(
 
     private fun saveToPersistLayer() {
         coroutineScope.launch {
-            AppRepository(context).pageRepository.updateScroll(pageId, scroll)
+            AppRepository(context).pageRepository.updateScroll(id, scroll)
+            pageFromDb = AppRepository(context).pageRepository.getById(id)
         }
     }
 }

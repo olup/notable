@@ -14,6 +14,9 @@ data class Page(
     @ColumnInfo(index = true)
     val notebookId: String?,
 
+    @ColumnInfo(defaultValue = "blank")
+    val nativeTemplate: String = "blank",
+
     val createdAt: Date = Date(),
     val updatedAt: Date = Date()
 )
@@ -50,6 +53,9 @@ interface PageDao {
     @Insert
     fun create(page: Page):Long
 
+    @Update
+    fun update(page: Page)
+
     @Query("DELETE FROM page WHERE id = :pageId")
     fun delete(pageId: String)
 }
@@ -75,6 +81,10 @@ class PageRepository(context: Context) {
 
     fun getSinglePages():LiveData<List<Page>> {
         return db.getSinglePages()
+    }
+
+    fun update(page:Page) {
+        return db.update(page)
     }
 
     fun delete(pageId:String) {

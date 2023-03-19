@@ -2,12 +2,16 @@ package com.olup.notable
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
@@ -34,10 +38,12 @@ fun PresentlyUsedToolIcon(mode: Mode, pen: Pen) : Int{
 @Composable
 @ExperimentalComposeUiApi
 fun Toolbar(
-    navController: NavController, bookId: String?, state: EditorState, page : PageModel
+    navController: NavController, state: EditorState
 ) {
     var isStrokeSelectionOpen by remember { mutableStateOf(false) }
     var isMenuOpen by remember { mutableStateOf(false) }
+    var isPageSettingsModalOpen by remember { mutableStateOf(false) }
+
     val context = LocalContext.current
 
     LaunchedEffect(isStrokeSelectionOpen, isMenuOpen) {
@@ -73,17 +79,21 @@ fun Toolbar(
         state.penSettings = settings
     }
 
+
+    if(isPageSettingsModalOpen){
+        PageSettingsModal(pageModel = state.pageModel) {
+            isPageSettingsModalOpen = false
+        }
+    }
     if (state.isToolbarOpen) {
         Column(
-            modifier = Modifier.width(IntrinsicSize.Max)
+            modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 Modifier
                     .background(Color.White)
-                    .height(35.dp)
-                    .ifTrue(state.isToolbarOpen) {
-                        Modifier.width(LocalConfiguration.current.screenWidthDp.dp)
-                    }
+                    .height(IntrinsicSize.Min)
+                    .fillMaxWidth()
 
             ) {
                 toolbarButton(
@@ -173,8 +183,8 @@ fun Toolbar(
                         .width(0.5.dp)
                         .background(Color.Black)
                 )
-                Spacer(Modifier.weight(1f))
 
+                Spacer(Modifier.weight(1f))
 
                 Box(
                     Modifier
@@ -183,11 +193,31 @@ fun Toolbar(
                         .background(Color.Black)
                 )
 
-                if (bookId != null) {
-                    toolbarButton(
-                        onSelect = {
-                            navController.navigate("books/${bookId}/pages")
-                        }, iconId = R.drawable.pages, contentDescription = "pages"
+                if (state.bookId != null) {
+                    val book = AppRepository(context).bookRepository.getById(state.bookId)
+
+                    // TODO maybe have generic utils for this ?
+                    val pageNumber = book!!.pageIds.indexOf(state.pageId) +1
+                    val totalPageNumber = book!!.pageIds.size
+
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.height(35.dp).padding(10.dp, 0.dp)
+                    ) {
+                        Text(
+                            text = "${pageNumber}/${totalPageNumber}",
+                            fontWeight = FontWeight.Light,
+                            modifier = Modifier.noRippleClickable {
+                                navController.navigate("books/${state.bookId}/pages")
+                            },
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    Box(
+                        Modifier
+                            .fillMaxHeight()
+                            .width(0.5.dp)
+                            .background(Color.Black)
                     )
                 }
                 Column {
@@ -200,7 +230,7 @@ fun Toolbar(
                         navController = navController,
                         state = state,
                         onClose = { isMenuOpen = false },
-                        page = page
+                        onPageSettingsOpen = {isPageSettingsModalOpen = true}
                     )
                 }
             }
@@ -214,7 +244,7 @@ fun Toolbar(
             if (isStrokeSelectionOpen) {
                 val thisPenSettings = state.penSettings[state.pen.penName]!!
                 Popup(
-                    offset = IntOffset(0, convertDpToPixel(41.dp, context).toInt()),
+                    offset = IntOffset(0, convertDpToPixel(37.dp, context).toInt()),
                     onDismissRequest = {
                         handleClosePenSettings()
                     },
@@ -225,6 +255,7 @@ fun Toolbar(
                     Column(
                         Modifier
                             .background(Color.White)
+                            .height(37.dp)
                     ) {
                         Row {
                             toolbarButton(text = "Size 3",
@@ -235,6 +266,14 @@ fun Toolbar(
                                 isSelected = thisPenSettings.strokeSize == 10f,onSelect = {onChangeStrokeSize(10f)})
                             toolbarButton(text = "Size 20",
                                 isSelected = thisPenSettings.strokeSize == 20f,onSelect = { onChangeStrokeSize(20f) })
+
+                            Box(
+                                Modifier
+                                    .fillMaxHeight()
+                                    .width(1.dp)
+                                    .background(Color.Black)
+                            )
+
                             toolbarButton(text = "Black")
                             toolbarButton(text = "Gray")
                             toolbarButton(text = "Light Gray")
@@ -265,7 +304,8 @@ fun Toolbar(
         Row(
             Modifier
                 .fillMaxWidth()
-                .noRippleClickable { state.isToolbarOpen = true }) {
+               // .noRippleClickable { state.isToolbarOpen = true }
+        ) {
             toolbarButton(
                 onSelect = { state.isToolbarOpen = true },
                 iconId = PresentlyUsedToolIcon(state.mode, state.pen),

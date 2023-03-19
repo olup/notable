@@ -21,8 +21,10 @@ fun penToStroke(pen: Pen): Int {
 }
 
 
-
+@kotlinx.serialization.Serializable
 data class PenSetting(
     var strokeSize: Float,
     var color: Int
 )
+
+typealias NamedSettings = Map<String, PenSetting>

@@ -13,6 +13,7 @@ data class Notebook(
     val title: String = "New notebook",
     val openPageId: String? = null,
     val pageIds: List<String> = listOf(),
+
     val createdAt: Date = Date(),
     val updatedAt: Date = Date()
 )
@@ -78,9 +79,9 @@ class BookRepository(context: Context) {
         db.setOpenPageId(id, pageId)
     }
 
-    fun addPage(id: String, pageId: String, position: Int? = null) {
+    fun addPage(id: String, pageId: String, index: Int? = null) {
         var pageIds = (db.getById(id)?: return).pageIds.toMutableList()
-        if(position != null) pageIds.add(position, pageId)
+        if(index != null) pageIds.add(index, pageId)
         else pageIds.add(pageId)
         db.setPageIds(id, pageIds)
     }
@@ -100,6 +101,18 @@ class BookRepository(context: Context) {
         pageIds.remove(pageId)
         pageIds.add(correctedIndex, pageId)
         db.setPageIds(id, pageIds)
+    }
+
+    fun getPageIndex(id: String, pageId: String) : Int? {
+        val pageIds = (db.getById(id)?: return null).pageIds
+        val index = pageIds.indexOf(pageId)
+        return if(index!= -1) index else null
+    }
+
+    fun getPageAtIndex(id: String, index: Int) : String? {
+        val pageIds = (db.getById(id)?: return null).pageIds
+        if(index < 0 || index > pageIds.size -1) return null
+        return pageIds[index]
     }
 
     fun delete(id: String) {
