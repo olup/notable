@@ -13,7 +13,9 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment.Companion.CenterVertically
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -28,6 +30,7 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.Folder
 
 @ExperimentalFoundationApi
+@ExperimentalComposeUiApi
 @Composable
 fun Library(navController: NavController, folderId: String? = null) {
     val appRepository = AppRepository(LocalContext.current)
@@ -37,23 +40,12 @@ fun Library(navController: NavController, folderId: String? = null) {
         .observeAsState()
     val folders by appRepository.folderRepository.getAllInFolder(folderId).observeAsState()
 
-    var selectedPage by remember { mutableStateOf<String?>(null) }
-
     Column(
         Modifier.fillMaxSize()
     ) {
         Topbar(
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                Text(text = "Add notebook",
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .noRippleClickable {
-                            appRepository.bookRepository.create(
-                                Notebook(parentFolderId = folderId)
-                            )
-                        }
-                        .padding(10.dp))
                 Text(text = "Add quick page",
                     textAlign = TextAlign.Center,
                     modifier = Modifier
@@ -63,6 +55,17 @@ fun Library(navController: NavController, folderId: String? = null) {
                             navController.navigate("pages/${page.id}")
                         }
                         .padding(10.dp))
+
+                Text(text = "Add notebook",
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .noRippleClickable {
+                            appRepository.bookRepository.create(
+                                Notebook(parentFolderId = folderId)
+                            )
+                        }
+                        .padding(10.dp))
+
                 Text(text = "Add Folder",
                     textAlign = TextAlign.Center,
                     modifier = Modifier
@@ -73,7 +76,10 @@ fun Library(navController: NavController, folderId: String? = null) {
                         .padding(10.dp))
             }
         }
-        Row(Modifier.padding(10.dp)) {
+        Row(
+            Modifier
+                .padding(10.dp)
+        ) {
             BreadCrumb(folderId) { navController.navigate("library" + if (it == null) "" else "?folderId=${it}") }
         }
         Column(
@@ -89,13 +95,23 @@ fun Library(navController: NavController, folderId: String? = null) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     items(folders!!) { folder ->
+                        var isSettingsOpen by remember { mutableStateOf(false) }
+                        if (isSettingsOpen) FolderConfigDialog(
+                            folderId = folder.id,
+                            onClose = { isSettingsOpen = false })
                         Row(
                             Modifier
+                                .combinedClickable(
+                                    onClick = {
+                                        navController.navigate("library?folderId=${folder.id}")
+                                    },
+                                    onLongClick = {
+                                        isSettingsOpen = true
+                                    },
+                                )
                                 .border(0.5.dp, Color.Black)
                                 .padding(10.dp, 5.dp)
-                                .noRippleClickable {
-                                    navController.navigate("library?folderId=${folder.id}")
-                                }) {
+                        ) {
                             Icon(
                                 imageVector = FeatherIcons.Folder,
                                 contentDescription = "folder icon",
@@ -119,25 +135,27 @@ fun Library(navController: NavController, folderId: String? = null) {
                 ) {
                     items(singlePages!!.reversed()) { page ->
                         val pageId = page.id
+                        var isPageSelected by remember{ mutableStateOf(false) }
                         Box {
                             PagePreview(
                                 modifier = Modifier
-                                    .width(100.dp)
-                                    .aspectRatio(3f / 4f)
-                                    .border(1.dp, Color.Black, RectangleShape)
                                     .combinedClickable(
                                         onClick = {
                                             navController.navigate("pages/$pageId")
                                         },
                                         onLongClick = {
-                                            selectedPage = pageId
+                                            isPageSelected = true
                                         },
-                                    ), pageId = pageId
+                                    )
+                                    .width(100.dp)
+                                    .aspectRatio(3f / 4f)
+                                    .border(1.dp, Color.Black, RectangleShape),
+                                pageId = pageId
                             )
-                            if (selectedPage == pageId) PageMenu(
+                            if (isPageSelected) PageMenu(
                                 pageId = pageId,
                                 canDelete = true,
-                                onClose = { selectedPage = null })
+                                onClose = { isPageSelected = false })
                         }
                     }
 
@@ -155,7 +173,10 @@ fun Library(navController: NavController, folderId: String? = null) {
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     items(books!!) { item ->
-
+                        var isSettingsOpen by remember { mutableStateOf(false) }
+                        if (isSettingsOpen) NotebookConfigDialog(
+                            bookId = item.id,
+                            onClose = { isSettingsOpen = false })
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -170,8 +191,7 @@ fun Library(navController: NavController, folderId: String? = null) {
                                         navController.navigate("books/$bookId/pages/$pageId")
                                     },
                                     onLongClick = {
-                                        val bookId = item.id
-                                        navController.navigate("books/$bookId/modal-settings")
+                                        isSettingsOpen = true
                                     },
                                 )
                         ) {

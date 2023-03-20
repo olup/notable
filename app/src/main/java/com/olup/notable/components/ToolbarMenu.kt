@@ -54,7 +54,7 @@ fun ToolbarMenu(
                     .padding(10.dp)
                     .noRippleClickable {
                         navController.popBackStack(
-                            route = "library", inclusive = false
+                            route = "library?folderId={folderId}", inclusive = false
                         )
                     }) {
                 Text("Library")

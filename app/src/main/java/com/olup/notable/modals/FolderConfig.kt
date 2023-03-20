@@ -25,18 +25,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
-import com.olup.notable.db.BookRepository
+import com.olup.notable.db.FolderRepository
 
 
 @ExperimentalComposeUiApi
 @Composable
-fun NotebookConfigDialog(bookId: String, onClose : ()->Unit) {
-    val bookRepository = BookRepository(LocalContext.current)
-    val book = bookRepository.getById(bookId) ?: return
+fun FolderConfigDialog(folderId: String, onClose : ()->Unit) {
+    val folderRepository = FolderRepository(LocalContext.current)
+    val folder = folderRepository.get(folderId) ?: return
     val context = LocalContext.current
 
-    var bookTitle by remember {
-        mutableStateOf(book.title)
+    var folderTitle by remember {
+        mutableStateOf(folder.title)
     }
 
 
@@ -54,7 +54,7 @@ fun NotebookConfigDialog(bookId: String, onClose : ()->Unit) {
             Column(
                 Modifier.padding(20.dp, 10.dp)
             ) {
-                Text(text = "Notebook Setting", fontWeight = FontWeight.Bold)
+                Text(text = "Folder Setting", fontWeight = FontWeight.Bold)
             }
             Box(
                 Modifier
@@ -69,12 +69,12 @@ fun NotebookConfigDialog(bookId: String, onClose : ()->Unit) {
 
                 Row() {
                     Text(
-                        text = "Notebook Title",
+                        text = "Folder Title",
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(Modifier.width(10.dp))
                     BasicTextField(
-                        value = bookTitle,
+                        value = folderTitle,
                         textStyle = TextStyle(
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.Light,
@@ -85,15 +85,14 @@ fun NotebookConfigDialog(bookId: String, onClose : ()->Unit) {
                             keyboardType = KeyboardType.Text,
                             imeAction = androidx.compose.ui.text.input.ImeAction.Done
                         ),
-                        onValueChange = { bookTitle = it },
+                        onValueChange = { folderTitle = it },
                         keyboardActions = KeyboardActions(onDone = {
                             focusManager.clearFocus()
                         }),
                         modifier = Modifier.background(Color(230,230,230,255)).padding(10.dp, 0.dp).onFocusChanged { focusState ->
                             if (!focusState.isFocused) {
-                                println("loose focus")
-                                val updatedBook = book.copy(title = bookTitle)
-                                bookRepository.update(updatedBook)
+                                val updatedFolder = folder.copy(title = folderTitle)
+                                folderRepository.update(updatedFolder)
                             }
                         }
 
@@ -114,10 +113,10 @@ fun NotebookConfigDialog(bookId: String, onClose : ()->Unit) {
             Column(
                 Modifier.padding(20.dp, 10.dp)
             ) {
-                Text(text = "Delete Notebook",
+                Text(text = "Delete Folder",
                     textAlign = TextAlign.Center,
                     modifier = Modifier.noRippleClickable {
-                        deleteBook(context, bookId)
+                        folderRepository.delete(folderId)
                         onClose()
                     })
             }

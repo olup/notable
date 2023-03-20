@@ -7,12 +7,11 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextDecoration
 import com.olup.notable.db.Folder
 import com.olup.notable.db.FolderRepository
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ChevronRight
-import compose.icons.feathericons.Home
-import compose.icons.feathericons.Slash
 
 @Composable
 fun BreadCrumb(folderId : String? = null, onSelectFolderId:(String?)->Unit){
@@ -28,13 +27,13 @@ fun BreadCrumb(folderId : String? = null, onSelectFolderId:(String?)->Unit){
     }
 
     Row() {
-        Text(text = "Library", modifier = Modifier.noRippleClickable { onSelectFolderId(null) })
+        Text(text = "Library", textDecoration = TextDecoration.Underline,modifier = Modifier.noRippleClickable { onSelectFolderId(null) })
         if (folderId != null) {
             val folders = getFolderList(folderId).reversed()
 
             folders.map{ f->
                 Icon(imageVector = FeatherIcons.ChevronRight, contentDescription = "")
-                Text(text = f.title, modifier = Modifier.noRippleClickable { onSelectFolderId(f.id) })
+                Text(text = f.title, textDecoration = TextDecoration.Underline, modifier = Modifier.noRippleClickable { onSelectFolderId(f.id) })
             }
         }
     }

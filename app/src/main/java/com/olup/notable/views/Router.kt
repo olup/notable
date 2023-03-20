@@ -72,16 +72,5 @@ fun Router() {
                 bookId = it.arguments?.getString("bookId")!!
             )
         }
-        dialog(
-            route = "books/{bookId}/modal-settings",
-            arguments = listOf(navArgument("bookId") {
-                type = NavType.StringType
-            })
-        ) {
-            NotebookConfigDialog(
-                navController = navController,
-                bookId = it.arguments?.getString("bookId")!!
-            )
-        }
     }
 }
