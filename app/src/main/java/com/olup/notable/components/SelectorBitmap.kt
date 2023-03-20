@@ -45,9 +45,15 @@ fun SelectedBitmap(
             }) {
         Image(
             bitmap = selectionState.selectedBitmap!!.asImageBitmap(),
-            contentDescription = "some useful description",
+            contentDescription = "Selection bitmap",
             modifier = Modifier
-                .offset { selectionState.selectionStartOffset!! + selectionState.selectionDisplaceOffset!! }
+                .offset {
+                    if (selectionState.selectionStartOffset == null) return@offset IntOffset(
+                        0,
+                        0
+                    ) // guard
+                    selectionState.selectionStartOffset!! + selectionState.selectionDisplaceOffset!!
+                }
                 .drawBehind {
                     drawRect(
                         color = Color.Gray,

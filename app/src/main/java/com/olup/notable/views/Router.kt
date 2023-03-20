@@ -21,16 +21,17 @@ fun Router() {
     val navController = rememberAnimatedNavController()
     AnimatedNavHost(
         navController = navController,
-        startDestination = "library",
+        startDestination = "library?folderId={folderId}",
 
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
         popEnterTransition = { EnterTransition.None },
         popExitTransition = { ExitTransition.None },
     ) {
-        composable(route = "library") {
+        composable(route = "library?folderId={folderId}",
+            arguments = listOf(navArgument("folderId") { nullable = true })) {
             /* Using composable function */
-            Library(navController = navController)
+            Library(navController = navController, folderId = it.arguments?.getString("folderId"))
         }
         composable(
             route = "books/{bookId}/pages/{pageId}",

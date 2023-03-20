@@ -6,13 +6,23 @@ import androidx.room.*
 import java.util.Date
 import java.util.UUID
 
-@Entity
+@Entity(
+    foreignKeys = [ForeignKey(
+        entity = Folder::class,
+        parentColumns = arrayOf("id"),
+        childColumns = arrayOf("parentFolderId"),
+        onDelete = ForeignKey.CASCADE
+    )]
+)
 data class Notebook(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
     val title: String = "New notebook",
     val openPageId: String? = null,
     val pageIds: List<String> = listOf(),
+
+    @ColumnInfo(index = true)
+    val parentFolderId: String? = null,
 
     val createdAt: Date = Date(),
     val updatedAt: Date = Date()
@@ -21,8 +31,8 @@ data class Notebook(
 // DAO
 @Dao
 interface NotebookDao {
-    @Query("SELECT * FROM notebook")
-    fun getAll(): LiveData<List<Notebook>>
+    @Query("SELECT * FROM notebook WHERE parentFolderId is :folderId")
+    fun getAllInFolder(folderId: String? = null): LiveData<List<Notebook>>
 
     @Query("SELECT * FROM notebook WHERE id = (:notebookId)")
     fun getByIdLive(notebookId: String): LiveData<Notebook>
@@ -63,8 +73,8 @@ class BookRepository(context: Context) {
         db.update(notebook)
     }
 
-    fun getAll(): LiveData<List<Notebook>> {
-        return db.getAll()
+    fun getAllInFolder(folderId: String? = null): LiveData<List<Notebook>> {
+        return db.getAllInFolder(folderId)
     }
 
     fun getById(notebookId: String): Notebook? {

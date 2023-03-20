@@ -10,6 +10,7 @@ class AppRepository(context: Context) {
     val bookRepository = BookRepository(context)
     val pageRepository = PageRepository(context)
     val strokeRepository = StrokeRepository(context)
+    val folderRepository = FolderRepository(context)
 
     fun getNextPageIdFromBookAndPage(
         notebookId: String,

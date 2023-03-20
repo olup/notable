@@ -30,34 +30,22 @@ class Converters {
     }
 }
 
-val MIGRATION_16_17 = object : Migration(16, 17) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL("ALTER TABLE Page ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
-        database.execSQL("ALTER TABLE Page ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
 
-        database.execSQL("ALTER TABLE Stroke ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
-        database.execSQL("ALTER TABLE Stroke ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
-
-        database.execSQL("ALTER TABLE Notebook ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
-        database.execSQL("ALTER TABLE Notebook ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
-    }
-}
-
-val MIGRATION_17_18 = object : Migration(17, 18) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL("ALTER TABLE Page ADD COLUMN nativeTemplate TEXT NOT NULL DEFAULT 'blank'")
-    }
-}
 
 @Database(
-    entities = [Notebook::class, Page::class, Stroke::class],
-    version = 19,
+    entities = [Folder::class, Notebook::class, Page::class, Stroke::class],
+    version = 24,
     autoMigrations = [
+        AutoMigration(19,20),
+        AutoMigration(20,21),
+        AutoMigration(21,22),
+        AutoMigration(23,24),
     ]
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
+    abstract fun folderDao(): FolderDao
     abstract fun notebookDao(): NotebookDao
     abstract fun pageDao(): PageDao
     abstract fun strokeDao(): StrokeDao
@@ -71,7 +59,10 @@ abstract class AppDatabase : RoomDatabase() {
                         Room.databaseBuilder(context, AppDatabase::class.java, "app_database")
                             .allowMainThreadQueries()
                             //.fallbackToDestructiveMigration()
-                            .addMigrations(MIGRATION_16_17, MIGRATION_17_18)
+                            .addMigrations(
+                                MIGRATION_16_17,
+                                MIGRATION_17_18,
+                                        MIGRATION_22_23)
                             .build()
                 }
             }

@@ -19,20 +19,20 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.NavController
 import com.olup.notable.PageModel
 
-fun PresentlyUsedToolIcon(mode: Mode, pen: Pen) : Int{
-   return  when(mode){
-       Mode.Draw -> {
-           when(pen){
-               Pen.BALLPEN  ->  R.drawable.ballpen
-               Pen.FOUNTAIN ->  R.drawable.fountain
-               Pen.BRUSH ->  R.drawable.brush
-               Pen.MARKER ->  R.drawable.marker
-               Pen.PENCIL ->  R.drawable.pencil
-           }
-       }
-       Mode.Erase -> R.drawable.eraser
-       Mode.Select -> R.drawable.lasso
-   }
+fun PresentlyUsedToolIcon(mode: Mode, pen: Pen): Int {
+    return when (mode) {
+        Mode.Draw -> {
+            when (pen) {
+                Pen.BALLPEN -> R.drawable.ballpen
+                Pen.FOUNTAIN -> R.drawable.fountain
+                Pen.BRUSH -> R.drawable.brush
+                Pen.MARKER -> R.drawable.marker
+                Pen.PENCIL -> R.drawable.pencil
+            }
+        }
+        Mode.Erase -> R.drawable.eraser
+        Mode.Select -> R.drawable.lasso
+    }
 }
 
 @Composable
@@ -46,8 +46,8 @@ fun Toolbar(
 
     val context = LocalContext.current
 
-    LaunchedEffect(isStrokeSelectionOpen, isMenuOpen) {
-        state.isDrawing = !isStrokeSelectionOpen && !isMenuOpen
+    LaunchedEffect(isMenuOpen) {
+        state.isDrawing = !isMenuOpen
     }
 
     fun handleChangePen(pen: Pen) {
@@ -73,14 +73,14 @@ fun Toolbar(
         state.mode = Mode.Select
     }
 
-    fun onChangeStrokeSize(size : Float){
+    fun onChangeStrokeSetting(penName: String, setting: PenSetting) {
         val settings = state.penSettings.toMutableMap()
-        settings.set(state.pen.penName, PenSetting(size, settings[state.pen.penName]!!.color))
+        settings.set(penName, setting)
         state.penSettings = settings
     }
 
 
-    if(isPageSettingsModalOpen){
+    if (isPageSettingsModalOpen) {
         PageSettingsModal(pageModel = state.pageModel) {
             isPageSettingsModalOpen = false
         }
@@ -92,7 +92,7 @@ fun Toolbar(
             Row(
                 Modifier
                     .background(Color.White)
-                    .height(IntrinsicSize.Min)
+                    .height(37.dp)
                     .fillMaxWidth()
 
             ) {
@@ -108,52 +108,63 @@ fun Toolbar(
                         .background(Color.Black)
                 )
 
-                toolbarButton(
+                PenToolbarButton(
+                    pen = Pen.BALLPEN,
+                    icon = R.drawable.ballpen,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.BALLPEN,
-                    onSelect = {
-                        handleChangePen(Pen.BALLPEN)
-                    },
-                    iconId = R.drawable.ballpen,
-                    contentDescription = "ballpen"
+                    onSelect = { handleChangePen(Pen.BALLPEN) },
+                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
+                    penSetting = state.penSettings[Pen.BALLPEN.penName] ?: return,
+                    onChangeSetting = { onChangeStrokeSetting(Pen.BALLPEN.penName, it) }
                 )
-                toolbarButton(
+
+                PenToolbarButton(
+                    pen = Pen.PENCIL,
+                    icon = R.drawable.pencil,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.PENCIL,
-                    onSelect = {
-                        handleChangePen(Pen.PENCIL)
-                    },
-                    iconId = R.drawable.pencil,
-                    contentDescription = "pencil"
+                    onSelect = { handleChangePen(Pen.PENCIL) },
+                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
+                    penSetting = state.penSettings[Pen.PENCIL.penName] ?: return,
+                    onChangeSetting = { onChangeStrokeSetting(Pen.PENCIL.penName, it) }
                 )
-                toolbarButton(
+
+                PenToolbarButton(
+                    pen = Pen.BRUSH,
+                    icon = R.drawable.brush,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.BRUSH,
-                    onSelect = {
-                        handleChangePen(Pen.BRUSH)
-                    },
-                    iconId = R.drawable.brush,
-                    contentDescription = "brush"
+                    onSelect = { handleChangePen(Pen.BRUSH) },
+                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
+                    penSetting = state.penSettings[Pen.BRUSH.penName] ?: return,
+                    onChangeSetting = { onChangeStrokeSetting(Pen.BRUSH.penName, it) }
                 )
-                toolbarButton(
+
+                PenToolbarButton(
+                    pen = Pen.FOUNTAIN,
+                    icon = R.drawable.fountain,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.FOUNTAIN,
-                    onSelect = {
-                        handleChangePen(Pen.FOUNTAIN)
-                    },
-                    iconId = R.drawable.fountain,
-                    contentDescription = "fountain"
+                    onSelect = { handleChangePen(Pen.FOUNTAIN) },
+                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
+                    penSetting = state.penSettings[Pen.FOUNTAIN.penName] ?: return,
+                    onChangeSetting = { onChangeStrokeSetting(Pen.FOUNTAIN.penName, it) }
                 )
+
                 Box(
                     Modifier
                         .fillMaxHeight()
                         .width(0.5.dp)
                         .background(Color.Black)
                 )
-                toolbarButton(
+
+                PenToolbarButton(
+                    pen = Pen.MARKER,
+                    icon = R.drawable.marker,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.MARKER,
-                    onSelect = {
-                        handleChangePen(Pen.MARKER)
-                    },
-                    iconId = R.drawable.marker,
-                    contentDescription = "marker"
+                    onSelect = { handleChangePen(Pen.MARKER) },
+                    sizes = listOf("L" to 20f, "XL" to 40f),
+                    penSetting = state.penSettings[Pen.MARKER.penName] ?: return,
+                    onChangeSetting = { onChangeStrokeSetting(Pen.MARKER.penName, it.copy(it.strokeSize, android.graphics.Color.LTGRAY)) }
                 )
+
                 Box(
                     Modifier
                         .fillMaxHeight()
@@ -197,12 +208,14 @@ fun Toolbar(
                     val book = AppRepository(context).bookRepository.getById(state.bookId)
 
                     // TODO maybe have generic utils for this ?
-                    val pageNumber = book!!.pageIds.indexOf(state.pageId) +1
+                    val pageNumber = book!!.pageIds.indexOf(state.pageId) + 1
                     val totalPageNumber = book!!.pageIds.size
 
                     Box(
                         contentAlignment = Alignment.Center,
-                        modifier = Modifier.height(35.dp).padding(10.dp, 0.dp)
+                        modifier = Modifier
+                            .height(35.dp)
+                            .padding(10.dp, 0.dp)
                     ) {
                         Text(
                             text = "${pageNumber}/${totalPageNumber}",
@@ -230,7 +243,7 @@ fun Toolbar(
                         navController = navController,
                         state = state,
                         onClose = { isMenuOpen = false },
-                        onPageSettingsOpen = {isPageSettingsModalOpen = true}
+                        onPageSettingsOpen = { isPageSettingsModalOpen = true }
                     )
                 }
             }
@@ -241,77 +254,19 @@ fun Toolbar(
                     .height(1.dp)
                     .background(Color.Black)
             )
+
+            // penStrokeMenu
             if (isStrokeSelectionOpen) {
-                val thisPenSettings = state.penSettings[state.pen.penName]!!
-                Popup(
-                    offset = IntOffset(0, convertDpToPixel(37.dp, context).toInt()),
-                    onDismissRequest = {
-                        handleClosePenSettings()
-                    },
-                    properties = PopupProperties(focusable = true)
 
-
-                ) {
-                    Column(
-                        Modifier
-                            .background(Color.White)
-                            .height(37.dp)
-                    ) {
-                        Row {
-                            toolbarButton(text = "Size 3",
-                                isSelected = thisPenSettings.strokeSize == 3f,onSelect = { onChangeStrokeSize(3f) })
-                            toolbarButton(text = "Size 5",
-                                isSelected = thisPenSettings.strokeSize == 5f,onSelect = { onChangeStrokeSize(5f) })
-                            toolbarButton(text = "Size 10",
-                                isSelected = thisPenSettings.strokeSize == 10f,onSelect = {onChangeStrokeSize(10f)})
-                            toolbarButton(text = "Size 20",
-                                isSelected = thisPenSettings.strokeSize == 20f,onSelect = { onChangeStrokeSize(20f) })
-
-                            Box(
-                                Modifier
-                                    .fillMaxHeight()
-                                    .width(1.dp)
-                                    .background(Color.Black)
-                            )
-
-                            toolbarButton(text = "Black")
-                            toolbarButton(text = "Gray")
-                            toolbarButton(text = "Light Gray")
-                            toolbarButton(text = "White")
-                        }
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(Color.Black)
-                        )
-                    }
-
-                }
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(Color.Black)
-                )
-                Box(modifier = Modifier
-                    .fillMaxSize()
-                    .noRippleClickable { isStrokeSelectionOpen = false })
             }
 
         }
     } else {
-        Row(
-            Modifier
-                .fillMaxWidth()
-               // .noRippleClickable { state.isToolbarOpen = true }
-        ) {
-            toolbarButton(
-                onSelect = { state.isToolbarOpen = true },
-                iconId = PresentlyUsedToolIcon(state.mode, state.pen),
-                contentDescription = "open toolbar"
-            )
-        }
+        toolbarButton(
+            onSelect = { state.isToolbarOpen = true },
+            iconId = PresentlyUsedToolIcon(state.mode, state.pen),
+            contentDescription = "open toolbar", modifier = Modifier.height(37.dp)
+        )
 
     }
 }

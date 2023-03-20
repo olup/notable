@@ -1,5 +1,6 @@
 package com.olup.notable.db
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import java.util.Date
@@ -17,6 +18,8 @@ data class Folder(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
     val title: String = "New Folder",
+
+   @ColumnInfo(index = true)
     val parentFolderId: String? = null,
 
     val createdAt: Date = Date(),
@@ -26,8 +29,12 @@ data class Folder(
 // DAO
 @Dao
 interface FolderDao {
-    @Query("SELECT * FROM folder WHERE parentFolderId=:folderId")
+    @Query("SELECT * FROM folder WHERE parentFolderId IS :folderId")
     fun getChildrenFolders(folderId:String?): LiveData<List<Folder>>
+
+    @Query("SELECT * FROM folder WHERE id IS :folderId")
+    fun get(folderId:String): Folder
+
 
     @Insert
     fun create(folder: Folder): Long
@@ -39,7 +46,7 @@ interface FolderDao {
     fun delete(id: String)
 }
 
-/*class FolderRepository(context: Context) {
+class FolderRepository(context: Context) {
     var db = AppDatabase.getDatabase(context)?.folderDao()!!
 
     fun create(folder: Folder) {
@@ -50,8 +57,12 @@ interface FolderDao {
         db.update(folder)
     }
 
-    fun getChildrenFolders(folderId: String): LiveData<List<Folder>> {
+    fun getAllInFolder(folderId: String? = null): LiveData<List<Folder>> {
         return db.getChildrenFolders(folderId)
+    }
+
+    fun get(folderId: String): Folder {
+        return db.get(folderId)
     }
 
 
@@ -59,4 +70,4 @@ interface FolderDao {
         db.delete(id)
     }
 
-}*/
+}

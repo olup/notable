@@ -32,12 +32,12 @@ class EditorState(val bookId: String? = null, val pageId: String, val pageModel:
     var isToolbarOpen by mutableStateOf(
         persistedEditorSettings?.isToolbarOpen ?: false
     ) // should save
-    var penSettings by mutableStateOf(
-        persistedEditorSettings?.penSettings ?: mapOf(
+    var penSettings by mutableStateOf<NamedSettings>(
+        persistedEditorSettings?.penSettings ?: mapOf<String, PenSetting>(
             Pen.BALLPEN.penName to PenSetting(5f, android.graphics.Color.BLACK),
             Pen.PENCIL.penName to PenSetting(5f, android.graphics.Color.BLACK),
             Pen.BRUSH.penName to PenSetting(5f, android.graphics.Color.BLACK),
-            Pen.MARKER.penName to PenSetting(5f, android.graphics.Color.BLACK),
+            Pen.MARKER.penName to PenSetting(20f, android.graphics.Color.LTGRAY),
             Pen.FOUNTAIN.penName to PenSetting(5f, android.graphics.Color.BLACK)
         )
     )

@@ -2,6 +2,7 @@ package com.olup.notable
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Icon
@@ -18,16 +19,18 @@ fun toolbarButton(
     onSelect: () -> Unit = {},
     iconId: Int? = null,
     text: String? = null,
-    contentDescription: String = ""
+    contentDescription: String = "",
+    modifier: Modifier = Modifier
 ) {
     Box(
-        Modifier
+        Modifier.then(modifier)
             .noRippleClickable {
                 onSelect()
             }
-            .height(35.dp)
             .background(if (isSelected) Color.Black else Color.Transparent)
-            .padding(7.dp)) {
+            .padding(7.dp)
+
+    ) {
         if (iconId != null) {
             Icon(
                 painter = painterResource(id = iconId),

@@ -1,5 +1,6 @@
 package com.olup.notable
 
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,7 +26,6 @@ var SCREEN_HEIGHT = EpdController.getEpdWidth().toInt()
 @ExperimentalFoundationApi
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-
         if(SCREEN_WIDTH == 0){
             SCREEN_WIDTH = applicationContext.resources.displayMetrics.widthPixels
             SCREEN_HEIGHT = applicationContext.resources.displayMetrics.heightPixels
@@ -54,8 +54,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onRestart() {
         super.onRestart()
+        // redraw after device sleep
         this.lifecycleScope.launch {
                 DrawCanvas.restartAfterConfChange.emit(Unit)
         }
+    }
+
+    override fun onContentChanged() {
+        super.onContentChanged()
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
     }
 }
