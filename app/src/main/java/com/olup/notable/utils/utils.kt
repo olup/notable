@@ -78,23 +78,6 @@ fun deletePage(context: Context, pageId: String) {
     }
 }
 
-// TODO move this to repository
-fun deleteBook(context: Context, bookId: String) {
-    val appRepository = AppRepository(context)
-    val book = appRepository.bookRepository.getById(bookId) ?: return
-
-    runBlocking {
-        launch {
-            appRepository.bookRepository.delete(bookId)
-        }
-        for (pageId in book.pageIds) {
-            launch {
-                deletePage(context, pageId)
-            }
-        }
-    }
-}
-
 fun <T : Any> Flow<T>.withPrevious(): Flow<Pair<T?, T>> = flow {
     var prev: T? = null
     this@withPrevious.collect {

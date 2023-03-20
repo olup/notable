@@ -117,7 +117,7 @@ fun NotebookConfigDialog(bookId: String, onClose : ()->Unit) {
                 Text(text = "Delete Notebook",
                     textAlign = TextAlign.Center,
                     modifier = Modifier.noRippleClickable {
-                        deleteBook(context, bookId)
+                        bookRepository.delete(bookId)
                         onClose()
                     })
             }
