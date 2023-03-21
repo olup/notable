@@ -60,6 +60,7 @@ class DrawCanvas(
         }
 
         override fun onRawDrawingTouchPointListReceived(plist: TouchPointList) {
+            println("End drawing")
             thread(true) {
                 if (getActualState().mode == Mode.Erase) {
                     handleErase(this@DrawCanvas.page,
@@ -251,6 +252,7 @@ class DrawCanvas(
     }
 
     fun refreshUi() {
+        println("refresh ui with is drawing : ${state.isDrawing}")
         if (state.isDrawing) {
             touchHelper.setRawDrawingEnabled(false)
             drawCanvasToView()
@@ -261,7 +263,7 @@ class DrawCanvas(
     }
 
     fun drawCanvasToView() {
-
+    println("Draw canvas")
         val canvas = this.holder.lockCanvas() ?: return
         canvas.drawBitmap(page.windowedBitmap, 0f, 0f, Paint());
 
@@ -284,6 +286,7 @@ class DrawCanvas(
     }
 
     fun updateIsDrawing() {
+        println("Update is drawing : ${state.isDrawing}")
         if (state.isDrawing) {
             touchHelper.setRawDrawingEnabled(true)
         } else {
@@ -293,6 +296,9 @@ class DrawCanvas(
     }
 
     fun updatePenAndStroke() {
+        println("Update pen and stroke")
+        println(state.penSettings[state.pen.penName]!!.strokeSize)
+        println(state.penSettings[state.pen.penName]!!.color)
         when (state.mode) {
             Mode.Draw -> touchHelper.setStrokeStyle(penToStroke(state.pen))
                 ?.setStrokeWidth(state.penSettings[state.pen.penName]!!.strokeSize)
@@ -305,6 +311,8 @@ class DrawCanvas(
     }
 
     fun updateIsToolbarOpen() {
+        println("Update toolbar open")
+
         val exclusionHeight =
             if (state.isToolbarOpen) convertDpToPixel(40.dp, context).toInt() else 0
 

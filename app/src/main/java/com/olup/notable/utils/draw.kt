@@ -47,7 +47,9 @@ fun drawMarkerStroke(
         this.strokeCap = Paint.Cap.ROUND
         this.strokeJoin = Paint.Join.ROUND
         this.isAntiAlias = true
+        this.color = Color.LTGRAY
         this.alpha = 100
+
     }
 
     val path = pointsToPath(points.map { SimplePointF(it.x, it.y) })

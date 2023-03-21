@@ -60,10 +60,6 @@ fun Toolbar(
 
     }
 
-    fun handleClosePenSettings() {
-        isStrokeSelectionOpen = false
-    }
-
     fun handleEraser() {
         state.mode = Mode.Erase
 
@@ -75,7 +71,7 @@ fun Toolbar(
 
     fun onChangeStrokeSetting(penName: String, setting: PenSetting) {
         val settings = state.penSettings.toMutableMap()
-        settings.set(penName, setting)
+        settings[penName] = setting.copy()
         state.penSettings = settings
     }
 
@@ -109,6 +105,7 @@ fun Toolbar(
                 )
 
                 PenToolbarButton(
+                    onStrokeMenuOpenChange = {state.isDrawing = !it},
                     pen = Pen.BALLPEN,
                     icon = R.drawable.ballpen,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.BALLPEN,
@@ -119,6 +116,7 @@ fun Toolbar(
                 )
 
                 PenToolbarButton(
+                    onStrokeMenuOpenChange = {state.isDrawing = !it},
                     pen = Pen.PENCIL,
                     icon = R.drawable.pencil,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.PENCIL,
@@ -129,6 +127,7 @@ fun Toolbar(
                 )
 
                 PenToolbarButton(
+                    onStrokeMenuOpenChange = {state.isDrawing = !it},
                     pen = Pen.BRUSH,
                     icon = R.drawable.brush,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.BRUSH,
@@ -139,6 +138,7 @@ fun Toolbar(
                 )
 
                 PenToolbarButton(
+                    onStrokeMenuOpenChange = {state.isDrawing = !it},
                     pen = Pen.FOUNTAIN,
                     icon = R.drawable.fountain,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.FOUNTAIN,
@@ -156,6 +156,7 @@ fun Toolbar(
                 )
 
                 PenToolbarButton(
+                    onStrokeMenuOpenChange = {state.isDrawing = !it},
                     pen = Pen.MARKER,
                     icon = R.drawable.marker,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.MARKER,

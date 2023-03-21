@@ -38,7 +38,7 @@ fun StrokeMenu(
                 toolbarButton(
                     text = it.first,
                     isSelected = value.strokeSize == it.second,
-                    onSelect = { onChange(PenSetting(strokeSize = it.second, color = 0)) },
+                    onSelect = { onChange(PenSetting(strokeSize = it.second, color = value.color)) },
                     modifier = Modifier
                 )
             }

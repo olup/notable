@@ -11,9 +11,17 @@ fun PenToolbarButton(
     onSelect: () -> Unit,
     sizes: List<Pair<String, Float>>,
     penSetting: PenSetting,
-    onChangeSetting: (PenSetting) -> Unit
+    onChangeSetting: (PenSetting) -> Unit,
+    onStrokeMenuOpenChange: ((Boolean) -> Unit)? = null
 ) {
     var isStrokeMenuOpen by remember { mutableStateOf(false) }
+
+    if(onStrokeMenuOpenChange != null){
+        LaunchedEffect(isStrokeMenuOpen) {
+            onStrokeMenuOpenChange(isStrokeMenuOpen)
+        }
+    }
+
 
     Box {
 
@@ -28,7 +36,7 @@ fun PenToolbarButton(
         )
 
         if (isStrokeMenuOpen) {
-            StrokeMenu(value = penSetting, onChange = onChangeSetting, onClose = {isStrokeMenuOpen = false}, options = sizes)
+            StrokeMenu(value = penSetting, onChange = { onChangeSetting(it) }, onClose = {isStrokeMenuOpen = false}, options = sizes)
         }
     }
 }
