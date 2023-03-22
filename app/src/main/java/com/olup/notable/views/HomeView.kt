@@ -28,11 +28,13 @@ import com.olup.notable.db.Notebook
 import com.olup.notable.db.Page
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Folder
+import kotlinx.coroutines.launch
 
 @ExperimentalFoundationApi
 @ExperimentalComposeUiApi
 @Composable
 fun Library(navController: NavController, folderId: String? = null) {
+
     val appRepository = AppRepository(LocalContext.current)
 
     val books by appRepository.bookRepository.getAllInFolder(folderId).observeAsState()
@@ -135,7 +137,7 @@ fun Library(navController: NavController, folderId: String? = null) {
                 ) {
                     items(singlePages!!.reversed()) { page ->
                         val pageId = page.id
-                        var isPageSelected by remember{ mutableStateOf(false) }
+                        var isPageSelected by remember { mutableStateOf(false) }
                         Box {
                             PagePreview(
                                 modifier = Modifier

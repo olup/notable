@@ -8,6 +8,8 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,12 +35,18 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
         EpdDeviceManager.enterAnimationUpdate(true);
+        val snackState = SnackState()
+
+        DataStoreManager.init(applicationContext)
+
         setContent {
+
             InkaTheme {
+                CompositionLocalProvider(SnackContext provides snackState ) {
                     Box(
                         Modifier
                             .background(Color.White)
-                    ){
+                    ) {
                         Router()
                     }
                     Box(
@@ -47,6 +55,8 @@ class MainActivity : ComponentActivity() {
                             .height(1.dp)
                             .background(Color.Black)
                     )
+                    SnackBar(state = snackState)
+                }
             }
         }
     }

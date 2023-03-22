@@ -15,8 +15,9 @@ import kotlin.math.max
 @Composable
 fun ScrollIndicator(context: Context, state: EditorState) {
     val page = state.pageModel
-
     val virtualHeight = max(page.height, page.scroll + page.viewHeight)
+    if(virtualHeight <= page.viewHeight) return
+
     val indicatorSize = (page.viewHeight / virtualHeight.toFloat()) * page.viewHeight
     val indicatorPosition = (page.scroll / virtualHeight.toFloat()) * page.viewHeight
 

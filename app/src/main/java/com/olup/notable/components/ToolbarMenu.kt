@@ -21,6 +21,7 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.NavController
 import com.olup.notable.PageModel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
@@ -33,14 +34,12 @@ fun ToolbarMenu(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val snackManager = SnackContext.current
+
     Popup(
-        alignment = Alignment.TopEnd,
-        onDismissRequest = { onClose() },
-        offset = IntOffset(
-            convertDpToPixel(-10.dp, context).toInt(),
-            convertDpToPixel(50.dp, context).toInt()
-        ),
-        properties = PopupProperties(focusable = true)
+        alignment = Alignment.TopEnd, onDismissRequest = { onClose() }, offset = IntOffset(
+            convertDpToPixel(-10.dp, context).toInt(), convertDpToPixel(50.dp, context).toInt()
+        ), properties = PopupProperties(focusable = true)
     ) {
         Column(
             Modifier
@@ -64,9 +63,24 @@ fun ToolbarMenu(
                     .padding(10.dp)
                     .noRippleClickable {
                         scope.launch {
+                            val removeSnack = snackManager.displaySnack(
+                                SnackConf(
+                                    text = "Exporting the page to PDF..."
+                                )
+                            )
+                            delay(10L) // Why do I need this ?
+
                             exportPage(context, state.pageId)
+
+                            removeSnack()
+                            snackManager.displaySnack(
+                                SnackConf(
+                                    text = "Book exported successfully", duration = 2000
+                                )
+                            )
+                            onClose()
                         }
-                        onClose()
+
                     }) {
                 Text("Export page")
             }
@@ -75,9 +89,23 @@ fun ToolbarMenu(
                     .padding(10.dp)
                     .noRippleClickable {
                         scope.launch {
-                            exportBook(context, state.bookId?:return@launch)
+                            val removeSnack = snackManager.displaySnack(
+                                SnackConf(
+                                    text = "Exporting the book to PDF...", id = "exportSnack"
+                                )
+                            )
+                            delay(10L) // Why do I need this ?
+
+                            exportBook(context, state.bookId ?: return@launch)
+
+                            removeSnack()
+                            snackManager.displaySnack(
+                                SnackConf(
+                                    text = "Book exported successfully", duration = 3000
+                                )
+                            )
+                            onClose()
                         }
-                        onClose()
                     }) {
                 Text("Export book")
             }
