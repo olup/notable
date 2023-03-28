@@ -78,21 +78,15 @@ fun QuickNav(navController: NavController, onClose: () -> Unit) {
         ) {
 
             Row {
-                ToolbarButton(
-                    imageVector = FeatherIcons.Zap,
-                    isSelected = true
-                )
-
-                Spacer(modifier = Modifier.width(5.dp))
 
                 ToolbarButton(
                     imageVector = FeatherIcons.Home,
                     onSelect = {
                         val parentFolder = if(pageId != null) appRepository.pageRepository.getById(pageId)?.parentFolderId else null
-                        onClose()
                         navController.navigate(
                             route = if(parentFolder != null) "library?folderId=${parentFolder}" else "library"
                         )
+                        onClose()
                     }
                 )
 
@@ -133,8 +127,8 @@ fun QuickNav(navController: NavController, onClose: () -> Unit) {
                                             appRepository.pageRepository.getById(thisPageId)?.notebookId
                                         val url =
                                             if (bookId == null) "pages/${thisPageId}" else "books/${bookId}/pages/${thisPageId}"
-                                        println(url)
                                         navController.navigate(url)
+                                        onClose()
                                     }
                                     .draggable(
                                         orientation = Orientation.Vertical,
