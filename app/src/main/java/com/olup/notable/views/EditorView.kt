@@ -1,7 +1,5 @@
 package com.olup.notable
 
-import android.graphics.Bitmap
-import android.graphics.Rect
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
@@ -14,21 +12,28 @@ import androidx.navigation.NavController
 import com.olup.notable.db.*
 import com.olup.notable.ui.theme.InkaTheme
 import com.onyx.android.sdk.pen.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.unit.IntOffset
-
 
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 @ExperimentalFoundationApi
-fun BookUi(
+fun EditorView(
     navController: NavController, _bookId: String?, _pageId: String
 ) {
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    // control if we do have a page
+    if(AppRepository(context).pageRepository.getById(_pageId) == null) {
+        if(_bookId != null){
+            // clean the book
+            println("Cleaning book")
+            AppRepository(context).bookRepository.removePage(_bookId, _pageId)
+        }
+        navController.navigate("library")
+        return
+    }
 
 
     val page = remember {
@@ -69,6 +74,7 @@ fun BookUi(
     ) {
         println("saving")
         DataStoreManager.setEditorSettings(
+            context,
             DataStoreManager.EditorSettings(
                 isToolbarOpen = editorState.isToolbarOpen,
                 mode = editorState.mode,

@@ -68,11 +68,8 @@ fun PageMenu(
                     Modifier
                         .padding(10.dp)
                         .noRippleClickable {
-                            // getting last page template
-                            val lastPage = appRepository.pageRepository.getById(appRepository.bookRepository.getPageAtIndex(notebookId, index)!!)
-                            val template = lastPage?.nativeTemplate ?: "blank"
-
-                            val page = Page(notebookId = notebookId, nativeTemplate = template)
+                            val book = appRepository.bookRepository.getById(notebookId) ?: return@noRippleClickable
+                            val page = Page(notebookId = notebookId, nativeTemplate = book.defaultNativeTemplate)
                             appRepository.pageRepository.create(page)
                             appRepository.bookRepository.addPage(notebookId, page.id, index + 1)
                         }) {

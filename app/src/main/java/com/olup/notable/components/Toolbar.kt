@@ -8,16 +8,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.NavController
-import com.olup.notable.PageModel
 
 fun PresentlyUsedToolIcon(mode: Mode, pen: Pen): Int {
     return when (mode) {
@@ -92,7 +87,7 @@ fun Toolbar(
                     .fillMaxWidth()
 
             ) {
-                toolbarButton(
+                ToolbarButton(
                     onSelect = {
                         state.isToolbarOpen = !state.isToolbarOpen
                     }, iconId = R.drawable.topbar_open, contentDescription = "close toolbar"
@@ -161,7 +156,7 @@ fun Toolbar(
                     icon = R.drawable.marker,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.MARKER,
                     onSelect = { handleChangePen(Pen.MARKER) },
-                    sizes = listOf("L" to 20f, "XL" to 40f),
+                    sizes = listOf("L" to 40f, "XL" to 60f),
                     penSetting = state.penSettings[Pen.MARKER.penName] ?: return,
                     onChangeSetting = { onChangeStrokeSetting(Pen.MARKER.penName, it.copy(it.strokeSize, android.graphics.Color.LTGRAY)) }
                 )
@@ -172,7 +167,7 @@ fun Toolbar(
                         .width(0.5.dp)
                         .background(Color.Black)
                 )
-                toolbarButton(
+                ToolbarButton(
                     isSelected = state.mode == Mode.Erase, onSelect = {
                         handleEraser()
                     }, iconId = R.drawable.eraser, contentDescription = "eraser"
@@ -183,7 +178,7 @@ fun Toolbar(
                         .width(0.5.dp)
                         .background(Color.Black)
                 )
-                toolbarButton(
+                ToolbarButton(
                     isSelected = state.mode == Mode.Select,
                     onSelect = { handleSelection() },
                     iconId = R.drawable.lasso,
@@ -235,7 +230,7 @@ fun Toolbar(
                     )
                 }
                 Column {
-                    toolbarButton(
+                    ToolbarButton(
                         onSelect = {
                             isMenuOpen = !isMenuOpen
                         }, iconId = R.drawable.menu, contentDescription = "menu"
@@ -263,7 +258,7 @@ fun Toolbar(
 
         }
     } else {
-        toolbarButton(
+        ToolbarButton(
             onSelect = { state.isToolbarOpen = true },
             iconId = PresentlyUsedToolIcon(state.mode, state.pen),
             contentDescription = "open toolbar", modifier = Modifier.height(37.dp)

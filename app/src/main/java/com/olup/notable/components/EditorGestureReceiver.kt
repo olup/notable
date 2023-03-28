@@ -8,8 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import kotlinx.coroutines.launch
 
 
@@ -23,118 +25,121 @@ fun EditorGestureReceiver(
 ) {
 
     val coroutineScope = rememberCoroutineScope()
-    Box(modifier = Modifier
-        .pointerInput(Unit) {
-            awaitEachGesture {
+    Box(
+        modifier = Modifier
+            .pointerInput(Unit) {
+                awaitEachGesture {
 
-                val down = awaitFirstDown()
-                val inputId = down.id
+                    val down = awaitFirstDown()
+                    val inputId = down.id
 
-                val initialPosition = down.position
-                val initialTimestamp = System.currentTimeMillis();
+                    val initialPosition = down.position
+                    val initialTimestamp = System.currentTimeMillis();
 
-                var lastPosition = initialPosition
-                var lastTimestamp = initialTimestamp
+                    var lastPosition = initialPosition
+                    var lastTimestamp = initialTimestamp
 
-                var inputsCount = 0
+                    var inputsCount = 0
 
-                // ignore non-touch
-                if (down.type != PointerType.Touch) return@awaitEachGesture
+                    // ignore non-touch
+                    if (down.type != PointerType.Touch) return@awaitEachGesture
 
 
-                do {
-                    val event = awaitPointerEvent()
-                    val fingerChange = event.changes.filter { it.type == PointerType.Touch }
-                    // is already consumed return
-                    if (fingerChange.find { it.isConsumed } != null) {
+                    do {
+                        val event = awaitPointerEvent()
+                        val fingerChange = event.changes.filter { it.type == PointerType.Touch }
+                        // is already consumed return
+                        if (fingerChange.find { it.isConsumed } != null) {
+                            return@awaitEachGesture
+                            println("Canceling gesture - already consumemd")
+                        }
+                        fingerChange.forEach { it.consume() }
+
+                        val eventReference =
+                            fingerChange.find { it.id.value == inputId.value } ?: break
+
+                        lastPosition = eventReference.position
+                        lastTimestamp = System.currentTimeMillis();
+                        inputsCount = fingerChange.size
+
+                        if (fingerChange.any { !it.pressed }) break
+                    } while (true)
+
+                    println("leaving gesture")
+
+                    val totalDelta = (initialPosition - lastPosition).getDistance()
+                    val gestureDuration = lastTimestamp - initialTimestamp
+
+                    if (totalDelta == 0f && gestureDuration < 150) {
+                        // in case of double tap
+                        if (withTimeoutOrNull(100) {
+                                awaitFirstDown()
+                                if (inputsCount == 1) {
+                                    state.isToolbarOpen = !state.isToolbarOpen
+                                }
+                            } != null) return@awaitEachGesture
+
+                        // in case of single tap
+                        if (inputsCount == 2) {
+                            state.mode = if (state.mode == Mode.Draw) Mode.Erase else Mode.Draw
+                        }
                         return@awaitEachGesture
-                        println("Canceling gesture - already consumemd")
+
                     }
-                    fingerChange.forEach { it.consume() }
 
-                    val eventReference = fingerChange.find { it.id.value == inputId.value } ?: break
+                    val verticalDrag = lastPosition.y - initialPosition.y
+                    val horinzontalDrag = lastPosition.x - initialPosition.x
 
-                    lastPosition = eventReference.position
-                    lastTimestamp = System.currentTimeMillis();
-                    inputsCount = fingerChange.size
 
-                    if (fingerChange.any { !it.pressed }) break
-                } while (true)
-
-                println("leaving gesture")
-
-                val totalDelta = (initialPosition - lastPosition).getDistance()
-                val gestureDuration = lastTimestamp - initialTimestamp
-
-                if (totalDelta == 0f && gestureDuration < 150) {
-                    // in case of double tap
-                    if(withTimeoutOrNull(100) {
-                            awaitFirstDown()
-                            if (inputsCount == 1) {
-                                state.isToolbarOpen = !state.isToolbarOpen
+                    if (verticalDrag < -200) {
+                        if (inputsCount == 1) {
+                            coroutineScope.launch {
+                                controlTower.onSingleFingerVerticalSwipe(
+                                    SimplePointF(
+                                        initialPosition.x, initialPosition.y
+                                    ), verticalDrag.toInt()
+                                )
                             }
-                        } != null ) return@awaitEachGesture
-
-                    // in case of single tap
-                    if (inputsCount == 2) {
-                        state.mode = if (state.mode == Mode.Draw) Mode.Erase else Mode.Draw
-                    }
-                    return@awaitEachGesture
-
-                }
-
-                val verticalDrag = lastPosition.y - initialPosition.y
-                val horinzontalDrag = lastPosition.x - initialPosition.x
-
-
-                if (verticalDrag < -200) {
-                    if (inputsCount == 1) {
-                        coroutineScope.launch {
-                            controlTower.onSingleFingerVerticalSwipe(
-                                SimplePointF(
-                                    initialPosition.x, initialPosition.y
-                                ), verticalDrag.toInt()
-                            )
                         }
                     }
-                }
-                if (verticalDrag > 200) {
-                    if (inputsCount == 1) {
-                        coroutineScope.launch {
-                            controlTower.onSingleFingerVerticalSwipe(
-                                SimplePointF(
-                                    initialPosition.x, initialPosition.y
-                                ), verticalDrag.toInt()
-                            )
+                    if (verticalDrag > 200) {
+                        if (inputsCount == 1) {
+                            coroutineScope.launch {
+                                controlTower.onSingleFingerVerticalSwipe(
+                                    SimplePointF(
+                                        initialPosition.x, initialPosition.y
+                                    ), verticalDrag.toInt()
+                                )
+                            }
                         }
                     }
-                }
-                if (horinzontalDrag < -200) {
-                    if (inputsCount == 1) {
-                        goToNextPage()
-                    } else if (inputsCount == 2) {
-                        println("Redo")
-                        coroutineScope.launch {
-                            History.moveHistory(UndoRedoType.Redo)
-                            DrawCanvas.refreshUi.emit(Unit)
+                    if (horinzontalDrag < -200) {
+                        if (inputsCount == 1) {
+                            goToNextPage()
+                        } else if (inputsCount == 2) {
+                            println("Redo")
+                            coroutineScope.launch {
+                                History.moveHistory(UndoRedoType.Redo)
+                                DrawCanvas.refreshUi.emit(Unit)
+                            }
                         }
                     }
-                }
-                if (horinzontalDrag > 200) {
-                    if (inputsCount == 1) {
-                        goToPreviousPage()
-                    } else if (inputsCount == 2) {
-                        println("Undo")
-                        coroutineScope.launch {
-                            History.moveHistory(UndoRedoType.Undo)
-                            DrawCanvas.refreshUi.emit(Unit)
+                    if (horinzontalDrag > 200) {
+                        if (inputsCount == 1) {
+                            goToPreviousPage()
+                        } else if (inputsCount == 2) {
+                            println("Undo")
+                            coroutineScope.launch {
+                                History.moveHistory(UndoRedoType.Undo)
+                                DrawCanvas.refreshUi.emit(Unit)
+                            }
                         }
+
                     }
 
                 }
-
             }
-        }
-        .fillMaxWidth()
-        .fillMaxHeight())
+            .fillMaxWidth()
+            .fillMaxHeight()
+    )
 }

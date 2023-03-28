@@ -33,19 +33,21 @@ class Converters {
 
 
 @Database(
-    entities = [Folder::class, Notebook::class, Page::class, Stroke::class],
-    version = 24,
+    entities = [Folder::class, Notebook::class, Page::class, Stroke::class, Kv::class],
+    version = 25,
     autoMigrations = [
         AutoMigration(19,20),
         AutoMigration(20,21),
         AutoMigration(21,22),
         AutoMigration(23,24),
+        AutoMigration(24,25),
     ]
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun folderDao(): FolderDao
+    abstract fun kvDao(): KvDao
     abstract fun notebookDao(): NotebookDao
     abstract fun pageDao(): PageDao
     abstract fun strokeDao(): StrokeDao

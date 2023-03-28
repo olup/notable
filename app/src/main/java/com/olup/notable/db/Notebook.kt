@@ -24,6 +24,9 @@ data class Notebook(
     @ColumnInfo(index = true)
     val parentFolderId: String? = null,
 
+    @ColumnInfo(defaultValue = "blank")
+    val defaultNativeTemplate: String = "blank",
+
     val createdAt: Date = Date(),
     val updatedAt: Date = Date()
 )
@@ -69,7 +72,7 @@ class BookRepository(context: Context) {
         db.setOpenPageId(notebook.id, page.id)
     }
 
-    fun update(notebook : Notebook) {
+    fun update(notebook: Notebook) {
         db.update(notebook)
     }
 
@@ -90,38 +93,44 @@ class BookRepository(context: Context) {
     }
 
     fun addPage(id: String, pageId: String, index: Int? = null) {
-        var pageIds = (db.getById(id)?: return).pageIds.toMutableList()
-        if(index != null) pageIds.add(index, pageId)
+        var pageIds = (db.getById(id) ?: return).pageIds.toMutableList()
+        if (index != null) pageIds.add(index, pageId)
         else pageIds.add(pageId)
         db.setPageIds(id, pageIds)
     }
 
     fun removePage(id: String, pageId: String) {
-        var pageIds = (db.getById(id)?: return).pageIds.toMutableList()
-        pageIds.remove(pageId)
-        db.setPageIds(id, pageIds)
+        var notebook = db.getById(id) ?: return
+        var updatedNotebook = notebook.copy(
+            // remove the page
+            pageIds = notebook.pageIds.filterNot { it == pageId },
+            // remove the "open page" if it's the one
+            openPageId = if (notebook.openPageId == pageId) null else notebook.openPageId
+        )
+        db.update(updatedNotebook)
+        println("Cleaned ${id} ${pageId}")
     }
 
     fun changeePageIndex(id: String, pageId: String, index: Int) {
-        var pageIds = (db.getById(id)?: return).pageIds.toMutableList()
+        var pageIds = (db.getById(id) ?: return).pageIds.toMutableList()
         var correctedIndex = index
-        if(correctedIndex < 0) correctedIndex = 0
-        if(correctedIndex > pageIds.size -1) correctedIndex = pageIds.size - 1
+        if (correctedIndex < 0) correctedIndex = 0
+        if (correctedIndex > pageIds.size - 1) correctedIndex = pageIds.size - 1
 
         pageIds.remove(pageId)
         pageIds.add(correctedIndex, pageId)
         db.setPageIds(id, pageIds)
     }
 
-    fun getPageIndex(id: String, pageId: String) : Int? {
-        val pageIds = (db.getById(id)?: return null).pageIds
+    fun getPageIndex(id: String, pageId: String): Int? {
+        val pageIds = (db.getById(id) ?: return null).pageIds
         val index = pageIds.indexOf(pageId)
-        return if(index!= -1) index else null
+        return if (index != -1) index else null
     }
 
-    fun getPageAtIndex(id: String, index: Int) : String? {
-        val pageIds = (db.getById(id)?: return null).pageIds
-        if(index < 0 || index > pageIds.size -1) return null
+    fun getPageAtIndex(id: String, index: Int): String? {
+        val pageIds = (db.getById(id) ?: return null).pageIds
+        if (index < 0 || index > pageIds.size - 1) return null
         return pageIds[index]
     }
 

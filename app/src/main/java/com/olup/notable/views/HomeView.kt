@@ -28,6 +28,7 @@ import com.olup.notable.db.Notebook
 import com.olup.notable.db.Page
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Folder
+import compose.icons.feathericons.Settings
 import kotlinx.coroutines.launch
 
 @ExperimentalFoundationApi
@@ -35,6 +36,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun Library(navController: NavController, folderId: String? = null) {
 
+    var isSettingsOpen by remember {
+        mutableStateOf(false)
+    }
     val appRepository = AppRepository(LocalContext.current)
 
     val books by appRepository.bookRepository.getAllInFolder(folderId).observeAsState()
@@ -47,12 +51,30 @@ fun Library(navController: NavController, folderId: String? = null) {
     ) {
         Topbar(
         ) {
+            Row(Modifier.fillMaxWidth()) {
+                Spacer(modifier = Modifier.weight(1f))
+                Icon(
+                    imageVector = FeatherIcons.Settings,
+                    contentDescription = "",
+                    Modifier
+                        .padding(8.dp)
+                        .noRippleClickable {
+                            isSettingsOpen = true
+                        })
+            }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 Text(text = "Add quick page",
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .noRippleClickable {
-                            val page = Page(notebookId = null, parentFolderId = folderId)
+                            val page = Page(
+                                notebookId = null,
+                                parentFolderId = folderId,
+                                nativeTemplate = appRepository.kvProxy.get(
+                                    "APP_SETTINGS",
+                                    AppSettings.serializer()
+                                )?.defaultNativeTemplate ?: "blank"
+                            )
                             appRepository.pageRepository.create(page)
                             navController.navigate("pages/${page.id}")
                         }
@@ -176,9 +198,6 @@ fun Library(navController: NavController, folderId: String? = null) {
                 ) {
                     items(books!!) { item ->
                         var isSettingsOpen by remember { mutableStateOf(false) }
-                        if (isSettingsOpen) NotebookConfigDialog(
-                            bookId = item.id,
-                            onClose = { isSettingsOpen = false })
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -189,7 +208,7 @@ fun Library(navController: NavController, folderId: String? = null) {
                                 .combinedClickable(
                                     onClick = {
                                         val bookId = item.id
-                                        val pageId = item.openPageId
+                                        val pageId = item.openPageId ?: item.pageIds[0]
                                         navController.navigate("books/$bookId/pages/$pageId")
                                     },
                                     onLongClick = {
@@ -214,11 +233,17 @@ fun Library(navController: NavController, folderId: String? = null) {
                                 )
                             }
                         }
+
+                        if (isSettingsOpen) NotebookConfigDialog(
+                            bookId = item.id,
+                            onClose = { isSettingsOpen = false })
                     }
                 }
             }
         }
     }
+
+    if (isSettingsOpen) AppSettingsModal(onClose = { isSettingsOpen = false })
 }
 
 

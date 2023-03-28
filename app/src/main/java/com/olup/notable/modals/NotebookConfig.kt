@@ -8,6 +8,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
@@ -25,23 +26,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import com.olup.notable.components.SelectMenu
 import com.olup.notable.db.BookRepository
+import kotlinx.coroutines.launch
 
 
 @ExperimentalComposeUiApi
 @Composable
 fun NotebookConfigDialog(bookId: String, onClose : ()->Unit) {
     val bookRepository = BookRepository(LocalContext.current)
-    val book = bookRepository.getById(bookId) ?: return
+    val book by bookRepository.getByIdLive(bookId).observeAsState()
     val context = LocalContext.current
 
+    if(book == null) return
+
     var bookTitle by remember {
-        mutableStateOf(book.title)
+        mutableStateOf(book!!.title)
     }
 
 
     Dialog(
-        onDismissRequest = { onClose() }
+        onDismissRequest = {
+            onClose()
+        }
     ) {
         val focusManager = LocalFocusManager.current
 
@@ -89,18 +96,48 @@ fun NotebookConfigDialog(bookId: String, onClose : ()->Unit) {
                         keyboardActions = KeyboardActions(onDone = {
                             focusManager.clearFocus()
                         }),
-                        modifier = Modifier.background(Color(230,230,230,255)).padding(10.dp, 0.dp).onFocusChanged { focusState ->
-                            if (!focusState.isFocused) {
-                                println("loose focus")
-                                val updatedBook = book.copy(title = bookTitle)
-                                bookRepository.update(updatedBook)
+                        modifier = Modifier
+                            .background(Color(230, 230, 230, 255))
+                            .padding(10.dp, 0.dp)
+                            .onFocusChanged { focusState ->
+                                if (!focusState.isFocused) {
+                                    println("loose focus")
+                                    val updatedBook = book!!.copy(title = bookTitle)
+                                    bookRepository.update(updatedBook)
+                                }
                             }
-                        }
 
 
                     )
 
                 }
+            }
+
+            Box(
+                Modifier
+                    .padding(20.dp, 0.dp)
+                    .height(0.5.dp)
+                    .fillMaxWidth()
+                    .background(Color.Black)
+            )
+
+            Row(Modifier.padding(20.dp, 10.dp)) {
+                Text(text = "Default Background Template")
+                Spacer(Modifier.width(10.dp))
+                SelectMenu(
+                    options = listOf(
+                        "blank" to "Blank page",
+                        "dotted" to "Dot grid",
+                        "lined" to "Lines",
+                        "squared" to "Small squares grid"
+                    ),
+                    onChange = {
+                        val updatedBook = book!!.copy(defaultNativeTemplate = it)
+                        bookRepository.update(updatedBook)
+                    },
+                    value = book!!.defaultNativeTemplate
+                )
+
             }
 
             Box(

@@ -18,6 +18,7 @@ import androidx.core.graphics.toRect
 import androidx.core.graphics.toRegion
 import com.olup.notable.db.*
 import com.onyx.android.sdk.data.note.TouchPoint
+import com.onyx.android.sdk.utils.BroadcastHelper.App
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -53,12 +54,21 @@ fun convertPixelToDp(px: Float, context: Context): Dp {
 fun deletePage(context: Context, pageId: String) {
     val appRepository = AppRepository(context)
     val page = appRepository.pageRepository.getById(pageId) ?: return
+    val proxy = appRepository.kvProxy
+    val settings = proxy.get("APPS_SETTINGS", AppSettings.serializer())
 
 
     runBlocking {
+        // remove from book
         if(page.notebookId != null){
             appRepository.bookRepository.removePage(page.notebookId, pageId)
         }
+
+        // remove from quick nav
+        if(settings != null && settings.quickNavPages.contains(pageId)){
+            proxy.setKv("APPS_SETTINGS", settings.copy(quickNavPages = settings.quickNavPages - pageId),AppSettings.serializer())
+        }
+
         launch {
             appRepository.pageRepository.delete(pageId)
         }

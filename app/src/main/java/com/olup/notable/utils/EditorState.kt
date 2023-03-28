@@ -28,7 +28,7 @@ class EditorState(val bookId: String? = null, val pageId: String, val pageModel:
             Pen.BALLPEN.penName to PenSetting(5f, Color.BLACK),
             Pen.PENCIL.penName to PenSetting(5f, Color.BLACK),
             Pen.BRUSH.penName to PenSetting(5f, Color.BLACK),
-            Pen.MARKER.penName to PenSetting(20f, Color.LTGRAY),
+            Pen.MARKER.penName to PenSetting(40f, Color.LTGRAY),
             Pen.FOUNTAIN.penName to PenSetting(5f, Color.BLACK)
         )
     )

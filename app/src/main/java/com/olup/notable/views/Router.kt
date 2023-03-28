@@ -1,13 +1,21 @@
 package com.olup.notable
 
+import android.widget.Space
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
-import androidx.navigation.compose.dialog
 import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
@@ -19,6 +27,13 @@ import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 @Composable
 fun Router() {
     val navController = rememberAnimatedNavController()
+    var isQuickNavOpen by remember {
+        mutableStateOf(false)
+    }
+    LaunchedEffect(key1 = isQuickNavOpen, block = {
+        DrawCanvas.isDrawing.emit(!isQuickNavOpen)
+    })
+
     AnimatedNavHost(
         navController = navController,
         startDestination = "library?folderId={folderId}",
@@ -28,8 +43,10 @@ fun Router() {
         popEnterTransition = { EnterTransition.None },
         popExitTransition = { ExitTransition.None },
     ) {
-        composable(route = "library?folderId={folderId}",
-            arguments = listOf(navArgument("folderId") { nullable = true })) {
+        composable(
+            route = "library?folderId={folderId}",
+            arguments = listOf(navArgument("folderId") { nullable = true })
+        ) {
             /* Using composable function */
             Library(navController = navController, folderId = it.arguments?.getString("folderId"))
         }
@@ -42,7 +59,7 @@ fun Router() {
                 type = NavType.StringType
             })
         ) {
-            BookUi(
+            EditorView(
                 navController = navController,
                 _bookId = it.arguments?.getString("bookId")!!,
                 _pageId = it.arguments?.getString("pageId")!!
@@ -54,7 +71,7 @@ fun Router() {
                 type = NavType.StringType
             })
         ) {
-            BookUi(
+            EditorView(
                 navController = navController,
                 _bookId = null,
                 _pageId = it.arguments?.getString("pageId")!!
@@ -73,4 +90,30 @@ fun Router() {
             )
         }
     }
+
+    if (isQuickNavOpen) QuickNav(navController = navController, { isQuickNavOpen = false })
+    else Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+    ) {
+        Spacer(modifier = Modifier.weight(1f))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+                .pointerInteropFilter {
+                    if(it.size == 0f) return@pointerInteropFilter true
+                    false
+                }
+                .pointerInput(Unit) {
+
+                    detectTapGestures(
+                        onDoubleTap = {
+                            isQuickNavOpen = true
+                        }
+                    )
+                })
+    }
+
 }

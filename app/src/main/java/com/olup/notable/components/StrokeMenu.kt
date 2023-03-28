@@ -7,7 +7,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -31,11 +30,11 @@ fun StrokeMenu(
         Row(
             Modifier
                 .background(Color.White)
-                .border(0.5.dp, Color.Black)
+                .border(1.dp, Color.Black)
                 .height(IntrinsicSize.Max)
         ) {
             options.map {
-                toolbarButton(
+                ToolbarButton(
                     text = it.first,
                     isSelected = value.strokeSize == it.second,
                     onSelect = { onChange(PenSetting(strokeSize = it.second, color = value.color)) },

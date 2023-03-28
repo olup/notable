@@ -2,22 +2,22 @@ package com.olup.notable
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun toolbarButton(
+fun ToolbarButton(
     isSelected: Boolean = false,
     onSelect: () -> Unit = {},
     iconId: Int? = null,
+    imageVector : ImageVector? = null,
     text: String? = null,
     contentDescription: String = "",
     modifier: Modifier = Modifier
@@ -40,6 +40,14 @@ fun toolbarButton(
             )
         }
 
+        if (imageVector != null) {
+            Icon(
+                imageVector = imageVector,
+                contentDescription,
+                Modifier,
+                if (isSelected) Color.White else Color.Black
+            )
+        }
         if (text != null) {
             Text(
                 text = text,

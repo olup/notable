@@ -35,6 +35,9 @@ fun ToolbarMenu(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackManager = SnackContext.current
+    val page = AppRepository(context).pageRepository.getById(state.pageId)!!
+    val parentFolder = if(page.notebookId != null) AppRepository(context).bookRepository.getById(page.notebookId!!)!!.parentFolderId else page.parentFolderId
+
 
     Popup(
         alignment = Alignment.TopEnd, onDismissRequest = { onClose() }, offset = IntOffset(
@@ -52,8 +55,8 @@ fun ToolbarMenu(
                     .fillMaxWidth()
                     .padding(10.dp)
                     .noRippleClickable {
-                        navController.popBackStack(
-                            route = "library?folderId={folderId}", inclusive = false
+                        navController.navigate(
+                            route = if(parentFolder != null) "library?folderId=${parentFolder}" else "library"
                         )
                     }) {
                 Text("Library")
@@ -75,7 +78,7 @@ fun ToolbarMenu(
                             removeSnack()
                             snackManager.displaySnack(
                                 SnackConf(
-                                    text = "Book exported successfully", duration = 2000
+                                    text = "Page exported successfully", duration = 2000
                                 )
                             )
                             onClose()

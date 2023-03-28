@@ -25,7 +25,7 @@ fun PenToolbarButton(
 
     Box {
 
-        toolbarButton(
+        ToolbarButton(
             isSelected = isSelected,
             onSelect = {
                 if (isSelected) isStrokeMenuOpen = !isStrokeMenuOpen

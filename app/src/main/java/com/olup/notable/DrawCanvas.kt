@@ -40,7 +40,7 @@ class DrawCanvas(
     companion object {
         var forceUpdate = MutableSharedFlow<Rect?>()
         var refreshUi = MutableSharedFlow<Unit>()
-        var isDrawing = MutableSharedFlow<Unit>()
+        var isDrawing = MutableSharedFlow<Boolean>()
         var restartAfterConfChange = MutableSharedFlow<Unit>()
     }
 
@@ -194,6 +194,12 @@ class DrawCanvas(
                 refreshUi()
             }
         }
+        coroutineScope.launch {
+            isDrawing.collect {
+                state.isDrawing = it
+            }
+        }
+
 
         // observe restartcount
         coroutineScope.launch {
@@ -297,8 +303,6 @@ class DrawCanvas(
 
     fun updatePenAndStroke() {
         println("Update pen and stroke")
-        println(state.penSettings[state.pen.penName]!!.strokeSize)
-        println(state.penSettings[state.pen.penName]!!.color)
         when (state.mode) {
             Mode.Draw -> touchHelper.setStrokeStyle(penToStroke(state.pen))
                 ?.setStrokeWidth(state.penSettings[state.pen.penName]!!.strokeSize)
