@@ -14,8 +14,8 @@ android {
         applicationId "com.olup.notable"
         minSdk 29
         targetSdk 33
-        versionCode 4
-        versionName "0.0.4"
+        versionCode 6
+        versionName "0.0.6"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -98,4 +98,8 @@ dependencies {
 
     implementation 'br.com.devsrsouza.compose.icons.android:feather:1.0.0'
 
+}
+
+task printVersionName {
+    println android.defaultConfig.versionName
 }
