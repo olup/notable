@@ -27,12 +27,12 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
       
-    - name: Cache Gradle packages
-      uses: actions/cache@v1
-      with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: ${{ runner.os }}-gradle
+ #   - name: Cache Gradle packages
+ #     uses: actions/cache@v1
+ #     with:
+ #         path: ~/.gradle/caches
+ #         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+ #         restore-keys: ${{ runner.os }}-gradle
 
     - name: Retrieve Version
       run: |
