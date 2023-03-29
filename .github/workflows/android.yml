@@ -4,6 +4,10 @@ on:
   push:
     branches: [ "release" ]
 
+env:
+  MAVEN_OPTS: >-
+    -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
+
 jobs:
   build:
 
