@@ -2,12 +2,11 @@ package com.olup.notable
 
 import android.graphics.Rect
 import androidx.compose.ui.unit.toOffset
-import com.olup.notable.PageModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 class EditorControlTower(
-    val scope: CoroutineScope, val page: PageModel, val history: History, val state: EditorState
+    val scope: CoroutineScope, val page: PageView, val history: History, val state: EditorState
 ) {
 
     fun onSingleFingerVerticalSwipe(startPosition: SimplePointF, delta: Int) {

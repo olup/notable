@@ -11,6 +11,9 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.olup.notable.components.SelectMenu
@@ -31,8 +34,14 @@ data class AppSettings (
 
 @Composable
 fun AppSettingsModal(onClose: () -> Unit) {
-    val kv = KvProxy(LocalContext.current)
+    val context = LocalContext.current
+    val kv = KvProxy(context)
+    val isLatestVersion = remember {
+        isLatestVersion(context)
+    }
     val settings by kv.observeKv("APP_SETTINGS", AppSettings.serializer(), AppSettings(version = 1)).observeAsState()
+    val uriHandler = LocalUriHandler.current
+
 
     if(settings == null) return
     Dialog(
@@ -79,6 +88,15 @@ fun AppSettingsModal(onClose: () -> Unit) {
 
                 }
                 Spacer(Modifier.height(10.dp))
+
+                if(!isLatestVersion){
+                    Text(text = "It seems a new version of ypu app is available on github.", fontStyle = FontStyle.Italic)
+                    Spacer(Modifier.height(10.dp))
+                    Text(text = "See release in browser", textDecoration = TextDecoration.Underline, modifier=Modifier.noRippleClickable {
+                        uriHandler.openUri("https://github.com/olup/notable-public/releases")
+                    })
+                    Spacer(Modifier.height(10.dp))
+                }
             }
 
         }

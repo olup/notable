@@ -29,7 +29,7 @@ class DrawCanvas(
     val _context: Context,
     val coroutineScope: CoroutineScope,
     val state: EditorState,
-    val page: PageModel,
+    val page: PageView,
     val history: History
 ) : SurfaceView(_context) {
 
@@ -331,6 +331,7 @@ class DrawCanvas(
             )
         ).setExcludeRect(listOf(android.graphics.Rect(0, 0, this.width, exclusionHeight))).openRawDrawing()
         touchHelper.setRawDrawingEnabled(true)
+        updatePenAndStroke()
 
         refreshUi()
     }

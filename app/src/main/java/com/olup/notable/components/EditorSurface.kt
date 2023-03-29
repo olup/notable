@@ -11,7 +11,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 @Composable
 @ExperimentalComposeUiApi
 fun EditorSurface(
-    state: EditorState, page : PageModel, history: History
+    state: EditorState, page : PageView, history: History
 ) {
     val couroutineScope = rememberCoroutineScope()
     println("recompose surface")
