@@ -66,10 +66,15 @@ dependencies {
 
     //implementation fileTree(dir: 'libs', include: ['*.aar'])
     implementation('com.onyx.android.sdk:onyxsdk-device:1.2.21') {
-        exclude group: 'com.android.support', module: 'support-compat'
+       exclude group: 'com.android.support', module: 'support-compat'
     }
     implementation('com.onyx.android.sdk:onyxsdk-pen:1.4.4') {
         exclude group: 'com.android.support', module: 'support-compat'
+        exclude group: 'com.android.support', module: 'appcompat-v7'
+    }
+    implementation('com.onyx.android.sdk:onyxsdk-base:1.6.42') {
+        exclude group: 'com.android.support', module: 'support-compat'
+        exclude group: 'com.android.support', module: 'appcompat-v7'
     }
     // used in RawInputManager.
     implementation group: 'io.reactivex.rxjava2', name: 'rxjava', version: '2.2.21'
