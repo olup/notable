@@ -18,7 +18,6 @@ import androidx.core.graphics.toRect
 import androidx.core.graphics.toRegion
 import com.olup.notable.db.*
 import com.onyx.android.sdk.data.note.TouchPoint
-import com.onyx.android.sdk.utils.BroadcastHelper.App
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -113,7 +112,7 @@ fun pointsToPath(points: List<SimplePointF>): Path {
 
 // points is in page coordinates
 fun handleErase(
-    page: PageModel,
+    page: PageView,
     history: History,
     points: List<SimplePointF>,
 ) {
@@ -156,7 +155,7 @@ enum class SelectPointPosition {
 // points is in page coodinates
 fun handleSelect(
     scope: CoroutineScope,
-    page: PageModel,
+    page: PageView,
     editorState: EditorState,
     points: List<SimplePointF>
 ) {
@@ -249,7 +248,7 @@ fun handleSelect(
 
 // touchpoints is in wiew coordinates
 fun handleDraw(
-    page: PageModel,
+    page: PageView,
     historyBucket: MutableList<String>,
     strokeSize: Float,
     pen: Pen,

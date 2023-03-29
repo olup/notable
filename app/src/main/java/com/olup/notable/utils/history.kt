@@ -2,7 +2,6 @@ package com.olup.notable
 
 import android.graphics.Rect
 import com.olup.notable.db.Stroke
-import com.olup.notable.PageModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -26,11 +25,11 @@ sealed class HistoryBusActions {
     data class MoveHistory(val type: UndoRedoType) : HistoryBusActions()
 }
 
-class History(coroutineScope: CoroutineScope, pageModel: PageModel) {
+class History(coroutineScope: CoroutineScope, pageView: PageView) {
 
     private var undoList: OperationList = mutableListOf()
     private var redoList: OperationList = mutableListOf()
-    val pageModel = pageModel
+    val pageModel = pageView
 
     // TODO maybe not in a companion object ?
     companion object {
@@ -51,7 +50,7 @@ class History(coroutineScope: CoroutineScope, pageModel: PageModel) {
                     is HistoryBusActions.MoveHistory -> {
                         val zoneAffected = undoRedo(type = it.type)
                         if(zoneAffected != null) {
-                            pageModel.drawArea(pageAreaToCanvasArea(zoneAffected, pageModel.scroll))
+                            pageView.drawArea(pageAreaToCanvasArea(zoneAffected, pageView.scroll))
                         }
                     }
                     is HistoryBusActions.RegisterHistoryOperationBlock -> { addOperationsToHistory(it.operationBlock)}

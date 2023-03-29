@@ -4,6 +4,7 @@ import android.graphics.*
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.toOffset
 import com.olup.notable.db.Stroke
+import com.onyx.android.sdk.data.note.ShapeCreateArgs
 import com.onyx.android.sdk.data.note.TouchPoint
 import com.onyx.android.sdk.pen.NeoBrushPen
 import com.onyx.android.sdk.pen.NeoCharcoalPen
@@ -71,7 +72,7 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
     when (stroke.pen) {
         Pen.BALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
         Pen.PENCIL -> NeoCharcoalPen.drawNormalStroke(
-            null, canvas, paint, points, -16777216, stroke.size, pressure, 90, false
+            null, canvas, paint, points, -16777216, stroke.size, ShapeCreateArgs(), Matrix(),false
         )
         Pen.BRUSH -> NeoBrushPen.drawStroke(canvas, paint, points, stroke.size, pressure, false)
         Pen.MARKER -> drawMarkerStroke(canvas, paint, stroke.size, points)

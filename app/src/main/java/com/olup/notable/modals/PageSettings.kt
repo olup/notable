@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
@@ -15,8 +14,8 @@ import com.olup.notable.components.SelectMenu
 import kotlinx.coroutines.launch
 
 @Composable
-fun PageSettingsModal(pageModel: PageModel, onClose: () -> Unit) {
-    var pageTemplate by remember { mutableStateOf(pageModel.pageFromDb!!.nativeTemplate) }
+fun PageSettingsModal(pageView: PageView, onClose: () -> Unit) {
+    var pageTemplate by remember { mutableStateOf(pageView.pageFromDb!!.nativeTemplate) }
     val scope = rememberCoroutineScope()
     Dialog(
         onDismissRequest = { onClose() }
@@ -55,10 +54,10 @@ fun PageSettingsModal(pageModel: PageModel, onClose: () -> Unit) {
                             "squared" to "Small squares grid"
                         ),
                         onChange = {
-                            val updatedPage = pageModel.pageFromDb!!.copy(nativeTemplate = it)
-                            pageModel.updatePageSettings(updatedPage)
+                            val updatedPage = pageView.pageFromDb!!.copy(nativeTemplate = it)
+                            pageView.updatePageSettings(updatedPage)
                             scope.launch {  DrawCanvas.refreshUi.emit(Unit) }
-                            pageTemplate = pageModel.pageFromDb!!.nativeTemplate
+                            pageTemplate = pageView.pageFromDb!!.nativeTemplate
                         },
                         value = pageTemplate
                     )

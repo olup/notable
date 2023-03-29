@@ -16,7 +16,7 @@ fun penToStroke(pen: Pen): Int {
         Pen.PENCIL -> StrokeStyle.CHARCOAL
         Pen.BRUSH -> StrokeStyle.NEO_BRUSH
         Pen.MARKER -> StrokeStyle.MARKER
-        Pen.FOUNTAIN -> StrokeStyle.BRUSH
+        Pen.FOUNTAIN -> StrokeStyle.FOUNTAIN
     }
 }
 

@@ -37,7 +37,7 @@ fun EditorView(
 
 
     val page = remember {
-        PageModel(
+        PageView(
             context = context,
             coroutineScope = scope,
             id = _pageId,
@@ -47,7 +47,7 @@ fun EditorView(
         )
     }
 
-    val editorState = remember { EditorState(bookId = _bookId, pageId = _pageId, pageModel = page) }
+    val editorState = remember { EditorState(bookId = _bookId, pageId = _pageId, pageView = page) }
 
     val history = remember {
         History(scope, page)
@@ -73,9 +73,9 @@ fun EditorView(
         editorState.mode
     ) {
         println("saving")
-        DataStoreManager.setEditorSettings(
+        EditorSettingCacheManager.setEditorSettings(
             context,
-            DataStoreManager.EditorSettings(
+            EditorSettingCacheManager.EditorSettings(
                 isToolbarOpen = editorState.isToolbarOpen,
                 mode = editorState.mode,
                 pen = editorState.pen,

@@ -10,7 +10,6 @@ import androidx.core.graphics.toRect
 import com.olup.notable.db.AppDatabase
 import com.olup.notable.db.Page
 import com.olup.notable.db.Stroke
-import com.onyx.android.sdk.api.device.epd.EpdController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
@@ -23,7 +22,7 @@ import kotlin.io.path.Path
 import kotlin.math.max
 import kotlin.system.measureTimeMillis
 
-class PageModel(
+class PageView(
     val context: Context,
     val coroutineScope: CoroutineScope,
     val id: String,

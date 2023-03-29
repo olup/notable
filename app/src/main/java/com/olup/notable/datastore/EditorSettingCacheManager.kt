@@ -1,20 +1,15 @@
 package com.olup.notable
 
 import android.content.Context
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
+import com.olup.notable.AppRepository
 import com.olup.notable.db.Kv
-import kotlinx.coroutines.flow.map
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 val persistVersion = 2
 
-object DataStoreManager {
+object EditorSettingCacheManager {
 
     @kotlinx.serialization.Serializable
     data class EditorSettings(
@@ -46,9 +41,5 @@ object DataStoreManager {
     fun setEditorSettings(context : Context, newEditorSettings: EditorSettings, shouldPersist : Boolean = true) {
         editorSettings = newEditorSettings
         if(shouldPersist) persist(context, newEditorSettings)
-    }
-
-    fun persistEditorSetting(newEditorSettings: EditorSettings) {
-        editorSettings = newEditorSettings
     }
 }

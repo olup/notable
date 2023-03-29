@@ -72,7 +72,7 @@ fun Toolbar(
 
 
     if (isPageSettingsModalOpen) {
-        PageSettingsModal(pageModel = state.pageModel) {
+        PageSettingsModal(pageView = state.pageView) {
             isPageSettingsModalOpen = false
         }
     }

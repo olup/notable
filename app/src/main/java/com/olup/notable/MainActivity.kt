@@ -9,14 +9,12 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.olup.notable.ui.theme.InkaTheme
-import com.onyx.android.sdk.api.device.EpdDeviceManager
 import com.onyx.android.sdk.api.device.epd.EpdController
 import kotlinx.coroutines.launch
 
@@ -28,19 +26,22 @@ var SCREEN_HEIGHT = EpdController.getEpdWidth().toInt()
 @ExperimentalFoundationApi
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
         if(SCREEN_WIDTH == 0){
             SCREEN_WIDTH = applicationContext.resources.displayMetrics.widthPixels
             SCREEN_HEIGHT = applicationContext.resources.displayMetrics.heightPixels
         }
 
-        super.onCreate(savedInstanceState)
-        EpdDeviceManager.enterAnimationUpdate(true);
         val snackState = SnackState()
+        // Refactor - we prob don't need this
+        EditorSettingCacheManager.init(applicationContext)
 
-        DataStoreManager.init(applicationContext)
+
+        //EpdDeviceManager.enterAnimationUpdate(true);
+
 
         setContent {
-
             InkaTheme {
                 CompositionLocalProvider(SnackContext provides snackState ) {
                     Box(

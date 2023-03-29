@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Badge
+import androidx.compose.material.BadgedBox
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -15,7 +17,6 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -23,18 +24,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.olup.notable.AppRepository
 import com.olup.notable.db.Folder
 import com.olup.notable.db.Notebook
 import com.olup.notable.db.Page
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Folder
 import compose.icons.feathericons.Settings
-import kotlinx.coroutines.launch
 
 @ExperimentalFoundationApi
 @ExperimentalComposeUiApi
 @Composable
 fun Library(navController: NavController, folderId: String? = null) {
+    val context = LocalContext.current
 
     var isSettingsOpen by remember {
         mutableStateOf(false)
@@ -46,6 +48,10 @@ fun Library(navController: NavController, folderId: String? = null) {
         .observeAsState()
     val folders by appRepository.folderRepository.getAllInFolder(folderId).observeAsState()
 
+    val isLatestVersion = remember {
+        isLatestVersion(context)
+    }
+
     Column(
         Modifier.fillMaxSize()
     ) {
@@ -53,14 +59,19 @@ fun Library(navController: NavController, folderId: String? = null) {
         ) {
             Row(Modifier.fillMaxWidth()) {
                 Spacer(modifier = Modifier.weight(1f))
-                Icon(
-                    imageVector = FeatherIcons.Settings,
-                    contentDescription = "",
-                    Modifier
-                        .padding(8.dp)
-                        .noRippleClickable {
-                            isSettingsOpen = true
-                        })
+                BadgedBox(
+                    badge = { if(!isLatestVersion) Badge( backgroundColor = Color.Black ) }
+                ) {
+                    Icon(
+                        imageVector = FeatherIcons.Settings,
+                        contentDescription = "",
+                        Modifier
+                            .padding(8.dp)
+                            .noRippleClickable {
+                                isSettingsOpen = true
+                            })
+                }
+
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 Text(text = "Add quick page",
@@ -71,8 +82,7 @@ fun Library(navController: NavController, folderId: String? = null) {
                                 notebookId = null,
                                 parentFolderId = folderId,
                                 nativeTemplate = appRepository.kvProxy.get(
-                                    "APP_SETTINGS",
-                                    AppSettings.serializer()
+                                    "APP_SETTINGS", AppSettings.serializer()
                                 )?.defaultNativeTemplate ?: "blank"
                             )
                             appRepository.pageRepository.create(page)

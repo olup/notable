@@ -10,6 +10,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url "http://repo.boox.com/repository/maven-public/"
+            allowInsecureProtocol = true
+        }
+        maven { url "https://jitpack.io" }
     }
 }
 rootProject.name = "Notable"

@@ -13,9 +13,9 @@ enum class Mode {
     Draw, Erase, Select
 }
 
-class EditorState(val bookId: String? = null, val pageId: String, val pageModel: PageModel) {
+class EditorState(val bookId: String? = null, val pageId: String, val pageView: PageView) {
 
-    val persistedEditorSettings = DataStoreManager.getEditorSettings()
+    val persistedEditorSettings = EditorSettingCacheManager.getEditorSettings()
 
     var mode by mutableStateOf(persistedEditorSettings?.mode ?: Mode.Draw) // should save
     var pen by mutableStateOf(persistedEditorSettings?.pen ?: Pen.BALLPEN) // should save
