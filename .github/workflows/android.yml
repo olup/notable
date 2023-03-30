@@ -25,9 +25,23 @@ jobs:
     - uses: gradle/gradle-build-action@v2
       with:
        gradle-version: 7.5
+
+    - name: Decode Keystore
+      id: decode_keystore
+      uses: timheuer/base64-to-file@v1.1
+      with:
+        fileDir: './secrets'
+        fileName: 'my.keystore'
+        encodedString: ${{ secrets.KEYSTORE_FILE }}
        
     - name: Execute Gradle build
-      run: ./gradlew assembleRelease --stacktrace
+      run: |
+        ./gradlew \
+         -PKEYSTORE_FILE="../${{ steps.decode_keystore.outputs.filePath }}" \
+         -PKEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }} \
+         -PKEY_ALIAS=${{ secrets.KEY_ALIAS }} \
+         -PKEY_PASSWORD=${{ secrets.KEY_PASSWORD }} \
+         assembleDebug
       
  #   - name: Cache Gradle packages
  #     uses: actions/cache@v1
@@ -48,7 +62,7 @@ jobs:
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
-        files: ${{ github.workspace }}/app/build/outputs/apk/release/app-release.apk
+        files: ${{ github.workspace }}/app/build/outputs/apk/debug/app-debug.apk
         tag_name: v${{env.version_name}}
         token: ${{ secrets.TOKEN }}
         repository: olup/notable-public
