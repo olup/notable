@@ -39,7 +39,7 @@ private inline fun exportPdf(folder: String, title: String, write: PdfDocument.(
     document.write()
     val filePath = ExportRoot / folder / "$title.pdf"
     Files.createDirectories(filePath.parent)
-    document.writeTo(FileOutputStream(filePath.absolutePathString()))
+    FileOutputStream(filePath.absolutePathString()).use(document::writeTo)
     document.close()
 }
 
