@@ -52,4 +52,3 @@ jobs:
         files: ${{ github.workspace }}/app/build/outputs/apk/release/app-release.apk
         tag_name: v${{env.version_name}}
         token: ${{ secrets.TOKEN }}
-        repository: olup/notable-public

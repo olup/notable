@@ -53,7 +53,7 @@ fun isLatestVersion(context: Context) : Boolean{
 
     try {
         val version = getCurrentVersionName(context)
-        val latestVersion = getLatestReleaseVersion("olup", "notable-public")
+        val latestVersion = getLatestReleaseVersion("olup", "notable")
         isLatestVersion = version != latestVersion
         return isLatestVersion!!
     } catch (e: Exception) {
