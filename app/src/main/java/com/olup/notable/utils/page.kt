@@ -36,7 +36,7 @@ fun exportBook(context : Context, bookId: String){
         document.finishPage(documentPage)
     }
 
-    val filePath = Paths.get(android.os.Environment.getExternalStorageDirectory().toString(), android.os.Environment.DIRECTORY_DOCUMENTS.toString(), "notable", "notebooks",  "${book.title}}.pdf")
+    val filePath = Paths.get(android.os.Environment.getExternalStorageDirectory().toString(), android.os.Environment.DIRECTORY_DOCUMENTS.toString(), "notable", "notebooks",  "${book.title}.pdf")
     Files.createDirectories(filePath.parent)
     document.writeTo( FileOutputStream(filePath.absolutePathString()))
     document.close()
