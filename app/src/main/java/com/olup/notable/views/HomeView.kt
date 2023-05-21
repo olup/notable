@@ -130,9 +130,11 @@ fun Library(navController: NavController, folderId: String? = null) {
                 ) {
                     items(folders!!) { folder ->
                         var isSettingsOpen by remember { mutableStateOf(false) }
+                        //println(isSettingsOpen)
                         if (isSettingsOpen) FolderConfigDialog(
                             folderId = folder.id,
                             onClose = { isSettingsOpen = false })
+
                         Row(
                             Modifier
                                 .combinedClickable(

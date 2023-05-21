@@ -33,7 +33,6 @@ import com.olup.notable.db.FolderRepository
 fun FolderConfigDialog(folderId: String, onClose : ()->Unit) {
     val folderRepository = FolderRepository(LocalContext.current)
     val folder = folderRepository.get(folderId) ?: return
-    val context = LocalContext.current
 
     var folderTitle by remember {
         mutableStateOf(folder.title)
