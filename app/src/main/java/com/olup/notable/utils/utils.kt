@@ -115,26 +115,29 @@ fun handleErase(
     page: PageView,
     history: History,
     points: List<SimplePointF>,
+    eraser: Eraser
 ) {
-    /* val paint = Paint().apply {
-         this.strokeWidth = 10f
+     val paint = Paint().apply {
+         this.strokeWidth = 30f
          this.style = Paint.Style.STROKE
          this.strokeCap = Paint.Cap.ROUND
          this.strokeJoin = Paint.Join.ROUND
          this.isAntiAlias = true
-     }*/
+     }
     val path = pointsToPath(points)
+    var outPath = Path()
 
-    // lasso eraser
-    path.close()
-    val outPath = path
+    if(eraser == Eraser.SELECT){
+        path.close()
+        outPath = path
+    }
 
 
-// stroke erasaer
-//    val outPath = Path()
-//    paint.getFillPath(path, outPath)
+    if(eraser == Eraser.PEN) {
+        paint.getFillPath(path, outPath)
+    }
 
-    val deletedStrokes = selectStrokesFromPath(page.strokes, path)
+    val deletedStrokes = selectStrokesFromPath(page.strokes, outPath)
 
     val deletedStrokeIds = deletedStrokes.map { it.id }
     page.removeStrokes(deletedStrokeIds)

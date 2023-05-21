@@ -79,6 +79,7 @@ fun EditorView(
                 isToolbarOpen = editorState.isToolbarOpen,
                 mode = editorState.mode,
                 pen = editorState.pen,
+                eraser = editorState.eraser,
                 penSettings = editorState.penSettings
             )
         )

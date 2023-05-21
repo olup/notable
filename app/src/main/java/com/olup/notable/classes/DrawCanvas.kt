@@ -53,7 +53,6 @@ class DrawCanvas(
         }
 
         override fun onEndRawDrawing(p0: Boolean, p1: TouchPoint?) {
-            // page.saveToDisk(context) // TODO
         }
 
         override fun onRawDrawingTouchPointMoveReceived(p0: TouchPoint?) {
@@ -65,7 +64,9 @@ class DrawCanvas(
                 if (getActualState().mode == Mode.Erase) {
                     handleErase(this@DrawCanvas.page,
                         history,
-                        plist.points.map { SimplePointF(it.x, it.y + page.scroll) })
+                        plist.points.map { SimplePointF(it.x, it.y + page.scroll) },
+                        eraser = getActualState().eraser
+                    )
                     drawCanvasToView()
                     refreshUi()
                 }
@@ -101,10 +102,10 @@ class DrawCanvas(
         }
 
         override fun onRawErasingTouchPointListReceived(plist: TouchPointList?) {
-            if(plist == null) return
+            if (plist == null) return
             handleErase(this@DrawCanvas.page,
                 history,
-                plist.points.map { SimplePointF(it.x, it.y + page.scroll) })
+                plist.points.map { SimplePointF(it.x, it.y + page.scroll) }, eraser = getActualState().eraser)
             drawCanvasToView()
             refreshUi()
         }
@@ -211,8 +212,22 @@ class DrawCanvas(
 
         // observe paen and stroke size
         coroutineScope.launch {
-            snapshotFlow { state.pen to state.penSettings.toMap() }.drop(1).collect {
+            snapshotFlow { state.pen }.drop(1).collect {
                 println("pen change: ${state.pen}")
+                updatePenAndStroke()
+                refreshUi()
+            }
+        }
+        coroutineScope.launch {
+            snapshotFlow { state.penSettings.toMap() }.drop(1).collect {
+                println("pen settings change: ${state.penSettings}")
+                updatePenAndStroke()
+                refreshUi()
+            }
+        }
+        coroutineScope.launch {
+            snapshotFlow { state.eraser}.drop(1).collect {
+                println("eraser change: ${state.eraser}")
                 updatePenAndStroke()
                 refreshUi()
             }
@@ -269,7 +284,7 @@ class DrawCanvas(
     }
 
     fun drawCanvasToView() {
-    println("Draw canvas")
+        println("Draw canvas")
         val canvas = this.holder.lockCanvas() ?: return
         canvas.drawBitmap(page.windowedBitmap, 0f, 0f, Paint());
 
@@ -307,8 +322,14 @@ class DrawCanvas(
             Mode.Draw -> touchHelper.setStrokeStyle(penToStroke(state.pen))
                 ?.setStrokeWidth(state.penSettings[state.pen.penName]!!.strokeSize)
                 ?.setStrokeColor(state.penSettings[state.pen.penName]!!.color)
-            Mode.Erase -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))?.setStrokeWidth(3f)
-                ?.setStrokeColor(Color.GRAY)
+            Mode.Erase -> {
+                when (state.eraser) {
+                    Eraser.PEN -> touchHelper.setStrokeStyle(penToStroke(Pen.MARKER))?.setStrokeWidth(30f)
+                        ?.setStrokeColor(Color.GRAY)
+                    Eraser.SELECT -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))?.setStrokeWidth(3f)
+                        ?.setStrokeColor(Color.GRAY)
+                }
+            }
             Mode.Select -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))?.setStrokeWidth(3f)
                 ?.setStrokeColor(Color.GRAY)
         }
@@ -329,7 +350,8 @@ class DrawCanvas(
                     0, 0, this.width, this.height
                 )
             )
-        ).setExcludeRect(listOf(android.graphics.Rect(0, 0, this.width, exclusionHeight))).openRawDrawing()
+        ).setExcludeRect(listOf(android.graphics.Rect(0, 0, this.width, exclusionHeight)))
+            .openRawDrawing()
         touchHelper.setRawDrawingEnabled(true)
         updatePenAndStroke()
 

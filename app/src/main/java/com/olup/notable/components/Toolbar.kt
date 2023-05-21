@@ -99,49 +99,41 @@ fun Toolbar(
                         .background(Color.Black)
                 )
 
-                PenToolbarButton(
-                    onStrokeMenuOpenChange = {state.isDrawing = !it},
+                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.BALLPEN,
                     icon = R.drawable.ballpen,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.BALLPEN,
                     onSelect = { handleChangePen(Pen.BALLPEN) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.BALLPEN.penName] ?: return,
-                    onChangeSetting = { onChangeStrokeSetting(Pen.BALLPEN.penName, it) }
-                )
+                    onChangeSetting = { onChangeStrokeSetting(Pen.BALLPEN.penName, it) })
 
-                PenToolbarButton(
-                    onStrokeMenuOpenChange = {state.isDrawing = !it},
+                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.PENCIL,
                     icon = R.drawable.pencil,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.PENCIL,
                     onSelect = { handleChangePen(Pen.PENCIL) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.PENCIL.penName] ?: return,
-                    onChangeSetting = { onChangeStrokeSetting(Pen.PENCIL.penName, it) }
-                )
+                    onChangeSetting = { onChangeStrokeSetting(Pen.PENCIL.penName, it) })
 
-                PenToolbarButton(
-                    onStrokeMenuOpenChange = {state.isDrawing = !it},
+                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.BRUSH,
                     icon = R.drawable.brush,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.BRUSH,
                     onSelect = { handleChangePen(Pen.BRUSH) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.BRUSH.penName] ?: return,
-                    onChangeSetting = { onChangeStrokeSetting(Pen.BRUSH.penName, it) }
-                )
+                    onChangeSetting = { onChangeStrokeSetting(Pen.BRUSH.penName, it) })
 
-                PenToolbarButton(
-                    onStrokeMenuOpenChange = {state.isDrawing = !it},
+                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.FOUNTAIN,
                     icon = R.drawable.fountain,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.FOUNTAIN,
                     onSelect = { handleChangePen(Pen.FOUNTAIN) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.FOUNTAIN.penName] ?: return,
-                    onChangeSetting = { onChangeStrokeSetting(Pen.FOUNTAIN.penName, it) }
-                )
+                    onChangeSetting = { onChangeStrokeSetting(Pen.FOUNTAIN.penName, it) })
 
                 Box(
                     Modifier
@@ -150,16 +142,19 @@ fun Toolbar(
                         .background(Color.Black)
                 )
 
-                PenToolbarButton(
-                    onStrokeMenuOpenChange = {state.isDrawing = !it},
+                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.MARKER,
                     icon = R.drawable.marker,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.MARKER,
                     onSelect = { handleChangePen(Pen.MARKER) },
                     sizes = listOf("L" to 40f, "XL" to 60f),
                     penSetting = state.penSettings[Pen.MARKER.penName] ?: return,
-                    onChangeSetting = { onChangeStrokeSetting(Pen.MARKER.penName, it.copy(it.strokeSize, android.graphics.Color.LTGRAY)) }
-                )
+                    onChangeSetting = {
+                        onChangeStrokeSetting(
+                            Pen.MARKER.penName,
+                            it.copy(it.strokeSize, android.graphics.Color.LTGRAY)
+                        )
+                    })
 
                 Box(
                     Modifier
@@ -167,11 +162,9 @@ fun Toolbar(
                         .width(0.5.dp)
                         .background(Color.Black)
                 )
-                ToolbarButton(
-                    isSelected = state.mode == Mode.Erase, onSelect = {
-                        handleEraser()
-                    }, iconId = R.drawable.eraser, contentDescription = "eraser"
-                )
+                EraserToolbarButton(isSelected = state.mode == Mode.Erase, onSelect = {
+                    handleEraser()
+                }, onMenuOpenChange = { isStrokeSelectionOpen = it }, value = state.eraser, onChange = {state.eraser = it})
                 Box(
                     Modifier
                         .fillMaxHeight()
@@ -235,12 +228,10 @@ fun Toolbar(
                             isMenuOpen = !isMenuOpen
                         }, iconId = R.drawable.menu, contentDescription = "menu"
                     )
-                    if (isMenuOpen) ToolbarMenu(
-                        navController = navController,
+                    if (isMenuOpen) ToolbarMenu(navController = navController,
                         state = state,
                         onClose = { isMenuOpen = false },
-                        onPageSettingsOpen = { isPageSettingsModalOpen = true }
-                    )
+                        onPageSettingsOpen = { isPageSettingsModalOpen = true })
                 }
             }
 
@@ -261,7 +252,8 @@ fun Toolbar(
         ToolbarButton(
             onSelect = { state.isToolbarOpen = true },
             iconId = PresentlyUsedToolIcon(state.mode, state.pen),
-            contentDescription = "open toolbar", modifier = Modifier.height(37.dp)
+            contentDescription = "open toolbar",
+            modifier = Modifier.height(37.dp)
         )
 
     }
