@@ -15,5 +15,7 @@ Editors' mode Gestures:
 - Double finger tap: writing modes to eraser modes / back to writing modes (letest pen)
 - Single finger, double tap: show/hide toolbar
 - Bottom screen double tap (single finger): show quick nav
+- Once selected, drag selection around
+- Once selected, double tap top copy selection
 
 Export feature works only on some devices it seems for now
