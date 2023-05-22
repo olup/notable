@@ -4,6 +4,7 @@ A custom note taking app for boox, with some special features.
 ## Features
 
 - Fast page's turn with caching
+- Infinite vertical scroll
 - Quick pages
 - Notebooks
 - Folders
