@@ -13,6 +13,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 fun PresentlyUsedToolIcon(mode: Mode, pen: Pen): Int {
     return when (mode) {
@@ -35,6 +37,7 @@ fun PresentlyUsedToolIcon(mode: Mode, pen: Pen): Int {
 fun Toolbar(
     navController: NavController, state: EditorState
 ) {
+    val scope = rememberCoroutineScope()
     var isStrokeSelectionOpen by remember { mutableStateOf(false) }
     var isMenuOpen by remember { mutableStateOf(false) }
     var isPageSettingsModalOpen by remember { mutableStateOf(false) }
@@ -193,12 +196,42 @@ fun Toolbar(
                         .background(Color.Black)
                 )
 
+                ToolbarButton(
+                    onSelect = {
+                        scope.launch {
+                            History.moveHistory(UndoRedoType.Undo)
+                            DrawCanvas.refreshUi.emit(Unit)
+                        }
+                    },
+                    iconId = R.drawable.undo,
+                    contentDescription = "undo"
+                )
+
+                ToolbarButton(
+                    onSelect = {
+                        scope.launch {
+                            History.moveHistory(UndoRedoType.Redo)
+                            DrawCanvas.refreshUi.emit(Unit)
+                        }
+                    },
+                    iconId = R.drawable.redo,
+                    contentDescription = "redo"
+                )
+
+                Box(
+                    Modifier
+                        .fillMaxHeight()
+                        .width(0.5.dp)
+                        .background(Color.Black)
+                )
+
                 if (state.bookId != null) {
                     val book = AppRepository(context).bookRepository.getById(state.bookId)
 
                     // TODO maybe have generic utils for this ?
                     val pageNumber = book!!.pageIds.indexOf(state.pageId) + 1
                     val totalPageNumber = book!!.pageIds.size
+
 
                     Box(
                         contentAlignment = Alignment.Center,
@@ -242,10 +275,6 @@ fun Toolbar(
                     .background(Color.Black)
             )
 
-            // penStrokeMenu
-            if (isStrokeSelectionOpen) {
-
-            }
 
         }
     } else {
