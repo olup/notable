@@ -56,7 +56,7 @@ fun AppSettingsModal(onClose: () -> Unit) {
             Column(
                 Modifier.padding(20.dp, 10.dp)
             ) {
-                Text(text = "App setting")
+                Text(text = "App setting - v${BuildConfig.VERSION_NAME}")
             }
             Box(
                 Modifier
@@ -89,14 +89,14 @@ fun AppSettingsModal(onClose: () -> Unit) {
                 }
                 Spacer(Modifier.height(10.dp))
 
-                if(!isLatestVersion){
+                //if(!isLatestVersion){
                     Text(text = "It seems a new version of ypu app is available on github.", fontStyle = FontStyle.Italic)
                     Spacer(Modifier.height(10.dp))
                     Text(text = "See release in browser", textDecoration = TextDecoration.Underline, modifier=Modifier.noRippleClickable {
                         uriHandler.openUri("https://github.com/olup/notable-public/releases")
                     })
                     Spacer(Modifier.height(10.dp))
-                }
+                //}
             }
 
         }
