@@ -31,6 +31,8 @@ import com.olup.notable.db.Page
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Folder
 import compose.icons.feathericons.Settings
+import java.net.URL
+import kotlin.concurrent.thread
 
 @ExperimentalFoundationApi
 @ExperimentalComposeUiApi
@@ -48,9 +50,14 @@ fun Library(navController: NavController, folderId: String? = null) {
         .observeAsState()
     val folders by appRepository.folderRepository.getAllInFolder(folderId).observeAsState()
 
-    val isLatestVersion = remember {
-        isLatestVersion(context)
+    var isLatestVersion by remember {
+        mutableStateOf(true)
     }
+    LaunchedEffect(key1 = Unit, block = {
+        thread {
+            isLatestVersion = isLatestVersion(context, true)
+        }
+    })
 
     Column(
         Modifier.fillMaxSize()
@@ -60,7 +67,7 @@ fun Library(navController: NavController, folderId: String? = null) {
             Row(Modifier.fillMaxWidth()) {
                 Spacer(modifier = Modifier.weight(1f))
                 BadgedBox(
-                    badge = { if(!isLatestVersion) Badge( backgroundColor = Color.Black ) }
+                    badge = { if(!isLatestVersion) Badge( backgroundColor = Color.Black, modifier = Modifier.offset(-12.dp, 10.dp) ) }
                 ) {
                     Icon(
                         imageVector = FeatherIcons.Settings,

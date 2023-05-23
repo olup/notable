@@ -5,22 +5,14 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import android.content.Context
 import android.content.pm.PackageManager
+import kotlinx.coroutines.CoroutineScope
 
 fun getLatestReleaseVersion(repoOwner: String, repoName: String): String? {
     val apiUrl = "https://api.github.com/repos/$repoOwner/$repoName/releases/latest"
-    val url = URL(apiUrl)
-    val connection = url.openConnection()
-    connection.setRequestProperty("User-Agent", "Mozilla/5.0")
-    val reader = BufferedReader(InputStreamReader(connection.getInputStream()))
-    val json = StringBuilder()
-    var line: String?
-    while (reader.readLine().also { line = it } != null) {
-        json.append(line)
-    }
-    reader.close()
+    val json = URL(apiUrl).readText()
 
     // Parse the JSON response and extract the tag name
-    val version = json.toString()
+    val version = json
         .split("\"tag_name\":")[1]
         .split(",")[0]
         .replace("\"", "")
@@ -48,8 +40,8 @@ fun getCurrentVersionName(context: Context): String? {
 
 // cache
 var isLatestVersion : Boolean? = null
-fun isLatestVersion(context: Context) : Boolean{
-    if(isLatestVersion!=null) return isLatestVersion!!
+fun isLatestVersion(context: Context, force : Boolean = false) : Boolean{
+    if(!force && isLatestVersion!=null) return isLatestVersion!!
 
     try {
         val version = getCurrentVersionName(context)

@@ -1,0 +1,63 @@
+name: Build and Release Preview
+
+on:
+  push:
+    branches: ["main"]
+
+env:
+  MAVEN_OPTS: >-
+    -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: set up JDK 18
+        uses: actions/setup-java@v3
+        with:
+          java-version: "18"
+          distribution: "temurin"
+          # cache: gradle
+
+      - uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: 7.5
+
+      - name: Decode Keystore
+        id: decode_keystore
+        uses: timheuer/base64-to-file@v1.1
+        with:
+          fileDir: "./secrets"
+          fileName: "my.keystore"
+          encodedString: ${{ secrets.KEYSTORE_FILE }}
+
+      - name: Execute Gradle build
+        run: |
+          ./gradlew \
+           -PDEBUG_STORE_FILE="../${{ steps.decode_keystore.outputs.filePath }}" \
+           -PDEBUG_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }} \
+           -PDEBUG_KEY_ALIAS=${{ secrets.KEY_ALIAS }} \
+           -PDEBUG_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }} \
+           assembleDebug
+
+      #   - name: Cache Gradle packages
+      #     uses: actions/cache@v1
+      #     with:
+      #         path: ~/.gradle/caches
+      #         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+      #         restore-keys: ${{ runner.os }}-gradle
+
+      - run: mv ${{ github.workspace }}/app/build/outputs/apk/debug/app-debug.apk ${{ github.workspace }}/app/build/outputs/apk/debug/notable-next.apk
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ github.workspace }}/app/build/outputs/apk/debug/notable-next.apk
+          tag_name: next
+          name: next
+          prerelease: true
+          draft: true
+          body: "Preview version corresponding to the latest build on main"
+          token: ${{ secrets.TOKEN }}
