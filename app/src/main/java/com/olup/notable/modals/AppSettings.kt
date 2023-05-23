@@ -107,8 +107,8 @@ fun AppSettingsModal(onClose: () -> Unit) {
                 }
                 Spacer(Modifier.height(10.dp))
 
-                //if(!isLatestVersion){
-                    Text(text = "It seems a new version of ypu app is available on github.", fontStyle = FontStyle.Italic)
+                if(!isLatestVersion){
+                    Text(text = "It seems a new version of Notable is available on github.", fontStyle = FontStyle.Italic)
                     Spacer(Modifier.height(10.dp))
                     Text(
                         text = "See release in browser",
@@ -116,12 +116,12 @@ fun AppSettingsModal(onClose: () -> Unit) {
                         modifier = Modifier.noRippleClickable {
                             val urlIntent = Intent(
                                 Intent.ACTION_VIEW,
-                                Uri.parse("https://github.com/olup/notable-public/releases")
+                                Uri.parse("https://github.com/olup/notable/releases")
                             )
                             context.startActivity(urlIntent)
                         })
                     Spacer(Modifier.height(10.dp))
-                //}
+                }
             }
 
         }
