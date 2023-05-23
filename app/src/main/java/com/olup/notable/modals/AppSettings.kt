@@ -70,7 +70,7 @@ fun AppSettingsModal(onClose: () -> Unit) {
             Column(
                 Modifier.padding(20.dp, 10.dp)
             ) {
-                Text(text = "App setting - v${BuildConfig.VERSION_NAME}")
+                Text(text = "App setting - v${BuildConfig.VERSION_NAME}${if(isNext) " [NEXT]" else ""}")
             }
             Box(
                 Modifier

@@ -40,6 +40,7 @@ jobs:
            -PDEBUG_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }} \
            -PDEBUG_KEY_ALIAS=${{ secrets.KEY_ALIAS }} \
            -PDEBUG_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }} \
+           -PIS_NEXT=true \
            assembleDebug
 
       #   - name: Cache Gradle packages

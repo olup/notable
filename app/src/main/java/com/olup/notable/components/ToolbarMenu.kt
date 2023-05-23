@@ -15,10 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.NavController
-import com.olup.notable.AppRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
 
 @Composable
 fun ToolbarMenu(
@@ -31,13 +29,21 @@ fun ToolbarMenu(
     val scope = rememberCoroutineScope()
     val snackManager = SnackContext.current
     val page = AppRepository(context).pageRepository.getById(state.pageId)!!
-    val parentFolder = if(page.notebookId != null) AppRepository(context).bookRepository.getById(page.notebookId!!)!!.parentFolderId else page.parentFolderId
-
+    val parentFolder =
+        if (page.notebookId != null)
+            AppRepository(context).bookRepository.getById(page.notebookId!!)!!
+                .parentFolderId
+        else page.parentFolderId
 
     Popup(
-        alignment = Alignment.TopEnd, onDismissRequest = { onClose() }, offset = IntOffset(
-            convertDpToPixel(-10.dp, context).toInt(), convertDpToPixel(50.dp, context).toInt()
-        ), properties = PopupProperties(focusable = true)
+        alignment = Alignment.TopEnd,
+        onDismissRequest = { onClose() },
+        offset =
+        IntOffset(
+            convertDpToPixel(-10.dp, context).toInt(),
+            convertDpToPixel(50.dp, context).toInt()
+        ),
+        properties = PopupProperties(focusable = true)
     ) {
         Column(
             Modifier
@@ -51,94 +57,89 @@ fun ToolbarMenu(
                     .padding(10.dp)
                     .noRippleClickable {
                         navController.navigate(
-                            route = if(parentFolder != null) "library?folderId=${parentFolder}" else "library"
+                            route =
+                            if (parentFolder != null) "library?folderId=${parentFolder}"
+                            else "library"
                         )
-                    }) {
-                Text("Library")
-            }
+                    }
+            ) { Text("Library") }
             Box(
                 Modifier
                     .padding(10.dp)
                     .noRippleClickable {
                         scope.launch {
-                            val removeSnack = snackManager.displaySnack(
-                                SnackConf(
-                                    text = "Exporting the page to PDF..."
+                            val removeSnack =
+                                snackManager.displaySnack(
+                                    SnackConf(text = "Exporting the page to PDF...")
                                 )
-                            )
                             delay(10L) // Why do I need this ?
 
                             exportPage(context, state.pageId)
 
                             removeSnack()
                             snackManager.displaySnack(
-                                SnackConf(
-                                    text = "Page exported successfully", duration = 2000
-                                )
+                                SnackConf(text = "Page exported successfully", duration = 2000)
                             )
                             onClose()
                         }
+                    }
+            ) { Text("Export page") }
+            if (state.bookId != null)
+                Box(
+                    Modifier
+                        .padding(10.dp)
+                        .noRippleClickable {
+                            scope.launch {
+                                val removeSnack =
+                                    snackManager.displaySnack(
+                                        SnackConf(
+                                            text = "Exporting the book to PDF...",
+                                            id = "exportSnack"
+                                        )
+                                    )
+                                delay(10L) // Why do I need this ?
 
-                    }) {
-                Text("Export page")
-            }
-            if (state.bookId != null) Box(
-                Modifier
-                    .padding(10.dp)
-                    .noRippleClickable {
-                        scope.launch {
-                            val removeSnack = snackManager.displaySnack(
-                                SnackConf(
-                                    text = "Exporting the book to PDF...", id = "exportSnack"
+                                exportBook(context, state.bookId ?: return@launch)
+
+                                removeSnack()
+                                snackManager.displaySnack(
+                                    SnackConf(
+                                        text = "Book exported successfully",
+                                        duration = 3000
+                                    )
                                 )
-                            )
-                            delay(10L) // Why do I need this ?
-
-                            exportBook(context, state.bookId ?: return@launch)
-
-                            removeSnack()
-                            snackManager.displaySnack(
-                                SnackConf(
-                                    text = "Book exported successfully", duration = 3000
-                                )
-                            )
-                            onClose()
+                                onClose()
+                            }
                         }
-                    }) {
-                Text("Export book")
-            }
+                ) { Text("Export book") }
             if (state.selectionState.selectedBitmap != null) {
                 Box(
                     Modifier
                         .fillMaxWidth()
                         .height(0.5.dp)
-                        .background(Color.Black)
-                )
+                        .background(Color.Black))
                 Box(
                     Modifier
                         .padding(10.dp)
                         .noRippleClickable {
                             shareBitmap(context, state.selectionState.selectedBitmap!!)
-                        }) {
-                    Text("Share selection")
-                }
+                        }
+                ) { Text("Share selection") }
             }
 
             Box(
                 Modifier
                     .fillMaxWidth()
                     .height(0.5.dp)
-                    .background(Color.Black)
-            )
+                    .background(Color.Black))
             Box(
                 Modifier
                     .padding(10.dp)
                     .noRippleClickable {
                         onPageSettingsOpen()
                         onClose()
-                    }) {
-                Text("Page Settings")
-            }
+                    }
+            ) { Text("Page Settings") }
 
             /*Box(
                 Modifier
@@ -152,4 +153,3 @@ fun ToolbarMenu(
         }
     }
 }
-

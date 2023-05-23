@@ -86,7 +86,7 @@ fun isLatestVersion(context: Context, force: Boolean = false): Boolean {
 
         }
 
-        else isLatestVersion = versionVersion.compareTo(latestVersionVersion) != -1
+        isLatestVersion = versionVersion.compareTo(latestVersionVersion) != -1
 
         return isLatestVersion!!
     } catch (e: Exception) {
@@ -94,3 +94,5 @@ fun isLatestVersion(context: Context, force: Boolean = false): Boolean {
         return true
     }
 }
+
+val isNext = BuildConfig.IS_NEXT

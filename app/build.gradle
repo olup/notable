@@ -25,6 +25,7 @@ android {
         ksp {
             arg('room.schemaLocation', "$projectDir/schemas")
         }
+
     }
 
     signingConfigs {
@@ -37,6 +38,7 @@ android {
             // Optional, specify signing versions used
             v1SigningEnabled true
             v2SigningEnabled true
+
         }
     }
 
@@ -46,6 +48,7 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
+            buildConfigField("boolean", "IS_NEXT", IS_NEXT)
         }
         release {
             minifyEnabled false
