@@ -10,11 +10,16 @@
 <div align="center">
 
 ![Notable App](https://github.com/olup/notable/blob/main/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png?raw=true "Notable Logo")
-  
 # Notable
-
+  
+[Features](#features) •
+[Download](#download) •
+[How to use](#how-to-use) •
+[Contribute](#contribute)
 </div>
-Notable is a custom note-taking app designed specifically for Boox devices. It offers a range of special features and optimizations to enhance your note-taking experience. This README file provides an overview of the app, its features, and instructions on how to use it.
+
+
+Notable is a **custom note-taking app designed specifically for BOOX e-ink devices.** It offers a clean minimalist design, with a range of special features and optimizations to enhance the note-taking experience.
 
 ## Features
 * **Fast Page Turn with Caching:** Notable leverages caching techniques to ensure smooth and swift page transitions, allowing you to navigate through your notes seamlessly.
@@ -31,3 +36,10 @@ Notable is a custom note-taking app designed specifically for Boox devices. It o
   * Bottom screen double tap (single finger): Show quick navigation.
   * Once selected, drag selection around.
   * Once selected, double tap top to copy the selection.
+
+## Download
+[Download the APK from the latest release right here!](https://github.com/olup/notable/releases)
+Open up the 'Assets' from the latest release, and select the APK.
+
+_What is a NEXT release?_
+The 'next' release is a pre-release, and will contain features imlemented but not yet released as part of a version - and sometimes experiments that could very well not be part a release.
