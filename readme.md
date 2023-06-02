@@ -1,4 +1,8 @@
+<div align="center">
+
 # Notable
+
+</div>
 A custom note taking app for boox, with some special features.
 
 ## Features
