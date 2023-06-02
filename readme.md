@@ -9,6 +9,8 @@
 
 <div align="center">
 
+![Notable App](https://github.com/olup/notable/blob/main/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png?raw=true "Notable Logo")
+  
 # Notable
 
 </div>
