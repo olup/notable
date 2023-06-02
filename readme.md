@@ -1,6 +1,8 @@
 <div align="center">
 
 # Notable
+  
+[![Downloads][downloads-badge]][releases]
 
 </div>
 A custom note taking app for boox, with some special features.
