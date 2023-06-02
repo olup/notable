@@ -42,7 +42,9 @@ Download [Notable here.](https://github.com/olup/notable/releases/latest)
 Open up the '**Assets**' from the release, and select the `.apk` file.
 
 _Where can I see alternative releases?_
+
 Select the projects ['Releases'](https://github.com/olup/notable/releases) and download alternative versions of the Notable app.
 
 _What is a NEXT release?_
+
 The 'next' release is a pre-release, and will contain features imlemented but not yet released as part of a version - and sometimes experiments that could very well not be part a release.
