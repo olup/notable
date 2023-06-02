@@ -19,7 +19,7 @@
 </div>
 
 
-Notable is a **custom note-taking app designed specifically for BOOX e-ink devices.** It offers a clean minimalist design, with a range of special features and optimizations to enhance the note-taking experience.
+Notable is a **custom note-taking app designed specifically for BOOX e-ink devices.** It offers a clean, minimalist design, with a range of special features and optimizations to enhance the note-taking experience.
 
 ## Features
 * **Fast Page Turn with Caching:** Notable leverages caching techniques to ensure smooth and swift page transitions, allowing you to navigate through your notes seamlessly.
