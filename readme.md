@@ -16,6 +16,9 @@
 [Download](#download) •
 [How to use](#how-to-use) •
 [Contribute](#contribute)
+  
+[![Downloads](https://img.shields.io/github/downloads/olup/notable/total?color=47c219 Downloads)](https://github.com/olup/notable/releases/latest) 
+ [![Discord](https://img.shields.io/badge/discord-7289da.svg Discord)](https://discord.com/invite/X3tHWZHUQg) 
 </div>
 
 
@@ -38,7 +41,7 @@ Notable is a **custom note-taking app designed specifically for BOOX e-ink devic
   * Once selected, double tap top to copy the selection.
 
 ## Download
-Download the latest version of the [Notable app here.](https://github.com/olup/notable/releases/latest)
+**Download the latest version of the [Notable app here.](https://github.com/olup/notable/releases/latest)**
 
 Open up the '**Assets**' from the release, and select the `.apk` file.
 
@@ -49,3 +52,12 @@ Select the projects <a href="https://github.com/olup/notable/releases" target="_
 <details><summary title="Click to show/hide details">❓ What is a 'next' release?</summary><br/>
 The 'next' release is a pre-release, and will contain features imlemented but not yet released as part of a version - and sometimes experiments that could very well not be part a release.
 </details>
+
+## How to use
+
+
+
+## Contribute
+Notable is an open-source project and welcomes contributions from the community. 
+
+
