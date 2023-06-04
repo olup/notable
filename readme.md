@@ -53,21 +53,23 @@ The 'next' release is a pre-release, and will contain features imlemented but no
 
 ## Gestures
 Notable features intuitive gestures controls within Editor's Mode, to optimize the editing experience:
-### ☝️ 1 Finger
+#### ☝️ 1 Finger
 * **Swipe up or down**: Scroll the page.
 * **Swipe left or right:** Change to the previous/next page (only available in notebooks).
 * **Double tap:** Show or hide the toolbar.
 * **Double tap bottom part of the screen:** Show quick navigation.
 
-### ✌️ 2 Fingers
+#### ✌️ 2 Fingers
 * **Swipe left or right:** Undo/redo your changes.
 * **Single tap:** Switch between writing modes and eraser modes.
 
-### 🔲 Selection
+#### 🔲 Selection
 * **Drag:** Move the selected writing around.
 * **Double tap:** Copy the selected writing.
 
 ## Contribute
 Notable is an open-source project and welcomes contributions from the community. 
+To start working with the project, see [the guide on how to start contributing](https://docs.github.com/en/get-started/quickstart/contributing-to-projects) to the project. 
 
-
+**Important:** Be sure to edit the `DEBUG_STORE_FILE` variable in the `/app/gradle.properties` file to the keystore on your own device. This is likely stored in the `.android` directory on your device.
+**Important:** To use your BOOX device for debugging, an application will be required to enable developer mode on your BOOX device. [See a short guide here.](https://imgur.com/a/i1kb2UQ)  
