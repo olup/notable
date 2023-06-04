@@ -22,7 +22,7 @@
   
 [Features](#features) •
 [Download](#download) •
-[How to use](#how-to-use) •
+[Gestures](#gestures) •
 [Contribute](#contribute)
   
 </div>
@@ -36,15 +36,7 @@ Notable is a **custom note-taking app designed specifically for BOOX e-ink devic
 * 📝 **Quick Pages:** Quickly create a new page using the Quick Pages feature.
 * 📒 **Notebooks:** Keep related notes together and easily switch between different notebooks based on your needs.
 * 📁 **Folders:** Create folders to organize your notes.
-* 🤏 **Editors' Mode Gestures:** Intuitive gesture controls to enhance the editing experience. Here are some of the supported gestures:
-  * Single finger swipe up or down: Scroll the page.
-  * Single finger swipe left or right: Change the page.
-  * Double finger swipe left or right: Undo/redo your changes.
-  * Double finger tap: Switch between writing modes and eraser modes.
-  * Single finger double tap: Show or hide the toolbar.
-  * Bottom screen double tap (single finger): Show quick navigation.
-  * Once selected, drag selection around.
-  * Once selected, double tap top to copy the selection.
+* 🤏 **Editors' Mode Gestures:** Intuitive gesture controls to enhance the editing experience. Here are some of the supported gestures.
 
 ## Download
 **Download the latest version of the [Notable app here.](https://github.com/olup/notable/releases/latest)**
@@ -52,16 +44,28 @@ Notable is a **custom note-taking app designed specifically for BOOX e-ink devic
 Open up the '**Assets**' from the release, and select the `.apk` file.
 
 <details><summary title="Click to show/hide details">❓ Where can I see alternative/older releases?</summary><br/>
-Select the projects <a href="https://github.com/olup/notable/releases" target="_blank">'Releases'</a> and download alternative versions of the Notable app.
+Select the projects <a href="https://github.com/olup/notable/tags" target="_blank">'Releases'</a> and download alternative versions of the Notable app.
 </details>
 
 <details><summary title="Click to show/hide details">❓ What is a 'next' release?</summary><br/>
 The 'next' release is a pre-release, and will contain features imlemented but not yet released as part of a version - and sometimes experiments that could very well not be part a release.
 </details>
 
-## How to use
+## Gestures
+Notable features intuitive gestures controls within Editor's Mode, to optimize the editing experience:
+### ☝️ 1 Finger
+* **Swipe up or down**: Scroll the page.
+* **Swipe left or right:** Change to the previous/next page (only available in notebooks).
+* **Double tap:** Show or hide the toolbar.
+* **Double tap bottom part of the screen:** Show quick navigation.
 
+### ✌️ 2 Fingers
+* **Swipe left or right:** Undo/redo your changes.
+* **Single tap:** Switch between writing modes and eraser modes.
 
+### 🔲 Selection
+* **Drag:** Move the selected writing around.
+* **Double tap:** Copy the selected writing.
 
 ## Contribute
 Notable is an open-source project and welcomes contributions from the community. 
