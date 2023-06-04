@@ -36,7 +36,7 @@ Notable is a **custom note-taking app designed specifically for BOOX e-ink devic
 * 📝 **Quick Pages:** Quickly create a new page using the Quick Pages feature.
 * 📒 **Notebooks:** Keep related notes together and easily switch between different notebooks based on your needs.
 * 📁 **Folders:** Create folders to organize your notes.
-* 🤏 **Editors' Mode Gestures:** Intuitive gesture controls to enhance the editing experience. Here are some of the supported gestures.
+* 🤏 **Editors' Mode Gestures:** [Intuitive gesture controls](#gestures) to enhance the editing experience. Here are some of the supported gestures.
 
 ## Download
 **Download the latest version of the [Notable app here.](https://github.com/olup/notable/releases/latest)**
