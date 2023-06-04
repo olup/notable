@@ -14,13 +14,15 @@
   
   
 <a href="https://github.com/olup/notable/releases/latest">
+  <img src="https://img.shields.io/badge/-download%20here-informational" alt="Download here">
+</a><br/>
+  
+  
+<a href="https://github.com/olup/notable/releases/latest">
   <img src="https://img.shields.io/github/downloads/olup/notable/total?color=47c219" alt="Downloads">
 </a>
 <a href="https://discord.com/invite/X3tHWZHUQg">
   <img src="https://img.shields.io/badge/discord-7289da.svg" alt="Discord">
-</a>
-<a href="https://github.com/olup/notable/releases/latest">
-  <img src="https://img.shields.io/badge/-download%20here-success" alt="Download here">
 </a>
   
 [Features](#features) •
