@@ -74,5 +74,6 @@ Notable features intuitive gestures controls within Editor's Mode, to optimize t
 Notable is an open-source project and welcomes contributions from the community. 
 To start working with the project, see [the guide on how to start contributing](https://docs.github.com/en/get-started/quickstart/contributing-to-projects) to the project. 
 
-**Important:** Be sure to edit the `DEBUG_STORE_FILE` variable in the `/app/gradle.properties` file to the keystore on your own device. This is likely stored in the `.android` directory on your device.
-**Important:** To use your BOOX device for debugging, an application will be required to enable developer mode on your BOOX device. [See a short guide here.](https://imgur.com/a/i1kb2UQ)  
+***Important:*** Be sure to edit the `DEBUG_STORE_FILE` variable in the `/app/gradle.properties` file to the keystore on your own device. This is likely stored in the `.android` directory on your device.
+
+***Important:*** To use your BOOX device for debugging, an application will be required to enable developer mode on your BOOX device. [See a short guide here.](https://imgur.com/a/i1kb2UQ)  
