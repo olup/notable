@@ -58,7 +58,7 @@ fun EditorGestureReceiver(
                         val fingerChange = event.changes.filter { it.type == PointerType.Touch }
                         // is already consumed return
                         if (fingerChange.find { it.isConsumed } != null) {
-                            Log.i(TAG, "Canceling gesture - already consumemd")
+                            Log.i(TAG, "Canceling gesture - already consumed")
                             return@awaitEachGesture
                         }
                         fingerChange.forEach { it.consume() }
