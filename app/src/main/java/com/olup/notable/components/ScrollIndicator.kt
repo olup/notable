@@ -20,8 +20,8 @@ fun ScrollIndicator(context: Context, state: EditorState) {
         val virtualHeight = max(page.height, page.scroll + height)
         if (virtualHeight <= height) return@BoxWithConstraints
 
-        val indicatorSize = (height / virtualHeight.toFloat()) * height
-        val indicatorPosition = (page.scroll / virtualHeight.toFloat()) * height
+        val indicatorSize = (height / virtualHeight.toFloat()) * this.maxHeight.value
+        val indicatorPosition = (page.scroll / virtualHeight.toFloat()) * this.maxHeight.value
 
 
         if (!state.isToolbarOpen) return@BoxWithConstraints
@@ -29,11 +29,11 @@ fun ScrollIndicator(context: Context, state: EditorState) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .offset(y = convertPixelToDp(indicatorPosition, context)
+                .offset(y = indicatorPosition.dp
                 )
                 .background(Color.Black)
                 .height(
-                    convertPixelToDp(indicatorSize, context)
+                    indicatorSize.dp
                 )
 
         )

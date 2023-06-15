@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.*
 import android.util.DisplayMetrics
+import android.util.TypedValue
 import io.shipbook.shipbooksdk.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -41,13 +42,11 @@ fun Modifier.noRippleClickable(
 fun convertDpToPixel(dp: Dp, context: Context): Float {
     val resources = context.resources
     val metrics: DisplayMetrics = resources.getDisplayMetrics()
-    return dp.value * (metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT)
-}
-
-fun convertPixelToDp(px: Float, context: Context): Dp {
-    val resources = context.resources
-    val metrics: DisplayMetrics = resources.getDisplayMetrics()
-    return Dp(px / (metrics.densityDpi.toFloat() / DisplayMetrics.DENSITY_DEFAULT))
+     return TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_DIP,
+        dp.value,
+        context.resources.displayMetrics
+    )
 }
 
 // TODO move this to repository
