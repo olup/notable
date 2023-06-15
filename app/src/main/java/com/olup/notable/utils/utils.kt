@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.*
 import android.util.DisplayMetrics
+import io.shipbook.shipbooksdk.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.remember
@@ -181,7 +182,7 @@ fun handleSelect(
         if (state.firstPageCut == null) {
             // this is the first page cut
             state.firstPageCut = completePoints
-            println("Registered first curt")
+            Log.i(TAG, "Registered first curt")
         } else {
             // this is the second page cut, we can also select the strokes
             // first lets have the cuts in the right order
@@ -425,7 +426,7 @@ fun shareBitmap(context: Context, bitmap: Bitmap) {
     canvas.drawBitmap(bitmap, 0f, 0f, null)
 
     val cachePath = File(context.cacheDir, "images")
-    println(cachePath)
+    Log.i(TAG, cachePath.toString())
     cachePath.mkdirs()
 
     try {

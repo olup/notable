@@ -2,6 +2,7 @@ package com.olup.notable
 
 import android.content.Context
 import android.graphics.*
+import io.shipbook.shipbooksdk.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -139,13 +140,13 @@ class PageView(
             imgBitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
             if (imgBitmap != null) {
                 windowedCanvas.drawBitmap(imgBitmap, 0f, 0f, Paint());
-                println("Page rendered from cache")
+                Log.i(TAG, "Page rendered from cache")
                 return true
             } else {
-                println("Cannot read cache image")
+                Log.i(TAG, "Cannot read cache image")
             }
         } else {
-            println("Cannot find cache image")
+            Log.i(TAG, "Cannot find cache image")
         }
         return false
     }
@@ -184,7 +185,7 @@ class PageView(
         val timeToBg = measureTimeMillis {
             drawBg(activeCanvas, pageFromDb?.nativeTemplate ?: "blank", scroll)
         }
-        println("Took $timeToBg to draw the BG")
+        Log.i(TAG, "Took $timeToBg to draw the BG")
 
         val timeToDraw = measureTimeMillis {
             strokes.forEach { stroke ->
@@ -199,7 +200,7 @@ class PageView(
 
             }
         }
-        println("Drew area in ${timeToDraw}ms")
+        Log.i(TAG, "Drew area in ${timeToDraw}ms")
         activeCanvas.restore();
     }
 

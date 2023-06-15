@@ -2,6 +2,7 @@ package com.olup.notable
 
 import android.content.Context
 import android.graphics.*
+import io.shipbook.shipbooksdk.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.compose.runtime.snapshotFlow
@@ -59,7 +60,7 @@ class DrawCanvas(
         }
 
         override fun onRawDrawingTouchPointListReceived(plist: TouchPointList) {
-            println("End drawing")
+            Log.i(TAG, "End drawing")
             thread(true) {
                 if (getActualState().mode == Mode.Erase) {
                     handleErase(this@DrawCanvas.page,
@@ -120,13 +121,13 @@ class DrawCanvas(
     }
 
     fun init() {
-        println("Initializing")
+        Log.i(TAG, "Initializing")
 
         val surfaceView = this
 
         val surfaceCallback: SurfaceHolder.Callback = object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) {
-                println("surface created ${holder}")
+                Log.i(TAG, "surface created ${holder}")
                 // init touch helper
                 touchHelper.setLimitRect(
                     mutableListOf(
@@ -135,7 +136,6 @@ class DrawCanvas(
                         )
                     )
                 ).setExcludeRect(listOf(android.graphics.Rect(0, 0, 0, 0))).openRawDrawing()
-                println(history)
 
                 // This is supposed to let the ui update while the old surface is being unmounted
                 coroutineScope.launch {
@@ -146,14 +146,14 @@ class DrawCanvas(
             override fun surfaceChanged(
                 holder: SurfaceHolder, format: Int, width: Int, height: Int
             ) {
-                println("surface changed ${holder}")
+                Log.i(TAG, "surface changed ${holder}")
                 drawCanvasToView()
                 updatePenAndStroke()
                 refreshUi()
             }
 
             override fun surfaceDestroyed(holder: SurfaceHolder) {
-                println(
+                Log.i(TAG,
                     "surface destroyed ${
                         this@DrawCanvas.hashCode().toString()
                     } - ref ${referencedSurfaceView}"
@@ -174,7 +174,7 @@ class DrawCanvas(
         // observe forceUpdate
         coroutineScope.launch {
             forceUpdate.collect { zoneAffected ->
-                println("Force update zone $zoneAffected")
+                Log.i(TAG, "Force update zone $zoneAffected")
 
                 if (zoneAffected != null) page.drawArea(
                     area = Rect(
@@ -213,21 +213,21 @@ class DrawCanvas(
         // observe paen and stroke size
         coroutineScope.launch {
             snapshotFlow { state.pen }.drop(1).collect {
-                println("pen change: ${state.pen}")
+                Log.i(TAG, "pen change: ${state.pen}")
                 updatePenAndStroke()
                 refreshUi()
             }
         }
         coroutineScope.launch {
             snapshotFlow { state.penSettings.toMap() }.drop(1).collect {
-                println("pen settings change: ${state.penSettings}")
+                Log.i(TAG, "pen settings change: ${state.penSettings}")
                 updatePenAndStroke()
                 refreshUi()
             }
         }
         coroutineScope.launch {
             snapshotFlow { state.eraser}.drop(1).collect {
-                println("eraser change: ${state.eraser}")
+                Log.i(TAG, "eraser change: ${state.eraser}")
                 updatePenAndStroke()
                 refreshUi()
             }
@@ -236,7 +236,7 @@ class DrawCanvas(
         // observe is drawing
         coroutineScope.launch {
             snapshotFlow { state.isDrawing }.drop(1).collect {
-                println("isDrawing change: ${state.isDrawing}")
+                Log.i(TAG, "isDrawing change: ${state.isDrawing}")
                 updateIsDrawing()
             }
         }
@@ -244,7 +244,7 @@ class DrawCanvas(
         // observe toolbar open
         coroutineScope.launch {
             snapshotFlow { state.isToolbarOpen }.drop(1).collect {
-                println("istoolbaropen change: ${state.isToolbarOpen}")
+                Log.i(TAG, "istoolbaropen change: ${state.isToolbarOpen}")
                 updateIsToolbarOpen()
             }
         }
@@ -252,7 +252,7 @@ class DrawCanvas(
         // observe mode
         coroutineScope.launch {
             snapshotFlow { getActualState().mode }.drop(1).collect {
-                println("mode change: ${getActualState().mode}")
+                Log.i(TAG, "mode change: ${getActualState().mode}")
                 updatePenAndStroke()
                 refreshUi()
             }
@@ -260,8 +260,7 @@ class DrawCanvas(
 
         coroutineScope.launch {
             commitHistorySignal.debounce(500).collect {
-                println("Commiting")
-                println(strokeHistoryBatch)
+                Log.i(TAG, "Commiting")
                 if (strokeHistoryBatch.size > 0) history.addOperationsToHistory(
                     operations = listOf(
                         Operation.DeleteStroke(strokeHistoryBatch.map { it })
@@ -273,7 +272,7 @@ class DrawCanvas(
     }
 
     fun refreshUi() {
-        println("refresh ui with is drawing : ${state.isDrawing}")
+        Log.i(TAG, "refresh ui with is drawing : ${state.isDrawing}")
         if (state.isDrawing) {
             touchHelper.setRawDrawingEnabled(false)
             drawCanvasToView()
@@ -284,14 +283,14 @@ class DrawCanvas(
     }
 
     fun drawCanvasToView() {
-        println("Draw canvas")
+        Log.i(TAG, "Draw canvas")
         val canvas = this.holder.lockCanvas() ?: return
         canvas.drawBitmap(page.windowedBitmap, 0f, 0f, Paint());
 
         if (getActualState().mode == Mode.Select) {
             // render selection
             if (getActualState().selectionState.firstPageCut != null) {
-                println("rendercut")
+                Log.i(TAG, "rendercut")
 
                 val path = pointsToPath(getActualState().selectionState.firstPageCut!!.map {
                     SimplePointF(
@@ -307,7 +306,7 @@ class DrawCanvas(
     }
 
     fun updateIsDrawing() {
-        println("Update is drawing : ${state.isDrawing}")
+        Log.i(TAG, "Update is drawing : ${state.isDrawing}")
         if (state.isDrawing) {
             touchHelper.setRawDrawingEnabled(true)
         } else {
@@ -317,7 +316,7 @@ class DrawCanvas(
     }
 
     fun updatePenAndStroke() {
-        println("Update pen and stroke")
+        Log.i(TAG, "Update pen and stroke")
         when (state.mode) {
             Mode.Draw -> touchHelper.setStrokeStyle(penToStroke(state.pen))
                 ?.setStrokeWidth(state.penSettings[state.pen.penName]!!.strokeSize)
@@ -336,7 +335,7 @@ class DrawCanvas(
     }
 
     fun updateIsToolbarOpen() {
-        println("Update toolbar open")
+        Log.i(TAG, "Update toolbar open")
 
         val exclusionHeight =
             if (state.isToolbarOpen) convertDpToPixel(40.dp, context).toInt() else 0

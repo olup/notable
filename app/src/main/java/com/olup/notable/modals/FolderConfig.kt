@@ -1,5 +1,6 @@
 package com.olup.notable
 
+import io.shipbook.shipbooksdk.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -40,7 +41,9 @@ fun FolderConfigDialog(folderId: String, onClose : ()->Unit) {
 
 
     Dialog(
-        onDismissRequest = { onClose() }
+        onDismissRequest = {
+            onClose()
+        }
     ) {
         val focusManager = LocalFocusManager.current
 

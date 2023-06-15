@@ -1,5 +1,6 @@
 package com.olup.notable
 
+import io.shipbook.shipbooksdk.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
@@ -28,7 +29,7 @@ fun EditorView(
     if(AppRepository(context).pageRepository.getById(_pageId) == null) {
         if(_bookId != null){
             // clean the book
-            println("Cleaning book")
+            Log.i(TAG, "Cleaning book")
             AppRepository(context).bookRepository.removePage(_bookId, _pageId)
         }
         navController.navigate("library")
@@ -72,7 +73,7 @@ fun EditorView(
         editorState.penSettings,
         editorState.mode
     ) {
-        println("saving")
+        Log.i(TAG, "saving")
         EditorSettingCacheManager.setEditorSettings(
             context,
             EditorSettingCacheManager.EditorSettings(

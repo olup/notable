@@ -1,5 +1,6 @@
 package com.olup.notable
 
+import io.shipbook.shipbooksdk.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -101,7 +102,7 @@ fun NotebookConfigDialog(bookId: String, onClose : ()->Unit) {
                             .padding(10.dp, 0.dp)
                             .onFocusChanged { focusState ->
                                 if (!focusState.isFocused) {
-                                    println("loose focus")
+                                    Log.i(TAG, "loose focus")
                                     val updatedBook = book!!.copy(title = bookTitle)
                                     bookRepository.update(updatedBook)
                                 }

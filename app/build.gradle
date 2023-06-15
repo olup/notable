@@ -134,6 +134,9 @@ dependencies {
     implementation 'br.com.devsrsouza.compose.icons.android:feather:1.0.0'
     implementation "com.beust:klaxon:5.5"
 
+    implementation 'io.shipbook:shipbooksdk:1.+'
+
+
 }
 
 task printVersionName {

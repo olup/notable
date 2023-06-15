@@ -2,6 +2,7 @@ package com.olup.notable
 
 import android.content.Context
 import android.content.pm.PackageManager
+import io.shipbook.shipbooksdk.Log
 import java.net.URL
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -70,7 +71,7 @@ fun isLatestVersion(context: Context, force: Boolean = false): Boolean {
     try {
         val version = getCurrentVersionName(context)
         val latestVersion = getLatestReleaseVersion("olup", "notable")
-        println("Version is ${version} and latest on repo is ${latestVersion}")
+        Log.i(TAG, "Version is ${version} and latest on repo is ${latestVersion}")
 
         // If either version is null, we can't compare them
         if (latestVersion == null || version == null){
@@ -90,7 +91,7 @@ fun isLatestVersion(context: Context, force: Boolean = false): Boolean {
 
         return isLatestVersion!!
     } catch (e: Exception) {
-        println("Failed to fetch latest release version: ${e.message}")
+        Log.i(TAG, "Failed to fetch latest release version: ${e.message}")
         return true
     }
 }
