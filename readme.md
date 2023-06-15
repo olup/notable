@@ -35,6 +35,8 @@
 
 Notable is a **custom note-taking app designed specifically for BOOX e-ink devices.** It offers a clean, minimalist design, with a range of special features and optimizations to enhance the note-taking experience.
 
+⚠️ This is alpha software with a couple of part time individuals pushing it further. We try to make it as stable as possible and to support a smooth update experience, but be prepared for the occasionnal bug and possible breaking chnages.
+
 ## Features
 * ⚡ **Fast Page Turn with Caching:** Notable leverages caching techniques to ensure smooth and swift page transitions, allowing you to navigate through your notes seamlessly.
 * ↕️ **Infinite Vertical Scroll:** Enjoy a virtually endless canvas for your notes. Scroll vertically without limitations.
@@ -44,7 +46,8 @@ Notable is a **custom note-taking app designed specifically for BOOX e-ink devic
 * 🤏 **Editors' Mode Gestures:** [Intuitive gesture controls](#gestures) to enhance the editing experience.
 
 ## Download
-**Download the latest version of the [Notable app here.](https://github.com/olup/notable/releases/latest)**
+**Download the latest stable version of the [Notable app here.](https://github.com/olup/notable/releases/latest)**
+Alternatively, get the latest build from main from the ["next" release](https://github.com/olup/notable/releases/next)**
 
 Open up the '**Assets**' from the release, and select the `.apk` file.
 
