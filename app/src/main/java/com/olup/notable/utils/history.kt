@@ -101,6 +101,7 @@ class History(coroutineScope: CoroutineScope, pageView: PageView) {
 
     fun addOperationsToHistory(operations: OperationBlock) {
         undoList.add(operations)
+        if(undoList.size > 5) undoList.removeFirst()
         redoList.clear()
     }
 }
