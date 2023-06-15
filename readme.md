@@ -48,7 +48,7 @@ Notable is a **custom note-taking app designed specifically for BOOX e-ink devic
 ## Download
 **Download the latest stable version of the [Notable app here.](https://github.com/olup/notable/releases/latest)**
 
-Alternatively, get the latest build from main from the ["next" release](https://github.com/olup/notable/releases/next)**
+Alternatively, get the latest build from main from the ["next" release](https://github.com/olup/notable/releases/next)
 
 Open up the '**Assets**' from the release, and select the `.apk` file.
 
