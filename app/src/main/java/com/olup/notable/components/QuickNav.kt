@@ -113,7 +113,7 @@ fun QuickNav(navController: NavController, onClose: () -> Unit) {
                                 PagePreview(modifier = Modifier
                                     .border(1.dp, Color.Black)
                                     .fillMaxWidth()
-                                    .aspectRatio(SCREEN_WIDTH.toFloat() / SCREEN_HEIGHT)
+                                    .aspectRatio(3f / 4f)
                                     .noRippleClickable {
                                         val bookId =
                                             appRepository.pageRepository.getById(thisPageId)?.notebookId

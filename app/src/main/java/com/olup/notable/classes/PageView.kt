@@ -67,26 +67,19 @@ class PageView(
         val page = AppRepository(context).pageRepository.getById(id)
         scroll = page!!.scroll
 
-        if (!isCached) {
-            // if not cached we work synchronously
-            val pageWithStrokes = AppRepository(context).pageRepository.getWithStrokeById(id)
-            strokes = pageWithStrokes.strokes
-            indexStrokes()
-            computeHeight()
-
-            // we draw and cache
-            drawBg(windowedCanvas, page.nativeTemplate, scroll)
-            drawArea(Rect(0, 0, windowedCanvas.width, windowedCanvas.height))
-            persistBitmap()
-            persistBitmapThumbnail()
-        }
-
-        // otherwise we can fetch this in the backgrond
         coroutineScope.launch {
             val pageWithStrokes = AppRepository(context).pageRepository.getWithStrokeById(id)
             strokes = pageWithStrokes.strokes
             indexStrokes()
             computeHeight()
+
+            if (!isCached) {
+                // we draw and cache
+                drawBg(windowedCanvas, page.nativeTemplate, scroll)
+                drawArea(Rect(0, 0, windowedCanvas.width, windowedCanvas.height))
+                persistBitmap()
+                persistBitmapThumbnail()
+            }
         }
     }
 
@@ -141,7 +134,12 @@ class PageView(
             if (imgBitmap != null) {
                 windowedCanvas.drawBitmap(imgBitmap, 0f, 0f, Paint());
                 Log.i(TAG, "Page rendered from cache")
-                return true
+                // let's control that the last preview fits the present orientation. Otherwise we'll ask for a redraw.
+                if(imgBitmap.height == windowedCanvas.height && imgBitmap.width == windowedCanvas.width){
+                    return true
+                } else {
+                    Log.i(TAG, "Image preview does not fit canvas area - redrawing")
+                }
             } else {
                 Log.i(TAG, "Cannot read cache image")
             }

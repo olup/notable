@@ -85,7 +85,7 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
 }
 
 
-const val padding = 50
+const val padding = 0
 const val lineHeight = 50
 const val dotSize = 4f
 

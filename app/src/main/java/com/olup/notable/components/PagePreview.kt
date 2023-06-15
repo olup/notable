@@ -3,12 +3,15 @@ package com.olup.notable
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
@@ -36,7 +39,8 @@ fun PagePreview(modifier: Modifier, pageId: String){
         Image(
             painter = rememberAsyncImagePainter(model = imgBitmap),
             contentDescription = "Image",
-            modifier = modifier
+            contentScale = ContentScale.FillWidth,
+            modifier = modifier.then(Modifier.background(Color.LightGray))
         )
     //}
 }
