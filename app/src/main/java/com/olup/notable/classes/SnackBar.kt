@@ -52,7 +52,6 @@ fun SnackBar(state: SnackState) {
     LaunchedEffect(Unit) {
         launch {
             state.cancelSnackFlow.collect { snackId ->
-                Log.i(TAG, "Cancellign")
                 getSnacks().removeIf { it.id == snackId }
             }
         }

@@ -38,7 +38,9 @@ class PageView(
     var strokesById: HashMap<String, Stroke> = hashMapOf()
     var scroll by mutableStateOf(0) // is observed by ui
     val saveTopic = MutableSharedFlow<Unit>()
-    var height by mutableStateOf(SCREEN_HEIGHT) // is observed by ui
+
+    var height by mutableStateOf(viewHeight) // is observed by ui
+
     var pageFromDb = AppRepository(context).pageRepository.getById(id)
 
     var db = AppDatabase.getDatabase(context)?.strokeDao()!!
@@ -123,6 +125,14 @@ class PageView(
         }
         val maxStrokeBottom = strokes.maxOf { it.bottom }.plus(50) ?: 0
         height = max(maxStrokeBottom.toInt(), viewHeight)
+    }
+
+    fun computeWidth(): Int {
+        if (strokes.isEmpty()) {
+            return viewWidth
+        }
+        val maxStrokeRight = strokes.maxOf { it.right }.plus(50) ?: 0
+        return max(maxStrokeRight.toInt(), viewWidth)
     }
 
     private fun removeStrokesFromPersistLayer(strokeIds: List<String>) {

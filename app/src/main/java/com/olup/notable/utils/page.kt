@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.IntOffset
 import com.olup.notable.db.BookRepository
 import com.olup.notable.db.PageRepository
 import com.olup.notable.db.Stroke
+import io.shipbook.shipbooksdk.Log
 import java.io.FileOutputStream
 import java.nio.file.Files
 import kotlin.io.path.absolutePathString
@@ -39,13 +40,21 @@ private inline fun exportPdf(dir: String, name: String, write: PdfDocument.() ->
 
 private fun PdfDocument.writePage(number: Int, repo: PageRepository, id: String) {
     val (page, strokes) = repo.getWithStrokeById(id)
+
     val strokeHeight = if (strokes.isEmpty()) 0 else strokes.maxOf(Stroke::bottom).toInt() + 50
-    val height = strokeHeight.coerceAtLeast(SCREEN_HEIGHT)
+    val strokeWidth = if (strokes.isEmpty()) 0 else strokes.maxOf(Stroke::right).toInt() + 50
+
+    val height = strokeHeight.coerceAtLeast(SCREEN_HEIGHT) // todo do not rely on this anymore
+    val width = strokeWidth.coerceAtLeast(SCREEN_WIDTH) // todo do not rely on this anymore
+
     val documentPage =
-        startPage(PdfDocument.PageInfo.Builder(SCREEN_WIDTH, height, number).create())
+        startPage(PdfDocument.PageInfo.Builder(width, height, number).create())
+
     drawBg(documentPage.canvas, page.nativeTemplate, 0)
+
     for (stroke in strokes) {
         drawStroke(documentPage.canvas, stroke, IntOffset(0, 0))
     }
+
     finishPage(documentPage)
 }
