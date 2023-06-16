@@ -51,8 +51,11 @@ class PageView(
             }
         }
 
-        val isCacehd = loadBitmap()
-        initFromPersistLayer(isCacehd)
+        windowedCanvas.drawColor(Color.WHITE)
+        drawBg(windowedCanvas, pageFromDb?.nativeTemplate!!, scroll)
+
+        val isCached = loadBitmap()
+        initFromPersistLayer(isCached)
     }
 
     fun indexStrokes() {
