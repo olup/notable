@@ -141,8 +141,8 @@ fun Library(navController: NavController, folderId: String? = null) {
                         if (isSettingsOpen) FolderConfigDialog(
                             folderId = folder.id,
                             onClose = {
-                                isSettingsOpen = false
                                 Log.i(TAG, "Closing Directory Dialog")
+                                isSettingsOpen = false
                             })
 
                         Row(

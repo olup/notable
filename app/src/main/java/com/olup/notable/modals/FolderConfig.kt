@@ -42,6 +42,7 @@ fun FolderConfigDialog(folderId: String, onClose : ()->Unit) {
 
     Dialog(
         onDismissRequest = {
+            Log.i(TAG, "Closing Directory Dialog - upstream")
             onClose()
         }
     ) {

@@ -81,6 +81,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
+
     override fun onContentChanged() {
         super.onContentChanged()
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);

@@ -36,6 +36,7 @@ class DrawCanvas(
 
     private val strokeHistoryBatch = mutableListOf<String>()
     private val commitHistorySignal = MutableSharedFlow<Unit>()
+    private val debouncedRefreshSignal = MutableSharedFlow<Unit>()
 
 
     companion object {
@@ -50,6 +51,7 @@ class DrawCanvas(
     }
 
     private val inputCallback: RawInputCallback = object : RawInputCallback() {
+
         override fun onBeginRawDrawing(p0: Boolean, p1: TouchPoint?) {
         }
 
@@ -63,7 +65,8 @@ class DrawCanvas(
             Log.i(TAG, "End drawing")
             thread(true) {
                 if (getActualState().mode == Mode.Erase) {
-                    handleErase(this@DrawCanvas.page,
+                    handleErase(
+                        this@DrawCanvas.page,
                         history,
                         plist.points.map { SimplePointF(it.x, it.y + page.scroll) },
                         eraser = getActualState().eraser
@@ -80,8 +83,10 @@ class DrawCanvas(
                         getActualState().pen,
                         plist.points
                     )
-                    coroutineScope.launch { commitHistorySignal.emit(Unit) }
-
+                    coroutineScope.launch {
+                        commitHistorySignal.emit(Unit)
+                        debouncedRefreshSignal.emit(Unit)
+                    }
                 }
 
                 if (getActualState().mode == Mode.Select) {
@@ -104,9 +109,12 @@ class DrawCanvas(
 
         override fun onRawErasingTouchPointListReceived(plist: TouchPointList?) {
             if (plist == null) return
-            handleErase(this@DrawCanvas.page,
+            handleErase(
+                this@DrawCanvas.page,
                 history,
-                plist.points.map { SimplePointF(it.x, it.y + page.scroll) }, eraser = getActualState().eraser)
+                plist.points.map { SimplePointF(it.x, it.y + page.scroll) },
+                eraser = getActualState().eraser
+            )
             drawCanvasToView()
             refreshUi()
         }
@@ -128,15 +136,8 @@ class DrawCanvas(
         val surfaceCallback: SurfaceHolder.Callback = object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) {
                 Log.i(TAG, "surface created ${holder}")
-                // init touch helper
-                touchHelper.setLimitRect(
-                    mutableListOf(
-                        android.graphics.Rect(
-                            0, 0, surfaceView.width, surfaceView.height
-                        )
-                    )
-                ).setExcludeRect(listOf(android.graphics.Rect(0, 0, 0, 0))).openRawDrawing()
-
+                // set up the drawing surface
+                updateActiveSurface()
                 // This is supposed to let the ui update while the old surface is being unmounted
                 coroutineScope.launch {
                     forceUpdate.emit(null)
@@ -153,7 +154,8 @@ class DrawCanvas(
             }
 
             override fun surfaceDestroyed(holder: SurfaceHolder) {
-                Log.i(TAG,
+                Log.i(
+                    TAG,
                     "surface destroyed ${
                         this@DrawCanvas.hashCode().toString()
                     } - ref ${referencedSurfaceView}"
@@ -226,7 +228,7 @@ class DrawCanvas(
             }
         }
         coroutineScope.launch {
-            snapshotFlow { state.eraser}.drop(1).collect {
+            snapshotFlow { state.eraser }.drop(1).collect {
                 Log.i(TAG, "eraser change: ${state.eraser}")
                 updatePenAndStroke()
                 refreshUi()
@@ -245,7 +247,7 @@ class DrawCanvas(
         coroutineScope.launch {
             snapshotFlow { state.isToolbarOpen }.drop(1).collect {
                 Log.i(TAG, "istoolbaropen change: ${state.isToolbarOpen}")
-                updateIsToolbarOpen()
+                updateActiveSurface()
             }
         }
 
@@ -269,16 +271,23 @@ class DrawCanvas(
                 strokeHistoryBatch.clear()
             }
         }
+
+        coroutineScope.launch {
+            debouncedRefreshSignal.debounce(1000).collect {
+                Log.i(TAG, "debounced refresh ui")
+                refreshUi()
+            }
+        }
     }
 
     fun refreshUi() {
         Log.i(TAG, "refresh ui with is drawing : ${state.isDrawing}")
+        drawCanvasToView()
+
         if (state.isDrawing) {
+            // reset screen freeze
             touchHelper.setRawDrawingEnabled(false)
-            drawCanvasToView()
-            touchHelper.setRawDrawingEnabled(true)
-        } else {
-            drawCanvasToView()
+            touchHelper.setRawDrawingEnabled(true) // screen won't freeze until you actually stoke
         }
     }
 
@@ -323,9 +332,11 @@ class DrawCanvas(
                 ?.setStrokeColor(state.penSettings[state.pen.penName]!!.color)
             Mode.Erase -> {
                 when (state.eraser) {
-                    Eraser.PEN -> touchHelper.setStrokeStyle(penToStroke(Pen.MARKER))?.setStrokeWidth(30f)
+                    Eraser.PEN -> touchHelper.setStrokeStyle(penToStroke(Pen.MARKER))
+                        ?.setStrokeWidth(30f)
                         ?.setStrokeColor(Color.GRAY)
-                    Eraser.SELECT -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))?.setStrokeWidth(3f)
+                    Eraser.SELECT -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))
+                        ?.setStrokeWidth(3f)
                         ?.setStrokeColor(Color.GRAY)
                 }
             }
@@ -334,8 +345,8 @@ class DrawCanvas(
         }
     }
 
-    fun updateIsToolbarOpen() {
-        Log.i(TAG, "Update toolbar open")
+    fun updateActiveSurface() {
+        Log.i(TAG, "Update editable surface")
 
         val exclusionHeight =
             if (state.isToolbarOpen) convertDpToPixel(40.dp, context).toInt() else 0
@@ -351,6 +362,7 @@ class DrawCanvas(
             )
         ).setExcludeRect(listOf(android.graphics.Rect(0, 0, this.width, exclusionHeight)))
             .openRawDrawing()
+
         touchHelper.setRawDrawingEnabled(true)
         updatePenAndStroke()
 
