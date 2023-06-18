@@ -36,7 +36,6 @@ class DrawCanvas(
 
     private val strokeHistoryBatch = mutableListOf<String>()
     private val commitHistorySignal = MutableSharedFlow<Unit>()
-    private val debouncedRefreshSignal = MutableSharedFlow<Unit>()
 
 
     companion object {
@@ -59,13 +58,9 @@ class DrawCanvas(
         }
 
         override fun onRawDrawingTouchPointMoveReceived(p0: TouchPoint?) {
-            coroutineScope.launch {
-                debouncedRefreshSignal.emit(Unit)
-            }
         }
 
         override fun onRawDrawingTouchPointListReceived(plist: TouchPointList) {
-            Log.i(TAG, "End drawing")
             thread(true) {
                 if (getActualState().mode == Mode.Erase) {
                     handleErase(
@@ -86,9 +81,6 @@ class DrawCanvas(
                         getActualState().pen,
                         plist.points
                     )
-                    coroutineScope.launch {
-                        commitHistorySignal.emit(Unit)
-                    }
                 }
 
                 if (getActualState().mode == Mode.Select) {
@@ -274,17 +266,10 @@ class DrawCanvas(
             }
         }
 
-// observe debounce refresh UI signal
-        coroutineScope.launch {
-            debouncedRefreshSignal.debounce(500).collect {
-                Log.i(TAG, "debounced refresh ui")
-                refreshUi()
-            }
-        }
     }
 
     fun refreshUi() {
-        Log.i(TAG, "refresh ui with is drawing : ${state.isDrawing}")
+        Log.i(TAG, "Refreshing ui. isDrawing : ${state.isDrawing}")
         drawCanvasToView()
 
         if (state.isDrawing) {

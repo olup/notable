@@ -81,6 +81,22 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        this.lifecycleScope.launch {
+            DrawCanvas.refreshUi.emit(Unit)
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        this.lifecycleScope.launch {
+            DrawCanvas.refreshUi.emit(Unit)
+        }
+    }
+
+
+
 
 
     override fun onContentChanged() {
