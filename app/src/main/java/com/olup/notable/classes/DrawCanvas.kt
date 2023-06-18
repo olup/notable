@@ -59,6 +59,9 @@ class DrawCanvas(
         }
 
         override fun onRawDrawingTouchPointMoveReceived(p0: TouchPoint?) {
+            coroutineScope.launch {
+                debouncedRefreshSignal.emit(Unit)
+            }
         }
 
         override fun onRawDrawingTouchPointListReceived(plist: TouchPointList) {
@@ -85,7 +88,6 @@ class DrawCanvas(
                     )
                     coroutineScope.launch {
                         commitHistorySignal.emit(Unit)
-                        debouncedRefreshSignal.emit(Unit)
                     }
                 }
 
@@ -272,8 +274,9 @@ class DrawCanvas(
             }
         }
 
+// observe debounce refresh UI signal
         coroutineScope.launch {
-            debouncedRefreshSignal.debounce(1000).collect {
+            debouncedRefreshSignal.debounce(500).collect {
                 Log.i(TAG, "debounced refresh ui")
                 refreshUi()
             }
