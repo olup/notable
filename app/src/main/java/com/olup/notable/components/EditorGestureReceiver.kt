@@ -1,5 +1,6 @@
 package com.olup.notable
 
+import io.shipbook.shipbooksdk.Log
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -50,7 +51,7 @@ fun EditorGestureReceiver(
                         // is already consumed return
                         if (fingerChange.find { it.isConsumed } != null) {
                             return@awaitEachGesture
-                            println("Canceling gesture - already consumemd")
+                            Log.i(TAG, "Canceling gesture - already consumemd")
                         }
                         fingerChange.forEach { it.consume() }
 
@@ -64,7 +65,7 @@ fun EditorGestureReceiver(
                         if (fingerChange.any { !it.pressed }) break
                     } while (true)
 
-                    println("leaving gesture")
+                    Log.i(TAG, "leaving gesture")
 
                     val totalDelta = (initialPosition - lastPosition).getDistance()
                     val gestureDuration = lastTimestamp - initialTimestamp
@@ -116,7 +117,7 @@ fun EditorGestureReceiver(
                         if (inputsCount == 1) {
                             goToNextPage()
                         } else if (inputsCount == 2) {
-                            println("Redo")
+                            Log.i(TAG, "Redo")
                             coroutineScope.launch {
                                 History.moveHistory(UndoRedoType.Redo)
                                 DrawCanvas.refreshUi.emit(Unit)
@@ -127,7 +128,7 @@ fun EditorGestureReceiver(
                         if (inputsCount == 1) {
                             goToPreviousPage()
                         } else if (inputsCount == 2) {
-                            println("Undo")
+                            Log.i(TAG, "Undo")
                             coroutineScope.launch {
                                 History.moveHistory(UndoRedoType.Undo)
                                 DrawCanvas.refreshUi.emit(Unit)

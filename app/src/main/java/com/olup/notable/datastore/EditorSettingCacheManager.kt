@@ -16,6 +16,7 @@ object EditorSettingCacheManager {
         val version: Int = persistVersion,
         val isToolbarOpen: Boolean,
         val pen: Pen,
+        val eraser: Eraser? = Eraser.PEN,
         val penSettings: NamedSettings,
         val mode: Mode
     )

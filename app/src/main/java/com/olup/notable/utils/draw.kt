@@ -1,6 +1,7 @@
 package com.olup.notable
 
 import android.graphics.*
+import io.shipbook.shipbooksdk.Log
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.toOffset
 import com.olup.notable.db.Stroke
@@ -84,7 +85,7 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
 }
 
 
-const val padding = 50
+const val padding = 0
 const val lineHeight = 50
 const val dotSize = 4f
 
@@ -144,7 +145,7 @@ fun drawDottedBg(canvas: Canvas, offset: Int) {
 }
 
 fun drawSquaredBg(canvas: Canvas, scroll: Int) {
-    println("Drawing BG")
+    Log.i(TAG, "Drawing BG")
     val height = canvas.height
     val width = canvas.width
 

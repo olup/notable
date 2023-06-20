@@ -1,5 +1,6 @@
 package com.olup.notable
 
+import io.shipbook.shipbooksdk.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -33,7 +34,6 @@ import com.olup.notable.db.FolderRepository
 fun FolderConfigDialog(folderId: String, onClose : ()->Unit) {
     val folderRepository = FolderRepository(LocalContext.current)
     val folder = folderRepository.get(folderId) ?: return
-    val context = LocalContext.current
 
     var folderTitle by remember {
         mutableStateOf(folder.title)
@@ -41,7 +41,10 @@ fun FolderConfigDialog(folderId: String, onClose : ()->Unit) {
 
 
     Dialog(
-        onDismissRequest = { onClose() }
+        onDismissRequest = {
+            Log.i(TAG, "Closing Directory Dialog - upstream")
+            onClose()
+        }
     ) {
         val focusManager = LocalFocusManager.current
 

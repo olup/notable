@@ -14,8 +14,9 @@ android {
         applicationId "com.olup.notable"
         minSdk 29
         targetSdk 33
-        versionCode 8
-        versionName "0.0.8"
+
+        versionCode 9
+        versionName "0.0.9"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -24,6 +25,7 @@ android {
         ksp {
             arg('room.schemaLocation', "$projectDir/schemas")
         }
+
     }
 
     signingConfigs {
@@ -45,6 +47,7 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
+            buildConfigField("boolean", "IS_NEXT", IS_NEXT)
         }
         release {
             minifyEnabled false
@@ -129,6 +132,9 @@ dependencies {
 
     implementation 'br.com.devsrsouza.compose.icons.android:feather:1.0.0'
     implementation "com.beust:klaxon:5.5"
+
+    implementation 'io.shipbook:shipbooksdk:1.+'
+
 
 }
 

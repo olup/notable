@@ -2,6 +2,7 @@ package com.olup.notable
 
 import android.content.Context
 import android.graphics.*
+import io.shipbook.shipbooksdk.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.compose.runtime.snapshotFlow
@@ -49,23 +50,25 @@ class DrawCanvas(
     }
 
     private val inputCallback: RawInputCallback = object : RawInputCallback() {
+
         override fun onBeginRawDrawing(p0: Boolean, p1: TouchPoint?) {
         }
 
         override fun onEndRawDrawing(p0: Boolean, p1: TouchPoint?) {
-            // page.saveToDisk(context) // TODO
         }
 
         override fun onRawDrawingTouchPointMoveReceived(p0: TouchPoint?) {
         }
 
         override fun onRawDrawingTouchPointListReceived(plist: TouchPointList) {
-            println("End drawing")
             thread(true) {
                 if (getActualState().mode == Mode.Erase) {
-                    handleErase(this@DrawCanvas.page,
+                    handleErase(
+                        this@DrawCanvas.page,
                         history,
-                        plist.points.map { SimplePointF(it.x, it.y + page.scroll) })
+                        plist.points.map { SimplePointF(it.x, it.y + page.scroll) },
+                        eraser = getActualState().eraser
+                    )
                     drawCanvasToView()
                     refreshUi()
                 }
@@ -78,8 +81,6 @@ class DrawCanvas(
                         getActualState().pen,
                         plist.points
                     )
-                    coroutineScope.launch { commitHistorySignal.emit(Unit) }
-
                 }
 
                 if (getActualState().mode == Mode.Select) {
@@ -101,10 +102,13 @@ class DrawCanvas(
         }
 
         override fun onRawErasingTouchPointListReceived(plist: TouchPointList?) {
-            if(plist == null) return
-            handleErase(this@DrawCanvas.page,
+            if (plist == null) return
+            handleErase(
+                this@DrawCanvas.page,
                 history,
-                plist.points.map { SimplePointF(it.x, it.y + page.scroll) })
+                plist.points.map { SimplePointF(it.x, it.y + page.scroll) },
+                eraser = getActualState().eraser
+            )
             drawCanvasToView()
             refreshUi()
         }
@@ -119,23 +123,15 @@ class DrawCanvas(
     }
 
     fun init() {
-        println("Initializing")
+        Log.i(TAG, "Initializing")
 
         val surfaceView = this
 
         val surfaceCallback: SurfaceHolder.Callback = object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) {
-                println("surface created ${holder}")
-                // init touch helper
-                touchHelper.setLimitRect(
-                    mutableListOf(
-                        android.graphics.Rect(
-                            0, 0, surfaceView.width, surfaceView.height
-                        )
-                    )
-                ).setExcludeRect(listOf(android.graphics.Rect(0, 0, 0, 0))).openRawDrawing()
-                println(history)
-
+                Log.i(TAG, "surface created ${holder}")
+                // set up the drawing surface
+                updateActiveSurface()
                 // This is supposed to let the ui update while the old surface is being unmounted
                 coroutineScope.launch {
                     forceUpdate.emit(null)
@@ -145,14 +141,15 @@ class DrawCanvas(
             override fun surfaceChanged(
                 holder: SurfaceHolder, format: Int, width: Int, height: Int
             ) {
-                println("surface changed ${holder}")
+                Log.i(TAG, "surface changed ${holder}")
                 drawCanvasToView()
                 updatePenAndStroke()
                 refreshUi()
             }
 
             override fun surfaceDestroyed(holder: SurfaceHolder) {
-                println(
+                Log.i(
+                    TAG,
                     "surface destroyed ${
                         this@DrawCanvas.hashCode().toString()
                     } - ref ${referencedSurfaceView}"
@@ -173,7 +170,7 @@ class DrawCanvas(
         // observe forceUpdate
         coroutineScope.launch {
             forceUpdate.collect { zoneAffected ->
-                println("Force update zone $zoneAffected")
+                Log.i(TAG, "Force update zone $zoneAffected")
 
                 if (zoneAffected != null) page.drawArea(
                     area = Rect(
@@ -211,8 +208,22 @@ class DrawCanvas(
 
         // observe paen and stroke size
         coroutineScope.launch {
-            snapshotFlow { state.pen to state.penSettings.toMap() }.drop(1).collect {
-                println("pen change: ${state.pen}")
+            snapshotFlow { state.pen }.drop(1).collect {
+                Log.i(TAG, "pen change: ${state.pen}")
+                updatePenAndStroke()
+                refreshUi()
+            }
+        }
+        coroutineScope.launch {
+            snapshotFlow { state.penSettings.toMap() }.drop(1).collect {
+                Log.i(TAG, "pen settings change: ${state.penSettings}")
+                updatePenAndStroke()
+                refreshUi()
+            }
+        }
+        coroutineScope.launch {
+            snapshotFlow { state.eraser }.drop(1).collect {
+                Log.i(TAG, "eraser change: ${state.eraser}")
                 updatePenAndStroke()
                 refreshUi()
             }
@@ -221,7 +232,7 @@ class DrawCanvas(
         // observe is drawing
         coroutineScope.launch {
             snapshotFlow { state.isDrawing }.drop(1).collect {
-                println("isDrawing change: ${state.isDrawing}")
+                Log.i(TAG, "isDrawing change: ${state.isDrawing}")
                 updateIsDrawing()
             }
         }
@@ -229,15 +240,15 @@ class DrawCanvas(
         // observe toolbar open
         coroutineScope.launch {
             snapshotFlow { state.isToolbarOpen }.drop(1).collect {
-                println("istoolbaropen change: ${state.isToolbarOpen}")
-                updateIsToolbarOpen()
+                Log.i(TAG, "istoolbaropen change: ${state.isToolbarOpen}")
+                updateActiveSurface()
             }
         }
 
         // observe mode
         coroutineScope.launch {
             snapshotFlow { getActualState().mode }.drop(1).collect {
-                println("mode change: ${getActualState().mode}")
+                Log.i(TAG, "mode change: ${getActualState().mode}")
                 updatePenAndStroke()
                 refreshUi()
             }
@@ -245,8 +256,7 @@ class DrawCanvas(
 
         coroutineScope.launch {
             commitHistorySignal.debounce(500).collect {
-                println("Commiting")
-                println(strokeHistoryBatch)
+                Log.i(TAG, "Commiting")
                 if (strokeHistoryBatch.size > 0) history.addOperationsToHistory(
                     operations = listOf(
                         Operation.DeleteStroke(strokeHistoryBatch.map { it })
@@ -255,28 +265,29 @@ class DrawCanvas(
                 strokeHistoryBatch.clear()
             }
         }
+
     }
 
     fun refreshUi() {
-        println("refresh ui with is drawing : ${state.isDrawing}")
+        Log.i(TAG, "Refreshing ui. isDrawing : ${state.isDrawing}")
+        drawCanvasToView()
+
         if (state.isDrawing) {
+            // reset screen freeze
             touchHelper.setRawDrawingEnabled(false)
-            drawCanvasToView()
-            touchHelper.setRawDrawingEnabled(true)
-        } else {
-            drawCanvasToView()
+            touchHelper.setRawDrawingEnabled(true) // screen won't freeze until you actually stoke
         }
     }
 
     fun drawCanvasToView() {
-    println("Draw canvas")
+        Log.i(TAG, "Draw canvas")
         val canvas = this.holder.lockCanvas() ?: return
         canvas.drawBitmap(page.windowedBitmap, 0f, 0f, Paint());
 
         if (getActualState().mode == Mode.Select) {
             // render selection
             if (getActualState().selectionState.firstPageCut != null) {
-                println("rendercut")
+                Log.i(TAG, "rendercut")
 
                 val path = pointsToPath(getActualState().selectionState.firstPageCut!!.map {
                     SimplePointF(
@@ -292,7 +303,7 @@ class DrawCanvas(
     }
 
     fun updateIsDrawing() {
-        println("Update is drawing : ${state.isDrawing}")
+        Log.i(TAG, "Update is drawing : ${state.isDrawing}")
         if (state.isDrawing) {
             touchHelper.setRawDrawingEnabled(true)
         } else {
@@ -302,20 +313,28 @@ class DrawCanvas(
     }
 
     fun updatePenAndStroke() {
-        println("Update pen and stroke")
+        Log.i(TAG, "Update pen and stroke")
         when (state.mode) {
             Mode.Draw -> touchHelper.setStrokeStyle(penToStroke(state.pen))
                 ?.setStrokeWidth(state.penSettings[state.pen.penName]!!.strokeSize)
                 ?.setStrokeColor(state.penSettings[state.pen.penName]!!.color)
-            Mode.Erase -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))?.setStrokeWidth(3f)
-                ?.setStrokeColor(Color.GRAY)
+            Mode.Erase -> {
+                when (state.eraser) {
+                    Eraser.PEN -> touchHelper.setStrokeStyle(penToStroke(Pen.MARKER))
+                        ?.setStrokeWidth(30f)
+                        ?.setStrokeColor(Color.GRAY)
+                    Eraser.SELECT -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))
+                        ?.setStrokeWidth(3f)
+                        ?.setStrokeColor(Color.GRAY)
+                }
+            }
             Mode.Select -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))?.setStrokeWidth(3f)
                 ?.setStrokeColor(Color.GRAY)
         }
     }
 
-    fun updateIsToolbarOpen() {
-        println("Update toolbar open")
+    fun updateActiveSurface() {
+        Log.i(TAG, "Update editable surface")
 
         val exclusionHeight =
             if (state.isToolbarOpen) convertDpToPixel(40.dp, context).toInt() else 0
@@ -329,7 +348,9 @@ class DrawCanvas(
                     0, 0, this.width, this.height
                 )
             )
-        ).setExcludeRect(listOf(android.graphics.Rect(0, 0, this.width, exclusionHeight))).openRawDrawing()
+        ).setExcludeRect(listOf(android.graphics.Rect(0, 0, this.width, exclusionHeight)))
+            .openRawDrawing()
+
         touchHelper.setRawDrawingEnabled(true)
         updatePenAndStroke()
 

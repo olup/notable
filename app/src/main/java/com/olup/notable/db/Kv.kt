@@ -1,6 +1,7 @@
 package com.olup.notable.db
 
 import android.content.Context
+import io.shipbook.shipbooksdk.Log
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import java.util.Date
@@ -11,6 +12,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.olup.notable.AppSettings
+import com.olup.notable.TAG
 import com.olup.notable.persistVersion
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -88,7 +90,7 @@ class KvProxy(context: Context) {
 
     fun <T> setKv(key: String, value: T, serializer: KSerializer<T>) {
         val jsonValue = Json.encodeToString(serializer, value)
-        println(jsonValue)
+        Log.i(TAG, jsonValue)
         kvRepository.set(Kv(key, jsonValue))
     }
 }

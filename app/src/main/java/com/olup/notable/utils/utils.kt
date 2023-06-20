@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.*
 import android.util.DisplayMetrics
+import android.util.TypedValue
+import io.shipbook.shipbooksdk.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.remember
@@ -40,13 +42,11 @@ fun Modifier.noRippleClickable(
 fun convertDpToPixel(dp: Dp, context: Context): Float {
     val resources = context.resources
     val metrics: DisplayMetrics = resources.getDisplayMetrics()
-    return dp.value * (metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT)
-}
-
-fun convertPixelToDp(px: Float, context: Context): Dp {
-    val resources = context.resources
-    val metrics: DisplayMetrics = resources.getDisplayMetrics()
-    return Dp(px / (metrics.densityDpi.toFloat() / DisplayMetrics.DENSITY_DEFAULT))
+     return TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_DIP,
+        dp.value,
+        context.resources.displayMetrics
+    )
 }
 
 // TODO move this to repository
@@ -115,26 +115,29 @@ fun handleErase(
     page: PageView,
     history: History,
     points: List<SimplePointF>,
+    eraser: Eraser
 ) {
-    /* val paint = Paint().apply {
-         this.strokeWidth = 10f
+     val paint = Paint().apply {
+         this.strokeWidth = 30f
          this.style = Paint.Style.STROKE
          this.strokeCap = Paint.Cap.ROUND
          this.strokeJoin = Paint.Join.ROUND
          this.isAntiAlias = true
-     }*/
+     }
     val path = pointsToPath(points)
+    var outPath = Path()
 
-    // lasso eraser
-    path.close()
-    val outPath = path
+    if(eraser == Eraser.SELECT){
+        path.close()
+        outPath = path
+    }
 
 
-// stroke erasaer
-//    val outPath = Path()
-//    paint.getFillPath(path, outPath)
+    if(eraser == Eraser.PEN) {
+        paint.getFillPath(path, outPath)
+    }
 
-    val deletedStrokes = selectStrokesFromPath(page.strokes, path)
+    val deletedStrokes = selectStrokesFromPath(page.strokes, outPath)
 
     val deletedStrokeIds = deletedStrokes.map { it.id }
     page.removeStrokes(deletedStrokeIds)
@@ -178,7 +181,7 @@ fun handleSelect(
         if (state.firstPageCut == null) {
             // this is the first page cut
             state.firstPageCut = completePoints
-            println("Registered first curt")
+            Log.i(TAG, "Registered first curt")
         } else {
             // this is the second page cut, we can also select the strokes
             // first lets have the cuts in the right order
@@ -422,7 +425,7 @@ fun shareBitmap(context: Context, bitmap: Bitmap) {
     canvas.drawBitmap(bitmap, 0f, 0f, null)
 
     val cachePath = File(context.cacheDir, "images")
-    println(cachePath)
+    Log.i(TAG, cachePath.toString())
     cachePath.mkdirs()
 
     try {

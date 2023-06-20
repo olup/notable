@@ -1,5 +1,6 @@
 package com.olup.notable
 
+import io.shipbook.shipbooksdk.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -139,7 +140,11 @@ fun Library(navController: NavController, folderId: String? = null) {
                         var isSettingsOpen by remember { mutableStateOf(false) }
                         if (isSettingsOpen) FolderConfigDialog(
                             folderId = folder.id,
-                            onClose = { isSettingsOpen = false })
+                            onClose = {
+                                Log.i(TAG, "Closing Directory Dialog")
+                                isSettingsOpen = false
+                            })
+
                         Row(
                             Modifier
                                 .combinedClickable(

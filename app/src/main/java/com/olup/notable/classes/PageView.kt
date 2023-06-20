@@ -2,6 +2,7 @@ package com.olup.notable
 
 import android.content.Context
 import android.graphics.*
+import io.shipbook.shipbooksdk.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -37,7 +38,9 @@ class PageView(
     var strokesById: HashMap<String, Stroke> = hashMapOf()
     var scroll by mutableStateOf(0) // is observed by ui
     val saveTopic = MutableSharedFlow<Unit>()
-    var height by mutableStateOf(SCREEN_HEIGHT) // is observed by ui
+
+    var height by mutableStateOf(viewHeight) // is observed by ui
+
     var pageFromDb = AppRepository(context).pageRepository.getById(id)
 
     var db = AppDatabase.getDatabase(context)?.strokeDao()!!
@@ -50,8 +53,11 @@ class PageView(
             }
         }
 
-        val isCacehd = loadBitmap()
-        initFromPersistLayer(isCacehd)
+        windowedCanvas.drawColor(Color.WHITE)
+        drawBg(windowedCanvas, pageFromDb?.nativeTemplate!!, scroll)
+
+        val isCached = loadBitmap()
+        initFromPersistLayer(isCached)
     }
 
     fun indexStrokes() {
@@ -66,26 +72,19 @@ class PageView(
         val page = AppRepository(context).pageRepository.getById(id)
         scroll = page!!.scroll
 
-        if (!isCached) {
-            // if not cached we work synchronously
-            val pageWithStrokes = AppRepository(context).pageRepository.getWithStrokeById(id)
-            strokes = pageWithStrokes.strokes
-            indexStrokes()
-            computeHeight()
-
-            // we draw and cache
-            drawBg(windowedCanvas, page.nativeTemplate, scroll)
-            drawArea(Rect(0, 0, windowedCanvas.width, windowedCanvas.height))
-            persistBitmap()
-            persistBitmapThumbnail()
-        }
-
-        // otherwise we can fetch this in the backgrond
         coroutineScope.launch {
             val pageWithStrokes = AppRepository(context).pageRepository.getWithStrokeById(id)
             strokes = pageWithStrokes.strokes
             indexStrokes()
             computeHeight()
+
+            if (!isCached) {
+                // we draw and cache
+                drawBg(windowedCanvas, page.nativeTemplate, scroll)
+                drawArea(Rect(0, 0, windowedCanvas.width, windowedCanvas.height))
+                persistBitmap()
+                persistBitmapThumbnail()
+            }
         }
     }
 
@@ -128,6 +127,14 @@ class PageView(
         height = max(maxStrokeBottom.toInt(), viewHeight)
     }
 
+    fun computeWidth(): Int {
+        if (strokes.isEmpty()) {
+            return viewWidth
+        }
+        val maxStrokeRight = strokes.maxOf { it.right }.plus(50) ?: 0
+        return max(maxStrokeRight.toInt(), viewWidth)
+    }
+
     private fun removeStrokesFromPersistLayer(strokeIds: List<String>) {
         AppRepository(context).strokeRepository.deleteAll(strokeIds)
     }
@@ -139,13 +146,18 @@ class PageView(
             imgBitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
             if (imgBitmap != null) {
                 windowedCanvas.drawBitmap(imgBitmap, 0f, 0f, Paint());
-                println("Page rendered from cache")
-                return true
+                Log.i(TAG, "Page rendered from cache")
+                // let's control that the last preview fits the present orientation. Otherwise we'll ask for a redraw.
+                if(imgBitmap.height == windowedCanvas.height && imgBitmap.width == windowedCanvas.width){
+                    return true
+                } else {
+                    Log.i(TAG, "Image preview does not fit canvas area - redrawing")
+                }
             } else {
-                println("Cannot read cache image")
+                Log.i(TAG, "Cannot read cache image")
             }
         } else {
-            println("Cannot find cache image")
+            Log.i(TAG, "Cannot find cache image")
         }
         return false
     }
@@ -184,7 +196,7 @@ class PageView(
         val timeToBg = measureTimeMillis {
             drawBg(activeCanvas, pageFromDb?.nativeTemplate ?: "blank", scroll)
         }
-        println("Took $timeToBg to draw the BG")
+        Log.i(TAG, "Took $timeToBg to draw the BG")
 
         val timeToDraw = measureTimeMillis {
             strokes.forEach { stroke ->
@@ -199,7 +211,7 @@ class PageView(
 
             }
         }
-        println("Drew area in ${timeToDraw}ms")
+        Log.i(TAG, "Drew area in ${timeToDraw}ms")
         activeCanvas.restore();
     }
 

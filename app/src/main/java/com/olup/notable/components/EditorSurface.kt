@@ -1,5 +1,6 @@
 package com.olup.notable
 
+import io.shipbook.shipbooksdk.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,7 +15,7 @@ fun EditorSurface(
     state: EditorState, page : PageView, history: History
 ) {
     val couroutineScope = rememberCoroutineScope()
-    println("recompose surface")
+    Log.i(TAG, "recompose surface")
 
     Box(
         modifier = Modifier

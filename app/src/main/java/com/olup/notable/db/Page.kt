@@ -20,13 +20,9 @@ import java.util.*
 )
 data class Page(
     @PrimaryKey val id: String = UUID.randomUUID().toString(), val scroll: Int = 0,
-
     @ColumnInfo(index = true) val notebookId: String? = null,
-
     @ColumnInfo(defaultValue = "blank") val nativeTemplate: String = "blank",
-
     @ColumnInfo(index = true) val parentFolderId: String? = null,
-
     val createdAt: Date = Date(), val updatedAt: Date = Date()
 )
 

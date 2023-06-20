@@ -1,5 +1,6 @@
 package com.olup.notable
 
+import io.shipbook.shipbooksdk.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Text
@@ -51,7 +52,6 @@ fun SnackBar(state: SnackState) {
     LaunchedEffect(Unit) {
         launch {
             state.cancelSnackFlow.collect { snackId ->
-                println("Cancellign")
                 getSnacks().removeIf { it.id == snackId }
             }
         }

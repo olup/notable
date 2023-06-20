@@ -30,3 +30,4 @@ val MIGRATION_22_23 = object : Migration(22, 23) {
                 "AND notebookId NOT IN (SELECT id FROM Notebook);")
     }
 }
+
