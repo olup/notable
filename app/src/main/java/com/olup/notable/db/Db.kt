@@ -34,13 +34,16 @@ class Converters {
 
 @Database(
     entities = [Folder::class, Notebook::class, Page::class, Stroke::class, Kv::class],
-    version = 25,
+    version = 28,
     autoMigrations = [
         AutoMigration(19,20),
         AutoMigration(20,21),
         AutoMigration(21,22),
         AutoMigration(23,24),
         AutoMigration(24,25),
+        AutoMigration(25,26),
+        AutoMigration(26,27),
+        AutoMigration(27,28),
     ]
 )
 @TypeConverters(Converters::class)
