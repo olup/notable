@@ -32,11 +32,10 @@ data class Version(val major: Int, val minor: Int, val patch: Int) : Comparable<
     }
 }
 
-
 fun getLatestReleaseVersion(repoOwner: String, repoName: String): String? {
     val apiUrl = "https://api.github.com/repos/$repoOwner/$repoName/releases"
     val json = URL(apiUrl).readText()
-    val versions = Json{ ignoreUnknownKeys = true }.decodeFromString<List<ghVersion>>(json)
+    val versions = Json { ignoreUnknownKeys = true }.decodeFromString<List<ghVersion>>(json)
 
     versions.forEach {
         if (!it.prerelease) {
@@ -74,7 +73,7 @@ fun isLatestVersion(context: Context, force: Boolean = false): Boolean {
         Log.i(TAG, "Version is ${version} and latest on repo is ${latestVersion}")
 
         // If either version is null, we can't compare them
-        if (latestVersion == null || version == null){
+        if (latestVersion == null || version == null) {
             throw Exception("One of the version is null - comparison is impossible")
         }
 
@@ -83,8 +82,9 @@ fun isLatestVersion(context: Context, force: Boolean = false): Boolean {
 
         // If either version does not fit simple semantic version don't compare
         if (latestVersionVersion == null || versionVersion == null) {
-            throw Exception("One of the version doesn't match simple semantic - comparison is impossible")
-
+            throw Exception(
+                    "One of the version doesn't match simple semantic - comparison is impossible"
+            )
         }
 
         isLatestVersion = versionVersion.compareTo(latestVersionVersion) != -1

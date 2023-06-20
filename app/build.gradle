@@ -38,7 +38,6 @@ android {
             // Optional, specify signing versions used
             v1SigningEnabled true
             v2SigningEnabled true
-
         }
     }
 
