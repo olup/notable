@@ -81,6 +81,9 @@ class DrawCanvas(
                         getActualState().pen,
                         plist.points
                     )
+                    coroutineScope.launch {
+                        commitHistorySignal.emit(Unit)
+                    }
                 }
 
                 if (getActualState().mode == Mode.Select) {
