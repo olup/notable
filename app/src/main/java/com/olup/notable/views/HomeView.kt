@@ -137,12 +137,12 @@ fun Library(navController: NavController, folderId: String? = null) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     items(folders!!) { folder ->
-                        var isSettingsOpen by remember { mutableStateOf(false) }
-                        if (isSettingsOpen) FolderConfigDialog(
+                        var isFolderSettingsOpen by remember { mutableStateOf(false) }
+                        if (isFolderSettingsOpen) FolderConfigDialog(
                             folderId = folder.id,
                             onClose = {
                                 Log.i(TAG, "Closing Directory Dialog")
-                                isSettingsOpen = false
+                                isFolderSettingsOpen = false
                             })
 
                         Row(
@@ -152,7 +152,7 @@ fun Library(navController: NavController, folderId: String? = null) {
                                         navController.navigate("library?folderId=${folder.id}")
                                     },
                                     onLongClick = {
-                                        isSettingsOpen = true
+                                        isFolderSettingsOpen = !isFolderSettingsOpen
                                     },
                                 )
                                 .border(0.5.dp, Color.Black)
