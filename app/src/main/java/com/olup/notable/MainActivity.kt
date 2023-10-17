@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
                         Modifier
                             .background(Color.White)
                     ) {
-                        Router(intentData)
+                        Router()
                     }
                     Box(
                         Modifier
