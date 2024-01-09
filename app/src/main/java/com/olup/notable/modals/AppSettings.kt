@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.olup.notable.components.SelectMenu
+import com.olup.notable.components.PathMenu
 import com.olup.notable.db.KvProxy
 import kotlin.concurrent.thread
 
@@ -25,6 +26,7 @@ import kotlin.concurrent.thread
 data class AppSettings(
         val version: Int,
         val defaultNativeTemplate: String = "blank",
+        val defaultSavePath: Srting = Environment.DIRECTORY_DOCUMENTS / "notable",
         val quickNavPages: List<String> = listOf()
 )
 
@@ -62,6 +64,23 @@ fun AppSettingsModal(onClose: () -> Unit) {
             Box(Modifier.height(0.5.dp).fillMaxWidth().background(Color.Black))
 
             Column(Modifier.padding(20.dp, 10.dp)) {
+                Row() {
+                    Text(text = "Save path")
+                    Spacer(Modifier.width(10.dp))
+                    PathMenu(
+                            onChange = {
+                                kv.setKv(
+                                        "APP_SETTINGS",
+                                        settings!!.copy(defaultSavePath = it),
+                                        AppSettings.serializer()
+                                )
+                            },
+                            value = settings?.defaultSavePath ?: Environment.DIRECTORY_DOCUMENTS / "notable"
+                    )
+                }
+
+                Spacer(Modifier.height(10.dp))
+
                 Row() {
                     Text(text = "Default Page Background Template")
                     Spacer(Modifier.width(10.dp))

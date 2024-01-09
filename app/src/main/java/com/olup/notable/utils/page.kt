@@ -6,6 +6,7 @@ import android.os.Environment
 import androidx.compose.ui.unit.IntOffset
 import com.olup.notable.db.BookRepository
 import com.olup.notable.db.PageRepository
+import com.olup.notable.db.appRepository
 import com.olup.notable.db.Stroke
 import io.shipbook.shipbooksdk.Log
 import java.io.FileOutputStream
@@ -31,8 +32,16 @@ fun exportPage(context: Context, pageId: String) {
 private inline fun exportPdf(dir: String, name: String, write: PdfDocument.() -> Unit) {
     val document = PdfDocument()
     document.write()
+
+    val context = LocalContext.current
+    val appRepository = AppRepository(context)
+
+    val savePath = appRepository.kvProxy.get(
+                                    "APP_SETTINGS", AppSettings.serializer()
+                                )?.defaultSavePath ?: Environment.DIRECTORY_DOCUMENTS / "notable"
+
     val filePath = Environment.getExternalStorageDirectory().toPath() /
-            Environment.DIRECTORY_DOCUMENTS / "notable" / dir / "$name.pdf"
+            savePath / dir / "$name.pdf"
     Files.createDirectories(filePath.parent)
     FileOutputStream(filePath.absolutePathString()).use(document::writeTo)
     document.close()
