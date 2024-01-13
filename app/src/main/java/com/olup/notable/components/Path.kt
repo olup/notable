@@ -31,7 +31,7 @@ fun PathMenu(value: String, onChange: (String) -> Unit) {
         Row() {
             Text(text = value,
                 fontWeight = FontWeight.Light,
-                modifier = Modifier.noRippleClickable { isExpanded = true })
+                modifier = Modifier.noRippleClickable { isExpanded = true }
                 // Register Directory selector dialog on Click event
             )
 
@@ -39,7 +39,7 @@ fun PathMenu(value: String, onChange: (String) -> Unit) {
                 Icons.Rounded.ArrowDropDown, contentDescription = "open select",
                 modifier = Modifier.height(20.dp)
             )
-            
+        }
         if (isExpanded) Popup(onDismissRequest = { isExpanded = false }) {
             Column(
                 modifier = Modifier

@@ -2,6 +2,7 @@ package com.olup.notable
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Environment
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -22,11 +23,12 @@ import com.olup.notable.components.PathMenu
 import com.olup.notable.db.KvProxy
 import kotlin.concurrent.thread
 
+
 @kotlinx.serialization.Serializable
 data class AppSettings(
         val version: Int,
         val defaultNativeTemplate: String = "blank",
-        val defaultSavePath: Srting = Environment.DIRECTORY_DOCUMENTS / "notable",
+        val defaultSavePath: String = Environment.DIRECTORY_DOCUMENTS "/notable",
         val quickNavPages: List<String> = listOf()
 )
 
@@ -75,7 +77,8 @@ fun AppSettingsModal(onClose: () -> Unit) {
                                         AppSettings.serializer()
                                 )
                             },
-                            value = settings?.defaultSavePath ?: Environment.DIRECTORY_DOCUMENTS / "notable"
+                            value = settings?.defaultSavePath
+                                ?: (Environment.DIRECTORY_DOCUMENTS + "/notable")
                     )
                 }
 
