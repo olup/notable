@@ -25,7 +25,7 @@ jobs:
       - name: Execute Gradle build
         run: |
           # For debugging, an ephemeral key suffice
-          keytool -genkey -v -keystore debug.keystore -storepass password -alias androiddebugkey -keypass password -dname "CN=Android Debug,O=Android,C=US"
+          keytool -genkey -v -keystore debug.keystore -storepass password -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -keypass password -dname "CN=Android Debug,O=Android,C=US"
 
           ./gradlew \
            -PDEBUG_STORE_FILE=debug.keystore \
