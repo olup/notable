@@ -28,7 +28,7 @@ import kotlin.concurrent.thread
 data class AppSettings(
         val version: Int,
         val defaultNativeTemplate: String = "blank",
-        val defaultSavePath: String = Environment.DIRECTORY_DOCUMENTS "/notable",
+        val defaultSavePath: String = Environment.DIRECTORY_DOCUMENTS + "/notable",
         val quickNavPages: List<String> = listOf()
 )
 

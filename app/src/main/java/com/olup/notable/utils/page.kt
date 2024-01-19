@@ -41,7 +41,7 @@ private inline fun exportPdf(context: Context, dir: String, name: String, write:
         "APP_SETTINGS", AppSettings.serializer()
     )?.defaultSavePath ?: (Environment.DIRECTORY_DOCUMENTS + "/notable")
 
-    val filePath = Environment.getExternalStorageDirectory().toPath() + "/$savePath/$dir/$name.pdf"
+    val filePath = Environment.getExternalStorageDirectory().toPath() / "$savePath/$dir/$name.pdf"
     Files.createDirectories(filePath.parent)
     FileOutputStream(filePath.absolutePathString()).use(document::writeTo)
     document.close()
