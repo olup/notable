@@ -98,6 +98,8 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-compat'
         exclude group: 'com.android.support', module: 'appcompat-v7'
     }
+    implementation("org.lsposed.hiddenapibypass:hiddenapibypass:4.3") // required by onyx sdk
+
     // used in RawInputManager.
     implementation group: 'io.reactivex.rxjava2', name: 'rxjava', version: '2.2.21'
     implementation group: 'io.reactivex.rxjava2', name: 'rxandroid', version: '2.1.1'
