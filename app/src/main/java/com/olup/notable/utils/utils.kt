@@ -249,7 +249,7 @@ fun handleSelect(
 }
 
 
-// touchpoints is in wiew coordinates
+// touchpoints is in view coordinates
 fun handleDraw(
     page: PageView,
     historyBucket: MutableList<String>,
