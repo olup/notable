@@ -78,6 +78,7 @@ class DrawCanvas(
                         this@DrawCanvas.page,
                         strokeHistoryBatch,
                         getActualState().penSettings[getActualState().pen.penName]!!.strokeSize,
+                        getActualState().penSettings[getActualState().pen.penName]!!.color,
                         getActualState().pen,
                         plist.points
                     )
