@@ -35,19 +35,6 @@ fun FloatingEditorView(
                     .background(Color.White)
             ) {
                 Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.LightGray)
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Floating Editor", style = MaterialTheme.typography.h6)
-                        IconButton(onClick = onDismissRequest) {
-                            Icon(Icons.Default.Close, contentDescription = "Close")
-                        }
-                    }
                     Box(modifier = Modifier.weight(1f)) {
                         EditorView(
                             navController = navController,
