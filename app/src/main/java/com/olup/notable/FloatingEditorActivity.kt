@@ -16,14 +16,21 @@ import com.olup.notable.ui.theme.InkaTheme
 import com.olup.notable.views.FloatingEditorView
 import com.olup.notable.db.Page
 import com.olup.notable.AppSettings
+import kotlinx.coroutines.launch
 
 class FloatingEditorActivity : ComponentActivity() {
     private lateinit var appRepository: AppRepository
+    private var pageId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        val pageId = intent.data?.lastPathSegment ?: return
+        pageId = intent.data?.lastPathSegment
+        if (pageId == null) {
+            finish()
+            return
+        }
+        
         appRepository = AppRepository(this)
         
         setContent {
@@ -48,7 +55,7 @@ class FloatingEditorActivity : ComponentActivity() {
                     }
 
                     if (showEditor) {
-                        FloatingEditorContent(pageId, navController)
+                        FloatingEditorContent(pageId!!, navController)
                     }
                 }
             }
@@ -73,7 +80,9 @@ class FloatingEditorActivity : ComponentActivity() {
         FloatingEditorView(
             navController = navController,
             pageId = pageId,
-            onDismissRequest = { finish() }
+            onDismissRequest = { 
+                finish()
+            }
         )
     }
 
@@ -86,6 +95,16 @@ class FloatingEditorActivity : ComponentActivity() {
                 // Permission denied, handle accordingly (e.g., show a message or close the activity)
                 finish()
             }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        pageId?.let { id ->
+            // Auto-export to PNG when the activity is destroyed
+            Thread {
+                exportPageToPng(this, id)
+            }.start()
         }
     }
 
