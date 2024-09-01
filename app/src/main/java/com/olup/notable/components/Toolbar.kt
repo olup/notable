@@ -297,6 +297,20 @@ fun Toolbar(
                             .background(Color.Black)
                     )
                 }
+                // Add Library Button
+                ToolbarButton(
+                    iconId = R.drawable.library, // Replace with your library icon resource
+                    contentDescription = "library",
+                    onSelect = {
+                        navController.navigate("library") // Navigate to main library
+                    }
+                )
+                Box(
+                    Modifier
+                        .fillMaxHeight()
+                        .width(0.5.dp)
+                        .background(Color.Black)
+                )
                 Column {
                     ToolbarButton(
                         onSelect = {
