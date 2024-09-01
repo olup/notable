@@ -96,6 +96,7 @@ fun Toolbar(
             onSelect = { color ->
                 selectedColor = color
                 changePenColor(color) // Change pen color for all pens
+                isColorSelectionDialogOpen = false
             },
             onClose = { isColorSelectionDialogOpen = false }
         )
