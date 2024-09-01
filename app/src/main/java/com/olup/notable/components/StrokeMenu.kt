@@ -2,6 +2,7 @@ package com.olup.notable
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable // Add this import
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -43,5 +44,41 @@ fun StrokeMenu(
             }
         }
 
+    }
+}
+
+
+@Composable
+fun ColorSelectionDialog(
+    currentColor: Color,
+    onSelect: (Color) -> Unit,
+    onClose: () -> Unit
+) {
+    val context = LocalContext.current
+
+    Popup(
+        offset = IntOffset(0, convertDpToPixel(43.dp, context).toInt()), onDismissRequest = {
+            onClose()
+        }, properties = PopupProperties(focusable = true), alignment = Alignment.TopCenter
+    ) {
+        Row(
+            Modifier
+                .background(Color.White)
+                .border(1.dp, Color.Black)
+                .padding(8.dp)
+        ) {
+            listOf(Color.Red, Color.Blue, Color.Green, Color.Black, Color.LightGray).forEach { color ->
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(color)
+                        .clickable { // Ensure clickable is recognized
+                            onSelect(color)
+                            onClose()
+                        }
+                        .border(1.dp, if (currentColor == color) Color.Black else Color.Transparent)
+                )
+            }
+        }
     }
 }

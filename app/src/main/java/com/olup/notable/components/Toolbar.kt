@@ -41,6 +41,9 @@ fun Toolbar(
     var isStrokeSelectionOpen by remember { mutableStateOf(false) }
     var isMenuOpen by remember { mutableStateOf(false) }
     var isPageSettingsModalOpen by remember { mutableStateOf(false) }
+    var isPaletteOpen by remember { mutableStateOf(false) }
+    var selectedColor by remember { mutableStateOf(Color.Black) } // Add a state for selected color
+    var isColorSelectionDialogOpen by remember { mutableStateOf(false) } // State for color selection dialog
 
     val context = LocalContext.current
 
@@ -73,6 +76,30 @@ fun Toolbar(
         state.penSettings = settings
     }
 
+    fun changePenColor(color: Color) {
+        val settings = state.penSettings.toMutableMap()
+        state.penSettings.keys.forEach { penName ->
+            settings[penName] = settings[penName]?.copy(color = android.graphics.Color.argb(
+                (color.alpha * 255).toInt(),
+                (color.red * 255).toInt(),
+                (color.green * 255).toInt(),
+                (color.blue * 255).toInt()
+            )) ?: return // Convert Color to Int
+        }
+        state.penSettings = settings
+    }
+
+    // Show Color Selection Dialog
+    if (isColorSelectionDialogOpen) {
+        ColorSelectionDialog(
+            currentColor = selectedColor,
+            onSelect = { color ->
+                selectedColor = color
+                changePenColor(color) // Change pen color for all pens
+            },
+            onClose = { isColorSelectionDialogOpen = false }
+        )
+    }
 
     if (isPageSettingsModalOpen) {
         PageSettingsModal(pageView = state.pageView) {
@@ -179,6 +206,20 @@ fun Toolbar(
                     onSelect = { handleSelection() },
                     iconId = R.drawable.lasso,
                     contentDescription = "lasso"
+                )
+                Box(
+                    Modifier
+                        .fillMaxHeight()
+                        .width(0.5.dp)
+                        .background(Color.Black)
+                )
+
+                ToolbarButton(
+                    iconId = R.drawable.palette,
+                    contentDescription = "palette",
+                    onSelect = {
+                        isColorSelectionDialogOpen = true // Open the color selection dialog
+                    }
                 )
                 Box(
                     Modifier
