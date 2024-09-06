@@ -55,7 +55,7 @@ fun exportPageToPng(context: Context, pageId: String) {
 
     // Save the bitmap as PNG
     val filePath = Environment.getExternalStorageDirectory().toPath() /
-            Environment.DIRECTORY_DOCUMENTS / "notable" / "pages" / "notable-page-${pageId.takeLast(6)}.png"
+            Environment.DIRECTORY_DOCUMENTS / "Obsidian" / "Kai" / "04 - Attachments" / "Notable" / "Pages" / "notable-page-${pageId}.png"
     File(filePath.parent.toString()).mkdirs()
     FileOutputStream(filePath.toString()).use { out ->
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
@@ -68,7 +68,7 @@ fun exportBookToPng(context: Context, bookId: String) {
     val pages = PageRepository(context)
     
     val dirPath = Environment.getExternalStorageDirectory().toPath() /
-            Environment.DIRECTORY_DOCUMENTS / "notable" / "notebooks" / book.title
+            Environment.DIRECTORY_DOCUMENTS / "Obsidian" / "Kai" / "04 - Attachments" / "Notable" / "Notebooks" / book.title
     File(dirPath.toString()).mkdirs()
 
     book.pageIds.forEachIndexed { index, pageId ->
