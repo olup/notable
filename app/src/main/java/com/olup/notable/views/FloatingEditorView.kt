@@ -37,33 +37,11 @@ fun FloatingEditorView(
                     .background(Color.White)
             ) {
                 Column {
-                    // Toolbar for floating editor view
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.Gray)
-                            .padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(onClick = { isFullScreen = !isFullScreen }) {
-                            Icon(
-                                painter = painterResource(id = if (isFullScreen) R.drawable.fullscreen_exit else R.drawable.fullscreen),
-                                contentDescription = if (isFullScreen) "Exit Fullscreen" else "Enter Fullscreen"
-                            )
-                        }
-                        Spacer(modifier = Modifier.weight(1f))
-                        IconButton(onClick = onDismissRequest) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.close),
-                                contentDescription = "Close"
-                            )
-                        }
-                    }
-
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
+                            .fillMaxHeight()
                             .background(Color.White)
                     ) {
                         EditorView(
