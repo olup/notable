@@ -107,6 +107,28 @@ fun ToolbarMenu(
                     }
             ) { Text("Export page to PNG") }
 
+            Box(
+                Modifier
+                    .padding(10.dp)
+                    .noRippleClickable {
+                        scope.launch {
+                            val removeSnack =
+                                snackManager.displaySnack(
+                                    SnackConf(text = "Exporting the page to JPEG...")
+                                )
+                            delay(10L) // Why do I need this ?
+
+                            exportPageToJpeg(context, state.pageId)
+
+                            removeSnack()
+                            snackManager.displaySnack(
+                                SnackConf(text = "Page exported successfully to JPEG", duration = 2000)
+                            )
+                            onClose()
+                        }
+                    }
+            ) { Text("Export page to JPEG") }
+
             if (state.bookId != null)
                 Box(
                     Modifier

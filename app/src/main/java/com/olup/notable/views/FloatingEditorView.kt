@@ -33,12 +33,39 @@ fun FloatingEditorView(
         InkaTheme {
             Box(
                 modifier = Modifier
-                    .fillMaxHeight(if (isFullScreen) 1f else 0.98f) // Adjust height based on full-screen state
-                    .fillMaxWidth() // Ensure it fills the width
+                    .fillMaxSize() // Ensure it fills the entire screen
                     .background(Color.White)
             ) {
                 Column {
-                    Box(modifier = Modifier.weight(1f)) {
+                    // Toolbar for floating editor view
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.Gray)
+                            .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { isFullScreen = !isFullScreen }) {
+                            Icon(
+                                painter = painterResource(id = if (isFullScreen) R.drawable.fullscreen_exit else R.drawable.fullscreen),
+                                contentDescription = if (isFullScreen) "Exit Fullscreen" else "Enter Fullscreen"
+                            )
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        IconButton(onClick = onDismissRequest) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.close),
+                                contentDescription = "Close"
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .background(Color.White)
+                    ) {
                         EditorView(
                             navController = navController,
                             _bookId = null,

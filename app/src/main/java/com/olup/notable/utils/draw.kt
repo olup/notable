@@ -71,6 +71,9 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
 
     when (stroke.pen) {
         Pen.BALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+        Pen.REDBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+        Pen.GREENBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+        Pen.BLUEBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
         Pen.PENCIL -> NeoCharcoalPen.drawNormalStroke(
             null, canvas, paint, points, -16777216, stroke.size, ShapeCreateArgs(), Matrix(),false
         )

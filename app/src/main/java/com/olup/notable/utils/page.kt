@@ -63,6 +63,37 @@ fun exportPageToPng(context: Context, pageId: String) {
     bitmap.recycle()
 }
 
+fun exportPageToJpeg(context: Context, pageId: String) {
+    val pages = PageRepository(context)
+    val (page, strokes) = pages.getWithStrokeById(pageId)
+
+    val strokeHeight = if (strokes.isEmpty()) 0 else strokes.maxOf(Stroke::bottom).toInt() + 50
+    val strokeWidth = if (strokes.isEmpty()) 0 else strokes.maxOf(Stroke::right).toInt() + 50
+
+    val height = strokeHeight.coerceAtLeast(SCREEN_HEIGHT)
+    val width = strokeWidth.coerceAtLeast(SCREEN_WIDTH)
+
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+
+    // Draw background
+    drawBg(canvas, page.nativeTemplate, 0)
+
+    // Draw strokes
+    for (stroke in strokes) {
+        drawStroke(canvas, stroke, IntOffset(0, 0))
+    }
+
+    // Save the bitmap as JPEG
+    val filePath = Environment.getExternalStorageDirectory().toPath() /
+            Environment.DIRECTORY_DOCUMENTS / "Obsidian" / "Kai" / "04 - Attachments" / "Notable" / "Pages" / "notable-page-${pageId}.jpg"
+    File(filePath.parent.toString()).mkdirs()
+    FileOutputStream(filePath.toString()).use { out ->
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+    }
+    bitmap.recycle()
+}
+
 fun exportBookToPng(context: Context, bookId: String) {
     val book = BookRepository(context).getById(bookId) ?: return
     val pages = PageRepository(context)

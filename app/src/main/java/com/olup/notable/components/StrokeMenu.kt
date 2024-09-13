@@ -2,8 +2,10 @@ package com.olup.notable
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable // Add this import
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.Button
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,40 +45,38 @@ fun StrokeMenu(
                 )
             }
         }
-
     }
 }
-
 
 @Composable
 fun ColorSelectionDialog(
     currentColor: Color,
     onSelect: (Color) -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    options: List<Color>
 ) {
     val context = LocalContext.current
 
     Popup(
-        offset = IntOffset(0, convertDpToPixel(43.dp, context).toInt()), onDismissRequest = {
-            onClose()
-        }, properties = PopupProperties(focusable = true), alignment = Alignment.TopCenter
+        offset = IntOffset(0, convertDpToPixel(43.dp, context).toInt()), 
+        onDismissRequest = { onClose() },
+        properties = PopupProperties(focusable = true),
+        alignment = Alignment.TopCenter
     ) {
         Row(
             Modifier
                 .background(Color.White)
                 .border(1.dp, Color.Black)
-                .padding(8.dp)
+                .height(IntrinsicSize.Max)
         ) {
-            listOf(Color.Red, Color.Blue, Color.Green, Color.Black, Color.LightGray).forEach { color ->
+            options.map { color ->
                 Box(
                     modifier = Modifier
                         .size(40.dp)
                         .background(color)
-                        .clickable { // Ensure clickable is recognized
-                            onSelect(color)
-                            onClose()
-                        }
-                        .border(1.dp, if (currentColor == color) Color.Black else Color.Transparent)
+                        .border(1.dp, if (color == currentColor) Color.Black else Color.Transparent)
+                        .clickable { onSelect(color) }
+                        .padding(8.dp)
                 )
             }
         }
