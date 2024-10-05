@@ -73,6 +73,7 @@ fun exportPageToPng(context: Context, pageId: String) {
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
     }
     bitmap.recycle()
+    copyPageLinkForObsidian(context, pageId)
 }
 
 fun copyPageLinkForObsidian(context: Context, pageId: String) {
