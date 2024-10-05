@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
 
         //EpdDeviceManager.enterAnimationUpdate(true);
 
-
+        val intentData = intent.data?.lastPathSegment
         setContent {
             InkaTheme {
                 CompositionLocalProvider(SnackContext provides snackState ) {
@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
                         Modifier
                             .background(Color.White)
                     ) {
-                        Router()
+                        Router(intentData)
                     }
                     Box(
                         Modifier

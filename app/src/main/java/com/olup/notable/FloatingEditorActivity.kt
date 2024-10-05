@@ -15,8 +15,6 @@ import androidx.navigation.compose.rememberNavController
 import com.olup.notable.ui.theme.InkaTheme
 import com.olup.notable.views.FloatingEditorView
 import com.olup.notable.db.Page
-import com.olup.notable.AppSettings
-import kotlinx.coroutines.launch
 
 class FloatingEditorActivity : ComponentActivity() {
     private lateinit var appRepository: AppRepository
