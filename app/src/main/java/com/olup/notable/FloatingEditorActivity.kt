@@ -21,15 +21,26 @@ import kotlinx.coroutines.launch
 class FloatingEditorActivity : ComponentActivity() {
     private lateinit var appRepository: AppRepository
     private var pageId: String? = null
+    private var bookId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        pageId = intent.data?.lastPathSegment
-        if (pageId == null) {
+        val data = intent.data?.lastPathSegment
+        if (data == null) {
             finish()
             return
         }
+
+        if (data.startsWith("page-")) {
+            pageId = data.removePrefix("page-")
+        } else if (data.startsWith("book-")) {
+            bookId = data.removePrefix("book-")
+        } else {
+            pageId = data
+            return
+        }
+
         
         appRepository = AppRepository(this)
         
@@ -55,7 +66,7 @@ class FloatingEditorActivity : ComponentActivity() {
                     }
 
                     if (showEditor) {
-                        FloatingEditorContent(pageId!!, navController)
+                        FloatingEditorContent(navController, pageId, bookId)
                     }
                 }
             }
@@ -63,41 +74,43 @@ class FloatingEditorActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun FloatingEditorContent(pageId: String, navController: androidx.navigation.NavController) {
-        var page = appRepository.pageRepository.getById(pageId)
-        if (page == null) {
-            page = Page(
-                id = pageId,
-                notebookId = null,
-                parentFolderId = null,
-                nativeTemplate = appRepository.kvProxy.get(
-                    "APP_SETTINGS", AppSettings.serializer()
-                )?.defaultNativeTemplate ?: "blank"
+    private fun FloatingEditorContent(
+        navController: androidx.navigation.NavController,
+        pageId: String? = null,
+        bookId: String? = null
+    ) {
+        if (pageId != null) {
+            var page = appRepository.pageRepository.getById(pageId)
+            if (page == null) {
+                page = Page(
+                    id = pageId,
+                    notebookId = null,
+                    parentFolderId = null,
+                    nativeTemplate = appRepository.kvProxy.get(
+                        "APP_SETTINGS", AppSettings.serializer()
+                    )?.defaultNativeTemplate ?: "blank"
+                )
+                appRepository.pageRepository.create(page)
+            }
+            
+            FloatingEditorView(
+                navController = navController,
+                pageId = pageId,
+                onDismissRequest = { 
+                    finish()
+                }
             )
-            appRepository.pageRepository.create(page)
+        } else if (bookId != null) {
+            var book = appRepository.bookRepository.getById(bookId)
+            FloatingEditorView(
+                navController = navController,
+                bookId = bookId,
+                onDismissRequest = { 
+                    finish()
+                }
+            )
         }
-        
-        FloatingEditorView(
-            navController = navController,
-            pageId = pageId,
-            onDismissRequest = { 
-                finish()
-            }
-        )
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == OVERLAY_PERMISSION_REQ_CODE) {
-            if (Settings.canDrawOverlays(this)) {
-                recreate() // Recreate the activity to show the editor
-            } else {
-                // Permission denied, handle accordingly (e.g., show a message or close the activity)
-                finish()
-            }
         }
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         pageId?.let { id ->
@@ -106,9 +119,15 @@ class FloatingEditorActivity : ComponentActivity() {
                 exportPageToPng(this, id)
             }.start()
         }
+        bookId?.let { id ->
+            // Auto-export to PDF when the activity is destroyed
+            Thread {
+                exportBook(this, id)
+            }.start()
+        }
     }
 
     companion object {
-        private const val OVERLAY_PERMISSION_REQ_CODE = 1234
+        private const val OVERLAY_PERMISSION_REQ_CODE = 1000
     }
 }

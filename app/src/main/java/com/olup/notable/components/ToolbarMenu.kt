@@ -112,6 +112,23 @@ fun ToolbarMenu(
                     .padding(10.dp)
                     .noRippleClickable {
                         scope.launch {
+                            delay(10L) // Why do I need this ?
+
+                            copyPageLinkForObsidian(context, state.pageId)
+
+                            snackManager.displaySnack(
+                                SnackConf(text = "Copied page link for obsidian", duration = 2000)
+                            )
+                            onClose()
+                        }
+                    }
+            ) { Text("Copy page link for obsidian") }
+
+            Box(
+                Modifier
+                    .padding(10.dp)
+                    .noRippleClickable {
+                        scope.launch {
                             val removeSnack =
                                 snackManager.displaySnack(
                                     SnackConf(text = "Exporting the page to JPEG...")
