@@ -114,7 +114,7 @@ fun ToolbarMenu(
                         scope.launch {
                             delay(10L) // Why do I need this ?
 
-                            copyPageLinkForObsidian(context, state.pageId)
+                            copyPagePngLinkForObsidian(context, state.pageId)
 
                             snackManager.displaySnack(
                                 SnackConf(text = "Copied page link for obsidian", duration = 2000)
@@ -122,7 +122,7 @@ fun ToolbarMenu(
                             onClose()
                         }
                     }
-            ) { Text("Copy page link for obsidian") }
+            ) { Text("Copy page png link for obsidian") }
 
             Box(
                 Modifier

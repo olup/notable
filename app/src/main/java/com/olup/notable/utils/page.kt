@@ -73,10 +73,10 @@ fun exportPageToPng(context: Context, pageId: String) {
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
     }
     bitmap.recycle()
-    copyPageLinkForObsidian(context, pageId)
+    copyPagePngLinkForObsidian(context, pageId)
 }
 
-fun copyPageLinkForObsidian(context: Context, pageId: String) {
+fun copyPagePngLinkForObsidian(context: Context, pageId: String) {
    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
    val textToCopy = """
        ![[notable-page-${pageId}.png]]
@@ -117,6 +117,7 @@ fun exportPageToJpeg(context: Context, pageId: String) {
     }
     bitmap.recycle()
 }
+
 
 fun exportBookToPng(context: Context, bookId: String) {
     val book = BookRepository(context).getById(bookId) ?: return
