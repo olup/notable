@@ -8,6 +8,13 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.Date
+import android.os.Environment
+import androidx.room.AutoMigration
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import java.io.File
 
 class Converters {
     @TypeConverter
@@ -58,18 +65,26 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         private var INSTANCE: AppDatabase? = null
+
         fun getDatabase(context: Context): AppDatabase {
             if (INSTANCE == null) {
                 synchronized(this) {
-                    INSTANCE =
-                        Room.databaseBuilder(context, AppDatabase::class.java, "app_database")
-                            .allowMainThreadQueries()
-                            //.fallbackToDestructiveMigration()
-                            .addMigrations(
-                                MIGRATION_16_17,
-                                MIGRATION_17_18,
-                                        MIGRATION_22_23)
-                            .build()
+                    val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                    // val dbDir = File(documentsDir, "Obsidian/MinimalNotes/99-Meta/backups/notabledb")
+                    val dbDir = File(documentsDir, "notabledb")
+                    if (!dbDir.exists()) {
+                        dbDir.mkdirs()
+                    }
+                    val dbFile = File(dbDir, "app_database")
+                    INSTANCE = Room.databaseBuilder(context, AppDatabase::class.java, dbFile.absolutePath)
+                        .allowMainThreadQueries()
+                        //.fallbackToDestructiveMigration()
+                        .addMigrations(
+                            MIGRATION_16_17,
+                            MIGRATION_17_18,
+                            MIGRATION_22_23
+                        )
+                        .build()
                 }
             }
             return INSTANCE!!
