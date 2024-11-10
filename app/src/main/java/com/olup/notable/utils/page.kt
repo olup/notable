@@ -30,8 +30,8 @@ fun exportBook(context: Context, bookId: String) {
 fun copyBookPdfLinkForObsidian(context:Context, bookId: String, bookName: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val textToCopy = """
-        ![[${bookName}.pdf]]
-        [Notable Book Link](notable:///book-${bookId})
+        [[../attachments/Notable/Notebooks/${bookName}.pdf]]
+        [[Notable Book Link][notable://book-${bookId}]]
     """.trimIndent()
     val clip = ClipData.newPlainText("Notable Book PDF Link", textToCopy)
     clipboard.setPrimaryClip(clip)
@@ -67,7 +67,7 @@ fun exportPageToPng(context: Context, pageId: String) {
 
     // Save the bitmap as PNG
     val filePath = Environment.getExternalStorageDirectory().toPath() /
-            Environment.DIRECTORY_DOCUMENTS / "Obsidian" / "MinimalNotes" / "03-Attachments" / "Notable" / "Pages" / "notable-page-${pageId}.png"
+            "org" / "attachments" / "Notable" / "Pages" / "notable-page-${pageId}.png"
     File(filePath.parent.toString()).mkdirs()
     FileOutputStream(filePath.toString()).use { out ->
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
@@ -79,8 +79,8 @@ fun exportPageToPng(context: Context, pageId: String) {
 fun copyPagePngLinkForObsidian(context: Context, pageId: String) {
    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
    val textToCopy = """
-       ![[notable-page-${pageId}.png]]
-       [Notable Link](notable:///page-${pageId})
+       [[../attachments/Notable/Pages/notable-page-${pageId}.png]]
+       [[Notable Link][notable://page-${pageId}]]
    """.trimIndent()
    val clip = ClipData.newPlainText("Notable Page Link", textToCopy)
    clipboard.setPrimaryClip(clip)
@@ -110,7 +110,7 @@ fun exportPageToJpeg(context: Context, pageId: String) {
 
     // Save the bitmap as JPEG
     val filePath = Environment.getExternalStorageDirectory().toPath() /
-            Environment.DIRECTORY_DOCUMENTS / "Obsidian" / "MinimalNotes" / "03-Attachments" / "Notable" / "Pages" / "notable-page-${pageId}.jpg"
+            "org" / "attachments" / "Notable" / "Pages" / "notable-page-${pageId}.jpg"
     File(filePath.parent.toString()).mkdirs()
     FileOutputStream(filePath.toString()).use { out ->
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
@@ -124,7 +124,7 @@ fun exportBookToPng(context: Context, bookId: String) {
     val pages = PageRepository(context)
     
     val dirPath = Environment.getExternalStorageDirectory().toPath() /
-            Environment.DIRECTORY_DOCUMENTS / "Obsidian" / "MinimalNotes" / "03-Attachments" / "Notable" / "Notebooks" / book.title
+            "org" / "attachments" / "Notable" / "Notebooks" / book.title
     File(dirPath.toString()).mkdirs()
 
     book.pageIds.forEachIndexed { index, pageId ->
@@ -157,7 +157,7 @@ private inline fun exportPdf(dir: String, name: String, write: PdfDocument.() ->
     val document = PdfDocument()
     document.write()
     val filePath = Environment.getExternalStorageDirectory().toPath() /
-            Environment.DIRECTORY_DOCUMENTS / "Obsidian" / "MinimalNotes" / "03-Attachments" / "Notable" / dir / "$name.pdf"
+            "org" / "attachments" / "Notable" / dir / "$name.pdf"
     Files.createDirectories(filePath.parent)
     FileOutputStream(filePath.absolutePathString()).use(document::writeTo)
     document.close()
