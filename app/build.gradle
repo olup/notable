@@ -68,10 +68,12 @@ android {
         kotlinCompilerExtensionVersion compose_version
     }
     packagingOptions {
-        pickFirst '**/*.so'
 
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+        jniLibs {
+            pickFirsts += ['**/*.so']
         }
     }
     namespace 'com.olup.notable'
