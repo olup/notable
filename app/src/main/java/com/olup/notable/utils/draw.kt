@@ -49,8 +49,7 @@ fun drawMarkerStroke(
         this.strokeCap = Paint.Cap.ROUND
         this.strokeJoin = Paint.Join.ROUND
         this.isAntiAlias = true
-        this.color = Color.LTGRAY
-        this.alpha = 100
+        this.alpha = 30
 
     }
 
@@ -64,7 +63,7 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
     //canvas.translate(offset.x.toFloat(), offset.y.toFloat())
 
     val paint = Paint().apply {
-        color = Color.BLACK
+        color = stroke.color
         this.strokeWidth = stroke.size
     }
 
@@ -72,6 +71,9 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
 
     when (stroke.pen) {
         Pen.BALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+        Pen.REDBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+        Pen.GREENBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+        Pen.BLUEBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
         Pen.PENCIL -> NeoCharcoalPen.drawNormalStroke(
             null, canvas, paint, points, -16777216, stroke.size, ShapeCreateArgs(), Matrix(),false
         )

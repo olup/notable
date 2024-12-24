@@ -1,5 +1,6 @@
 package com.olup.notable
 
+import android.app.Activity
 import android.widget.Space
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -20,19 +21,54 @@ import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import androidx.activity.compose.BackHandler
+import androidx.compose.ui.platform.LocalContext
+
 
 @ExperimentalAnimationApi
 @ExperimentalFoundationApi
 @ExperimentalComposeUiApi
 @Composable
-fun Router() {
+fun Router(intentData: String?) {
     val navController = rememberAnimatedNavController()
+    val context = LocalContext.current
     var isQuickNavOpen by remember {
         mutableStateOf(false)
     }
+    var pageId: String? by remember { mutableStateOf(null) }
+    var bookId: String? by remember { mutableStateOf(null) }
+    var isFromIntent by remember { mutableStateOf(false) }
+
     LaunchedEffect(key1 = isQuickNavOpen, block = {
         DrawCanvas.isDrawing.emit(!isQuickNavOpen)
     })
+
+    // Handle navigation based on intent data
+    LaunchedEffect(key1 = intentData) {
+        if (intentData != null) {
+            isFromIntent = true
+            if (intentData.startsWith("page-")) {
+                pageId = intentData.removePrefix("page-")
+                navController.navigate("pages/$pageId")
+            } else if (intentData.startsWith("book-")) {
+                bookId = intentData.removePrefix("book-")
+                navController.navigate("books/$bookId/pages")
+            }
+        }
+    }
+
+    if (isFromIntent) {
+        // backhandler for intent
+        BackHandler {
+            if (pageId != null) {
+                exportPageToPng(context, pageId!!)
+            } else if (bookId != null) {
+                exportBook(context, bookId!!)
+            }
+            // Exit the app
+            (context as? Activity)?.finish()
+        }
+    }
 
     AnimatedNavHost(
         navController = navController,

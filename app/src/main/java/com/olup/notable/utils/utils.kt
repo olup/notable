@@ -254,6 +254,7 @@ fun handleDraw(
     page: PageView,
     historyBucket: MutableList<String>,
     strokeSize: Float,
+    color: Int,
     pen: Pen,
     touchPoints: List<TouchPoint>
 ) {
@@ -288,7 +289,8 @@ fun handleDraw(
         bottom = boundingBox.bottom,
         left = boundingBox.left,
         right = boundingBox.right,
-        points = points
+        points = points, 
+        color = color
     )
     page.addStrokes(listOf(stroke))
     page.drawArea(pageAreaToCanvasArea(strokeBounds(stroke).toRect(), page.scroll))

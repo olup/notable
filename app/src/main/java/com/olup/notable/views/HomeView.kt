@@ -34,6 +34,9 @@ import compose.icons.feathericons.Folder
 import compose.icons.feathericons.Settings
 import java.net.URL
 import kotlin.concurrent.thread
+import androidx.compose.material.Button
+import com.olup.notable.views.FloatingEditorView
+import com.olup.notable.AppSettings
 
 @ExperimentalFoundationApi
 @ExperimentalComposeUiApi
@@ -60,6 +63,9 @@ fun Library(navController: NavController, folderId: String? = null) {
         }
     })
 
+    var showFloatingEditor by remember { mutableStateOf(false) }
+    var floatingEditorPageId by remember { mutableStateOf<String?>(null) }
+
     Column(
         Modifier.fillMaxSize()
     ) {
@@ -79,7 +85,6 @@ fun Library(navController: NavController, folderId: String? = null) {
                                 isSettingsOpen = true
                             })
                 }
-
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 Text(text = "Add quick page",
@@ -114,6 +119,24 @@ fun Library(navController: NavController, folderId: String? = null) {
                         .noRippleClickable {
                             val folder = Folder(parentFolderId = folderId)
                             appRepository.folderRepository.create(folder)
+                        }
+                        .padding(10.dp))
+
+                // Add the new "Floating Editor" button here
+                Text(text = "Floating Editor",
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .noRippleClickable {
+                            val page = Page(
+                                notebookId = null,
+                                parentFolderId = folderId,
+                                nativeTemplate = appRepository.kvProxy.get(
+                                    "APP_SETTINGS", AppSettings.serializer()
+                                )?.defaultNativeTemplate ?: "blank"
+                            )
+                            appRepository.pageRepository.create(page)
+                            floatingEditorPageId = page.id
+                            showFloatingEditor = true
                         }
                         .padding(10.dp))
             }
@@ -266,6 +289,18 @@ fun Library(navController: NavController, folderId: String? = null) {
     }
 
     if (isSettingsOpen) AppSettingsModal(onClose = { isSettingsOpen = false })
+
+    // Add the FloatingEditorView here
+    if (showFloatingEditor && floatingEditorPageId != null) {
+        FloatingEditorView(
+            navController = navController,
+            pageId = floatingEditorPageId!!,
+            onDismissRequest = { 
+                showFloatingEditor = false
+                floatingEditorPageId = null
+            }
+        )
+    }
 }
 
 

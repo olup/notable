@@ -78,12 +78,74 @@ fun ToolbarMenu(
 
                             removeSnack()
                             snackManager.displaySnack(
-                                SnackConf(text = "Page exported successfully", duration = 2000)
+                                SnackConf(text = "Page exported successfully to PDF", duration = 2000)
                             )
                             onClose()
                         }
                     }
-            ) { Text("Export page") }
+            ) { Text("Export page to PDF") }
+
+            Box(
+                Modifier
+                    .padding(10.dp)
+                    .noRippleClickable {
+                        scope.launch {
+                            val removeSnack =
+                                snackManager.displaySnack(
+                                    SnackConf(text = "Exporting the page to PNG...")
+                                )
+                            delay(10L) // Why do I need this ?
+
+                            exportPageToPng(context, state.pageId)
+
+                            removeSnack()
+                            snackManager.displaySnack(
+                                SnackConf(text = "Page exported successfully to PNG", duration = 2000)
+                            )
+                            onClose()
+                        }
+                    }
+            ) { Text("Export page to PNG") }
+
+            Box(
+                Modifier
+                    .padding(10.dp)
+                    .noRippleClickable {
+                        scope.launch {
+                            delay(10L) // Why do I need this ?
+
+                            copyPagePngLinkForObsidian(context, state.pageId)
+
+                            snackManager.displaySnack(
+                                SnackConf(text = "Copied page link for obsidian", duration = 2000)
+                            )
+                            onClose()
+                        }
+                    }
+            ) { Text("Copy page png link for obsidian") }
+
+            Box(
+                Modifier
+                    .padding(10.dp)
+                    .noRippleClickable {
+                        scope.launch {
+                            val removeSnack =
+                                snackManager.displaySnack(
+                                    SnackConf(text = "Exporting the page to JPEG...")
+                                )
+                            delay(10L) // Why do I need this ?
+
+                            exportPageToJpeg(context, state.pageId)
+
+                            removeSnack()
+                            snackManager.displaySnack(
+                                SnackConf(text = "Page exported successfully to JPEG", duration = 2000)
+                            )
+                            onClose()
+                        }
+                    }
+            ) { Text("Export page to JPEG") }
+
             if (state.bookId != null)
                 Box(
                     Modifier
@@ -104,14 +166,44 @@ fun ToolbarMenu(
                                 removeSnack()
                                 snackManager.displaySnack(
                                     SnackConf(
-                                        text = "Book exported successfully",
+                                        text = "Book exported successfully to PDF",
                                         duration = 3000
                                     )
                                 )
                                 onClose()
                             }
                         }
-                ) { Text("Export book") }
+                ) { Text("Export book to PDF") }
+
+            if (state.bookId != null)
+                Box(
+                    Modifier
+                        .padding(10.dp)
+                        .noRippleClickable {
+                                scope.launch {
+                                    val removeSnack =
+                                        snackManager.displaySnack(
+                                            SnackConf(
+                                                text = "Exporting the book to PNG...",
+                                                id = "exportSnack"
+                                            )
+                                        )
+                                    delay(10L) // Why do I need this ?
+
+                                    exportBookToPng(context, state.bookId ?: return@launch)
+
+                                    removeSnack()
+                                    snackManager.displaySnack(
+                                        SnackConf(
+                                            text = "Book exported successfully to PNG",
+                                            duration = 3000
+                                        )
+                                    )
+                                    onClose()
+                                }
+                            }
+                    ) { Text("Export book to PNG") }
+
             if (state.selectionState.selectedBitmap != null) {
                 Box(
                     Modifier

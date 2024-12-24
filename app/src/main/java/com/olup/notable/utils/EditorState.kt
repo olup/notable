@@ -27,6 +27,9 @@ class EditorState(val bookId: String? = null, val pageId: String, val pageView: 
     var penSettings by mutableStateOf<NamedSettings>(
         persistedEditorSettings?.penSettings ?: mapOf<String, PenSetting>(
             Pen.BALLPEN.penName to PenSetting(5f, Color.BLACK),
+            Pen.REDBALLPEN.penName to PenSetting(5f, Color.RED),
+            Pen.BLUEBALLPEN.penName to PenSetting(5f, Color.BLUE),
+            Pen.GREENBALLPEN.penName to PenSetting(5f, Color.GREEN),
             Pen.PENCIL.penName to PenSetting(5f, Color.BLACK),
             Pen.BRUSH.penName to PenSetting(5f, Color.BLACK),
             Pen.MARKER.penName to PenSetting(40f, Color.LTGRAY),

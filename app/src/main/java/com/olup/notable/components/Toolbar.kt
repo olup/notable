@@ -21,6 +21,9 @@ fun PresentlyUsedToolIcon(mode: Mode, pen: Pen): Int {
         Mode.Draw -> {
             when (pen) {
                 Pen.BALLPEN -> R.drawable.ballpen
+                Pen.REDBALLPEN -> R.drawable.ballpenred
+                Pen.BLUEBALLPEN -> R.drawable.ballpenblue
+                Pen.GREENBALLPEN -> R.drawable.ballpengreen
                 Pen.FOUNTAIN -> R.drawable.fountain
                 Pen.BRUSH -> R.drawable.brush
                 Pen.MARKER -> R.drawable.marker
@@ -41,6 +44,9 @@ fun Toolbar(
     var isStrokeSelectionOpen by remember { mutableStateOf(false) }
     var isMenuOpen by remember { mutableStateOf(false) }
     var isPageSettingsModalOpen by remember { mutableStateOf(false) }
+    var isPaletteOpen by remember { mutableStateOf(false) }
+    var selectedColor by remember { mutableStateOf(Color.Black) } // Add a state for selected color
+    var isColorSelectionDialogOpen by remember { mutableStateOf(false) } // State for color selection dialog
 
     val context = LocalContext.current
 
@@ -55,12 +61,10 @@ fun Toolbar(
             state.mode = Mode.Draw
             state.pen = pen
         }
-
     }
 
     fun handleEraser() {
         state.mode = Mode.Erase
-
     }
 
     fun handleSelection() {
@@ -73,6 +77,31 @@ fun Toolbar(
         state.penSettings = settings
     }
 
+    fun changePenColor(color: Color) {
+        val settings = state.penSettings.toMutableMap()
+        val selectedPenName = state.pen.penName
+        settings[selectedPenName] = settings[selectedPenName]?.copy(color = android.graphics.Color.argb(
+            (color.alpha * 255).toInt(),
+            (color.red * 255).toInt(),
+            (color.green * 255).toInt(),
+            (color.blue * 255).toInt()
+        )) ?: return // Convert Color to Int
+        state.penSettings = settings
+    }
+
+    // Show Color Selection Dialog
+    if (isColorSelectionDialogOpen) {
+        ColorSelectionDialog(
+            currentColor = selectedColor,
+            onSelect = { color ->
+                selectedColor = color
+                changePenColor(color) // Change pen color for all pens
+                isColorSelectionDialogOpen = false
+            },
+            onClose = { isColorSelectionDialogOpen = false },
+            options = listOf(Color.Red, Color.Green, Color.Blue, Color.Cyan, Color.Magenta, Color.Gray, Color.DarkGray,  Color.Yellow) // List of color options
+        )
+    }
 
     if (isPageSettingsModalOpen) {
         PageSettingsModal(pageView = state.pageView) {
@@ -88,7 +117,6 @@ fun Toolbar(
                     .background(Color.White)
                     .height(37.dp)
                     .fillMaxWidth()
-
             ) {
                 ToolbarButton(
                     onSelect = {
@@ -110,6 +138,33 @@ fun Toolbar(
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.BALLPEN.penName] ?: return,
                     onChangeSetting = { onChangeStrokeSetting(Pen.BALLPEN.penName, it) })
+
+                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
+                    pen = Pen.REDBALLPEN,
+                    icon = R.drawable.ballpenred,
+                    isSelected = state.mode == Mode.Draw && state.pen == Pen.REDBALLPEN,
+                    onSelect = { handleChangePen(Pen.REDBALLPEN) },
+                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
+                    penSetting = state.penSettings[Pen.REDBALLPEN.penName] ?: return,
+                    onChangeSetting = { onChangeStrokeSetting(Pen.REDBALLPEN.penName, it) })
+
+                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
+                    pen = Pen.BLUEBALLPEN,
+                    icon = R.drawable.ballpenblue,
+                    isSelected = state.mode == Mode.Draw && state.pen == Pen.BLUEBALLPEN,
+                    onSelect = { handleChangePen(Pen.BLUEBALLPEN) },
+                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
+                    penSetting = state.penSettings[Pen.BLUEBALLPEN.penName] ?: return,
+                    onChangeSetting = { onChangeStrokeSetting(Pen.BLUEBALLPEN.penName, it) })
+
+                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
+                    pen = Pen.GREENBALLPEN,
+                    icon = R.drawable.ballpenred,
+                    isSelected = state.mode == Mode.Draw && state.pen == Pen.GREENBALLPEN,
+                    onSelect = { handleChangePen(Pen.GREENBALLPEN) },
+                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
+                    penSetting = state.penSettings[Pen.GREENBALLPEN.penName] ?: return,
+                    onChangeSetting = { onChangeStrokeSetting(Pen.GREENBALLPEN.penName, it) })
 
                 PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.PENCIL,
@@ -187,6 +242,20 @@ fun Toolbar(
                         .background(Color.Black)
                 )
 
+                ToolbarButton(
+                    iconId = R.drawable.palette,
+                    contentDescription = "palette",
+                    onSelect = {
+                        isColorSelectionDialogOpen = true // Open the color selection dialog
+                    }
+                )
+                Box(
+                    Modifier
+                        .fillMaxHeight()
+                        .width(0.5.dp)
+                        .background(Color.Black)
+                )
+
                 Spacer(Modifier.weight(1f))
 
                 Box(
@@ -232,7 +301,6 @@ fun Toolbar(
                     val pageNumber = book!!.pageIds.indexOf(state.pageId) + 1
                     val totalPageNumber = book!!.pageIds.size
 
-
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
@@ -255,6 +323,20 @@ fun Toolbar(
                             .background(Color.Black)
                     )
                 }
+                // Add Library Button
+                ToolbarButton(
+                    iconId = R.drawable.library, // Replace with your library icon resource
+                    contentDescription = "library",
+                    onSelect = {
+                        navController.navigate("library") // Navigate to main library
+                    }
+                )
+                Box(
+                    Modifier
+                        .fillMaxHeight()
+                        .width(0.5.dp)
+                        .background(Color.Black)
+                )
                 Column {
                     ToolbarButton(
                         onSelect = {
@@ -274,8 +356,6 @@ fun Toolbar(
                     .height(1.dp)
                     .background(Color.Black)
             )
-
-
         }
     } else {
         ToolbarButton(
@@ -284,6 +364,5 @@ fun Toolbar(
             contentDescription = "open toolbar",
             modifier = Modifier.height(37.dp)
         )
-
     }
 }
