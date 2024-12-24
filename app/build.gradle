@@ -87,17 +87,19 @@ dependencies {
     implementation 'androidx.activity:activity-compose:1.3.1'
 
     //implementation fileTree(dir: 'libs', include: ['*.aar'])
-    implementation('com.onyx.android.sdk:onyxsdk-device:1.2.26') {
+    implementation('com.onyx.android.sdk:onyxsdk-device:1.2.32') {
        exclude group: 'com.android.support', module: 'support-compat'
     }
-    implementation('com.onyx.android.sdk:onyxsdk-pen:1.4.8') {
+    implementation('com.onyx.android.sdk:onyxsdk-pen:1.4.12') {
         exclude group: 'com.android.support', module: 'support-compat'
         exclude group: 'com.android.support', module: 'appcompat-v7'
     }
-    implementation('com.onyx.android.sdk:onyxsdk-base:1.6.42') {
+    implementation('com.onyx.android.sdk:onyxsdk-base:1.7.8') {
         exclude group: 'com.android.support', module: 'support-compat'
         exclude group: 'com.android.support', module: 'appcompat-v7'
     }
+
+    // Temporary (?) fix for https://github.com/gaborauth/toolsboox-android/issues/305
     implementation("org.lsposed.hiddenapibypass:hiddenapibypass:4.3") // required by onyx sdk
 
     // used in RawInputManager.
