@@ -83,6 +83,7 @@ The list below lists devices which users confirm to be supported by Notable. It 
 commitment from the developers. Feel free to add your device to the list.
 
 * [ONYX BOOX Go 10.3](https://onyxboox.com/boox_go103)
+* [Onyx Boox Note Air 4 C](https://onyxboox.pl/en/ebook-readers/onyx-boox-note-air-4-c)
 
 ## Contribute
 Notable is an open-source project and welcomes contributions from the community. 
