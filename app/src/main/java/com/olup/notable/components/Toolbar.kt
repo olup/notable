@@ -13,7 +13,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 fun PresentlyUsedToolIcon(mode: Mode, pen: Pen): Int {
@@ -30,10 +29,12 @@ fun PresentlyUsedToolIcon(mode: Mode, pen: Pen): Int {
                 Pen.PENCIL -> R.drawable.pencil
             }
         }
+
         Mode.Erase -> R.drawable.eraser
         Mode.Select -> R.drawable.lasso
     }
 }
+
 
 @Composable
 @ExperimentalComposeUiApi
@@ -45,7 +46,16 @@ fun Toolbar(
     var isMenuOpen by remember { mutableStateOf(false) }
     var isPageSettingsModalOpen by remember { mutableStateOf(false) }
     var isPaletteOpen by remember { mutableStateOf(false) }
-    var selectedColor by remember { mutableStateOf(Color.Black) } // Add a state for selected color
+    val penColorMap = mapOf(
+        Pen.REDBALLPEN to Color.Red,
+        Pen.BLUEBALLPEN to Color.Blue,
+        Pen.GREENBALLPEN to Color.Green,
+    )
+    var selectedColor by remember {
+        mutableStateOf(
+            penColorMap[state.pen] ?: Color.Black
+        )
+    } // Add a state for selected color
     var isColorSelectionDialogOpen by remember { mutableStateOf(false) } // State for color selection dialog
 
     val context = LocalContext.current
@@ -80,12 +90,14 @@ fun Toolbar(
     fun changePenColor(color: Color) {
         val settings = state.penSettings.toMutableMap()
         val selectedPenName = state.pen.penName
-        settings[selectedPenName] = settings[selectedPenName]?.copy(color = android.graphics.Color.argb(
-            (color.alpha * 255).toInt(),
-            (color.red * 255).toInt(),
-            (color.green * 255).toInt(),
-            (color.blue * 255).toInt()
-        )) ?: return // Convert Color to Int
+        settings[selectedPenName] = settings[selectedPenName]?.copy(
+            color = android.graphics.Color.argb(
+                (color.alpha * 255).toInt(),
+                (color.red * 255).toInt(),
+                (color.green * 255).toInt(),
+                (color.blue * 255).toInt()
+            )
+        ) ?: return // Convert Color to Int
         state.penSettings = settings
     }
 
@@ -99,7 +111,16 @@ fun Toolbar(
                 isColorSelectionDialogOpen = false
             },
             onClose = { isColorSelectionDialogOpen = false },
-            options = listOf(Color.Red, Color.Green, Color.Blue, Color.Cyan, Color.Magenta, Color.Gray, Color.DarkGray,  Color.Yellow) // List of color options
+            options = listOf(
+                Color.Red,
+                Color.Green,
+                Color.Blue,
+                Color.Cyan,
+                Color.Magenta,
+                Color.Gray,
+                Color.DarkGray,
+                Color.Yellow
+            ) // List of color options
         )
     }
 
@@ -130,7 +151,8 @@ fun Toolbar(
                         .background(Color.Black)
                 )
 
-                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
+                PenToolbarButton(
+                    onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.BALLPEN,
                     icon = R.drawable.ballpen,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.BALLPEN,
@@ -139,59 +161,71 @@ fun Toolbar(
                     penSetting = state.penSettings[Pen.BALLPEN.penName] ?: return,
                     onChangeSetting = { onChangeStrokeSetting(Pen.BALLPEN.penName, it) })
 
-                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
+                PenToolbarButton(
+                    onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.REDBALLPEN,
                     icon = R.drawable.ballpenred,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.REDBALLPEN,
                     onSelect = { handleChangePen(Pen.REDBALLPEN) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.REDBALLPEN.penName] ?: return,
-                    onChangeSetting = { onChangeStrokeSetting(Pen.REDBALLPEN.penName, it) })
+                    onChangeSetting = { onChangeStrokeSetting(Pen.REDBALLPEN.penName, it) },
+                )
 
-                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
+                PenToolbarButton(
+                    onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.BLUEBALLPEN,
                     icon = R.drawable.ballpenblue,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.BLUEBALLPEN,
                     onSelect = { handleChangePen(Pen.BLUEBALLPEN) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.BLUEBALLPEN.penName] ?: return,
-                    onChangeSetting = { onChangeStrokeSetting(Pen.BLUEBALLPEN.penName, it) })
+                    onChangeSetting = { onChangeStrokeSetting(Pen.BLUEBALLPEN.penName, it) },
+                )
 
-                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
+                PenToolbarButton(
+                    onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.GREENBALLPEN,
-                    icon = R.drawable.ballpenred,
+                    icon = R.drawable.ballpengreen,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.GREENBALLPEN,
                     onSelect = { handleChangePen(Pen.GREENBALLPEN) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.GREENBALLPEN.penName] ?: return,
-                    onChangeSetting = { onChangeStrokeSetting(Pen.GREENBALLPEN.penName, it) })
+                    onChangeSetting = { onChangeStrokeSetting(Pen.GREENBALLPEN.penName, it) },
+                )
 
-                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
+                PenToolbarButton(
+                    onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.PENCIL,
                     icon = R.drawable.pencil,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.PENCIL,
                     onSelect = { handleChangePen(Pen.PENCIL) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.PENCIL.penName] ?: return,
-                    onChangeSetting = { onChangeStrokeSetting(Pen.PENCIL.penName, it) })
+                    onChangeSetting = { onChangeStrokeSetting(Pen.PENCIL.penName, it) },
+                )
 
-                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
+                PenToolbarButton(
+                    onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.BRUSH,
                     icon = R.drawable.brush,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.BRUSH,
                     onSelect = { handleChangePen(Pen.BRUSH) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.BRUSH.penName] ?: return,
-                    onChangeSetting = { onChangeStrokeSetting(Pen.BRUSH.penName, it) })
+                    onChangeSetting = { onChangeStrokeSetting(Pen.BRUSH.penName, it) },
+                )
 
-                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
+                PenToolbarButton(
+                    onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.FOUNTAIN,
                     icon = R.drawable.fountain,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.FOUNTAIN,
                     onSelect = { handleChangePen(Pen.FOUNTAIN) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.FOUNTAIN.penName] ?: return,
-                    onChangeSetting = { onChangeStrokeSetting(Pen.FOUNTAIN.penName, it) })
+                    onChangeSetting = { onChangeStrokeSetting(Pen.FOUNTAIN.penName, it) },
+                )
 
                 Box(
                     Modifier
@@ -200,7 +234,8 @@ fun Toolbar(
                         .background(Color.Black)
                 )
 
-                PenToolbarButton(onStrokeMenuOpenChange = { state.isDrawing = !it },
+                PenToolbarButton(
+                    onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.MARKER,
                     icon = R.drawable.marker,
                     isSelected = state.mode == Mode.Draw && state.pen == Pen.MARKER,
@@ -220,9 +255,14 @@ fun Toolbar(
                         .width(0.5.dp)
                         .background(Color.Black)
                 )
-                EraserToolbarButton(isSelected = state.mode == Mode.Erase, onSelect = {
-                    handleEraser()
-                }, onMenuOpenChange = { isStrokeSelectionOpen = it }, value = state.eraser, onChange = {state.eraser = it})
+                EraserToolbarButton(
+                    isSelected = state.mode == Mode.Erase,
+                    onSelect = {
+                        handleEraser()
+                    },
+                    onMenuOpenChange = { isStrokeSelectionOpen = it },
+                    value = state.eraser,
+                    onChange = { state.eraser = it })
                 Box(
                     Modifier
                         .fillMaxHeight()
@@ -361,6 +401,7 @@ fun Toolbar(
         ToolbarButton(
             onSelect = { state.isToolbarOpen = true },
             iconId = PresentlyUsedToolIcon(state.mode, state.pen),
+            penColor = if(state.mode != Mode.Erase) state.penSettings[state.pen.penName]?.color?.let { Color(it) } else null,
             contentDescription = "open toolbar",
             modifier = Modifier.height(37.dp)
         )
