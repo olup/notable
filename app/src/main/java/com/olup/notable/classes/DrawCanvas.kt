@@ -95,6 +95,19 @@ class DrawCanvas(
                     drawCanvasToView()
                     refreshUi()
                 }
+
+                if (getActualState().mode == Mode.Line) {
+                    handleLine(
+                        page = this@DrawCanvas.page,
+                        historyBucket = strokeHistoryBatch,
+                        strokeSize = getActualState().penSettings[getActualState().pen.penName]!!.strokeSize,
+                        color = getActualState().penSettings[getActualState().pen.penName]!!.color,
+                        pen = getActualState().pen,
+                        touchPoints =  plist.points
+                    )
+                    drawCanvasToView()
+                    refreshUi()
+                }
             }
         }
 
@@ -334,6 +347,8 @@ class DrawCanvas(
             }
             Mode.Select -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))?.setStrokeWidth(3f)
                 ?.setStrokeColor(Color.GRAY)
+            Mode.Line -> {
+            }
         }
     }
 

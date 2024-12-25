@@ -29,9 +29,18 @@ fun PresentlyUsedToolIcon(mode: Mode, pen: Pen): Int {
                 Pen.PENCIL -> R.drawable.pencil
             }
         }
-
         Mode.Erase -> R.drawable.eraser
         Mode.Select -> R.drawable.lasso
+        Mode.Line -> R.drawable.line
+    }
+}
+fun isSelected(state: EditorState, penType: Pen): Boolean {
+    return if (state.mode == Mode.Draw && state.pen == penType) {
+        true
+    } else if (state.mode == Mode.Line && state.pen == penType) {
+        true
+    } else {
+        false
     }
 }
 
@@ -79,6 +88,9 @@ fun Toolbar(
 
     fun handleSelection() {
         state.mode = Mode.Select
+    }
+    fun handleLine() {
+        state.mode = Mode.Line
     }
 
     fun onChangeStrokeSetting(penName: String, setting: PenSetting) {
@@ -155,7 +167,7 @@ fun Toolbar(
                     onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.BALLPEN,
                     icon = R.drawable.ballpen,
-                    isSelected = state.mode == Mode.Draw && state.pen == Pen.BALLPEN,
+                    isSelected = isSelected(state, Pen.BALLPEN),
                     onSelect = { handleChangePen(Pen.BALLPEN) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.BALLPEN.penName] ?: return,
@@ -165,7 +177,7 @@ fun Toolbar(
                     onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.REDBALLPEN,
                     icon = R.drawable.ballpenred,
-                    isSelected = state.mode == Mode.Draw && state.pen == Pen.REDBALLPEN,
+                    isSelected = isSelected(state, Pen.REDBALLPEN),
                     onSelect = { handleChangePen(Pen.REDBALLPEN) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.REDBALLPEN.penName] ?: return,
@@ -176,7 +188,7 @@ fun Toolbar(
                     onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.BLUEBALLPEN,
                     icon = R.drawable.ballpenblue,
-                    isSelected = state.mode == Mode.Draw && state.pen == Pen.BLUEBALLPEN,
+                    isSelected = isSelected(state, Pen.BLUEBALLPEN),
                     onSelect = { handleChangePen(Pen.BLUEBALLPEN) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.BLUEBALLPEN.penName] ?: return,
@@ -187,7 +199,7 @@ fun Toolbar(
                     onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.GREENBALLPEN,
                     icon = R.drawable.ballpengreen,
-                    isSelected = state.mode == Mode.Draw && state.pen == Pen.GREENBALLPEN,
+                    isSelected = isSelected(state, Pen.GREENBALLPEN),
                     onSelect = { handleChangePen(Pen.GREENBALLPEN) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.GREENBALLPEN.penName] ?: return,
@@ -198,7 +210,7 @@ fun Toolbar(
                     onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.PENCIL,
                     icon = R.drawable.pencil,
-                    isSelected = state.mode == Mode.Draw && state.pen == Pen.PENCIL,
+                    isSelected = isSelected(state, Pen.PENCIL),
                     onSelect = { handleChangePen(Pen.PENCIL) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.PENCIL.penName] ?: return,
@@ -209,7 +221,7 @@ fun Toolbar(
                     onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.BRUSH,
                     icon = R.drawable.brush,
-                    isSelected = state.mode == Mode.Draw && state.pen == Pen.BRUSH,
+                    isSelected =isSelected(state, Pen.BRUSH),
                     onSelect = { handleChangePen(Pen.BRUSH) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.BRUSH.penName] ?: return,
@@ -220,11 +232,18 @@ fun Toolbar(
                     onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.FOUNTAIN,
                     icon = R.drawable.fountain,
-                    isSelected = state.mode == Mode.Draw && state.pen == Pen.FOUNTAIN,
+                    isSelected =isSelected(state, Pen.FOUNTAIN),
                     onSelect = { handleChangePen(Pen.FOUNTAIN) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.FOUNTAIN.penName] ?: return,
                     onChangeSetting = { onChangeStrokeSetting(Pen.FOUNTAIN.penName, it) },
+                )
+
+                LineToolbarButton(
+                    onStrokeMenuOpenChange = { state.isDrawing = !it },
+                    icon = R.drawable.line,
+                    isSelected = state.mode == Mode.Line,
+                    onSelect = {handleLine() },
                 )
 
                 Box(
@@ -238,7 +257,7 @@ fun Toolbar(
                     onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.MARKER,
                     icon = R.drawable.marker,
-                    isSelected = state.mode == Mode.Draw && state.pen == Pen.MARKER,
+                    isSelected = isSelected(state, Pen.MARKER),
                     onSelect = { handleChangePen(Pen.MARKER) },
                     sizes = listOf("L" to 40f, "XL" to 60f),
                     penSetting = state.penSettings[Pen.MARKER.penName] ?: return,

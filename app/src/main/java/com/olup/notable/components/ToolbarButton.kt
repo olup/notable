@@ -26,7 +26,6 @@ fun ToolbarButton(
     contentDescription: String = "",
     modifier: Modifier = Modifier
 ) {
-    Log.i("PenColor", "penColor: $penColor")
     Box(
         Modifier
             .then(modifier)

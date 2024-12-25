@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.IntOffset
 import com.olup.notable.db.Stroke
 
 enum class Mode {
-    Draw, Erase, Select
+    Draw, Erase, Select, Line
 }
 
 class EditorState(val bookId: String? = null, val pageId: String, val pageView: PageView) {
