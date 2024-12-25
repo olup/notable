@@ -75,7 +75,7 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
         Pen.GREENBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
         Pen.BLUEBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
         Pen.PENCIL -> NeoCharcoalPen.drawNormalStroke(
-            null, canvas, paint, points, -16777216, stroke.size, ShapeCreateArgs(), Matrix(),false
+            null, canvas, paint, points, stroke.color, stroke.size, ShapeCreateArgs(), Matrix(),false
         )
         Pen.BRUSH -> NeoBrushPen.drawStroke(canvas, paint, points, stroke.size, pressure, false)
         Pen.MARKER -> drawMarkerStroke(canvas, paint, stroke.size, points)
