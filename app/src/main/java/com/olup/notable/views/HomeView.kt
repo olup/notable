@@ -35,6 +35,7 @@ import compose.icons.feathericons.Settings
 import java.net.URL
 import kotlin.concurrent.thread
 import androidx.compose.material.Button
+import androidx.compose.ui.Alignment
 import com.olup.notable.views.FloatingEditorView
 import com.olup.notable.AppSettings
 
@@ -74,7 +75,12 @@ fun Library(navController: NavController, folderId: String? = null) {
             Row(Modifier.fillMaxWidth()) {
                 Spacer(modifier = Modifier.weight(1f))
                 BadgedBox(
-                    badge = { if(!isLatestVersion) Badge( backgroundColor = Color.Black, modifier = Modifier.offset(-12.dp, 10.dp) ) }
+                    badge = {
+                        if (!isLatestVersion) Badge(
+                            backgroundColor = Color.Black,
+                            modifier = Modifier.offset(-12.dp, 10.dp)
+                        )
+                    }
                 ) {
                     Icon(
                         imageVector = FeatherIcons.Settings,
@@ -261,6 +267,20 @@ fun Library(navController: NavController, folderId: String? = null) {
                                     },
                                 )
                         ) {
+                            Box {
+                                val pageId = item.pageIds[0]
+                                PagePreview(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .aspectRatio(3f / 4f)
+                                        .border(1.dp, Color.Black, RectangleShape)
+                                        .combinedClickable(
+                                            onClick = {
+                                                navController.navigate("books/${item.id}/pages/$pageId")
+                                            },
+                                        ), pageId
+                                )
+                            }
                             Text(
                                 text = item.pageIds.size.toString(),
                                 modifier = Modifier
@@ -268,17 +288,16 @@ fun Library(navController: NavController, folderId: String? = null) {
                                     .padding(5.dp),
                                 color = Color.White
                             )
-                            Row(Modifier.fillMaxSize()) {
-                                Text(
-                                    text = item.title,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier
-                                        .align(CenterVertically)
-                                        .fillMaxWidth()
-                                )
-                            }
+                            Text(
+                                text = item.title,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp) // Add some padding above the row
+                                    .background(Color.White)
+                            )
                         }
-
                         if (isSettingsOpen) NotebookConfigDialog(
                             bookId = item.id,
                             onClose = { isSettingsOpen = false })
@@ -295,7 +314,7 @@ fun Library(navController: NavController, folderId: String? = null) {
         FloatingEditorView(
             navController = navController,
             pageId = floatingEditorPageId!!,
-            onDismissRequest = { 
+            onDismissRequest = {
                 showFloatingEditor = false
                 floatingEditorPageId = null
             }
