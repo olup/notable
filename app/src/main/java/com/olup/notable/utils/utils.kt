@@ -42,7 +42,7 @@ fun Modifier.noRippleClickable(
 fun convertDpToPixel(dp: Dp, context: Context): Float {
     val resources = context.resources
     val metrics: DisplayMetrics = resources.getDisplayMetrics()
-     return TypedValue.applyDimension(
+    return TypedValue.applyDimension(
         TypedValue.COMPLEX_UNIT_DIP,
         dp.value,
         context.resources.displayMetrics
@@ -59,13 +59,17 @@ fun deletePage(context: Context, pageId: String) {
 
     runBlocking {
         // remove from book
-        if(page.notebookId != null){
+        if (page.notebookId != null) {
             appRepository.bookRepository.removePage(page.notebookId, pageId)
         }
 
         // remove from quick nav
-        if(settings != null && settings.quickNavPages.contains(pageId)){
-            proxy.setKv("APPS_SETTINGS", settings.copy(quickNavPages = settings.quickNavPages - pageId),AppSettings.serializer())
+        if (settings != null && settings.quickNavPages.contains(pageId)) {
+            proxy.setKv(
+                "APPS_SETTINGS",
+                settings.copy(quickNavPages = settings.quickNavPages - pageId),
+                AppSettings.serializer()
+            )
         }
 
         launch {
@@ -117,23 +121,23 @@ fun handleErase(
     points: List<SimplePointF>,
     eraser: Eraser
 ) {
-     val paint = Paint().apply {
-         this.strokeWidth = 30f
-         this.style = Paint.Style.STROKE
-         this.strokeCap = Paint.Cap.ROUND
-         this.strokeJoin = Paint.Join.ROUND
-         this.isAntiAlias = true
-     }
+    val paint = Paint().apply {
+        this.strokeWidth = 30f
+        this.style = Paint.Style.STROKE
+        this.strokeCap = Paint.Cap.ROUND
+        this.strokeJoin = Paint.Join.ROUND
+        this.isAntiAlias = true
+    }
     val path = pointsToPath(points)
     var outPath = Path()
 
-    if(eraser == Eraser.SELECT){
+    if (eraser == Eraser.SELECT) {
         path.close()
         outPath = path
     }
 
 
-    if(eraser == Eraser.PEN) {
+    if (eraser == Eraser.PEN) {
         paint.getFillPath(path, outPath)
     }
 
@@ -289,13 +293,14 @@ fun handleDraw(
         bottom = boundingBox.bottom,
         left = boundingBox.left,
         right = boundingBox.right,
-        points = points, 
+        points = points,
         color = color
     )
     page.addStrokes(listOf(stroke))
     page.drawArea(pageAreaToCanvasArea(strokeBounds(stroke).toRect(), page.scroll))
     historyBucket.add(stroke.id)
 }
+
 fun handleLine(
     page: PageView,
     historyBucket: MutableList<String>,
@@ -304,87 +309,36 @@ fun handleLine(
     pen: Pen,
     touchPoints: List<TouchPoint>
 ) {
-
     val startPoint = touchPoints.first()
     val endPoint = touchPoints.last()
+
+    // Setting intermediate values for tilt and pressure
     startPoint.tiltX = touchPoints[touchPoints.size / 10].tiltX
     startPoint.tiltY = touchPoints[touchPoints.size / 10].tiltY
     startPoint.pressure = touchPoints[touchPoints.size / 10].pressure
-    endPoint.tiltX = touchPoints[9*touchPoints.size / 10].tiltX
-    endPoint.tiltY = touchPoints[9*touchPoints.size / 10].tiltY
-    endPoint.pressure = touchPoints[9*touchPoints.size / 10].pressure
+    endPoint.tiltX = touchPoints[9 * touchPoints.size / 10].tiltX
+    endPoint.tiltY = touchPoints[9 * touchPoints.size / 10].tiltY
+    endPoint.pressure = touchPoints[9 * touchPoints.size / 10].pressure
 
-    val initialPoint = touchPoints[0]
-    val boundingBox = RectF(
-        initialPoint.x,
-        initialPoint.y + page.scroll,
-        initialPoint.x,
-        initialPoint.y + page.scroll
-    )
-
-    val points = touchPoints.map {
-        boundingBox.union(it.x, it.y + page.scroll)
-        StrokePoint(
-            x = it.x,
-            y = it.y + page.scroll,
-            pressure = it.pressure,
-            size = it.size,
-            tiltX = it.tiltX,
-            tiltY = it.tiltY,
-            timestamp = it.timestamp,
-        )
-    }
-
-    // I do not know better solution
     // Helper function to interpolate between two values
     fun lerp(start: Float, end: Float, fraction: Float) = start + (end - start) * fraction
 
     val numberOfPoints = 100 // Define how many points should line have
-    val points2 = mutableListOf<StrokePoint>()
-
-    for (i in 0 until numberOfPoints) {
+    val points2 = List<TouchPoint>(numberOfPoints) { i ->
         val fraction = i.toFloat() / (numberOfPoints - 1)
         val x = lerp(startPoint.x, endPoint.x, fraction)
-        val y = lerp(startPoint.y + page.scroll, endPoint.y + page.scroll, fraction)
+        val y = lerp(startPoint.y , endPoint.y , fraction)
         val pressure = lerp(startPoint.pressure, endPoint.pressure, fraction)
         val size = lerp(startPoint.size, endPoint.size, fraction)
         val tiltX = (lerp(startPoint.tiltX.toFloat(), endPoint.tiltX.toFloat(), fraction)).toInt()
         val tiltY = (lerp(startPoint.tiltY.toFloat(), endPoint.tiltY.toFloat(), fraction)).toInt()
         val timestamp = System.currentTimeMillis()
 
-        points2.add(
-            StrokePoint(
-                x = x,
-                y = y,
-                pressure = pressure,
-                size = size,
-                tiltX = tiltX,
-                tiltY = tiltY,
-                timestamp = timestamp
-            )
-        )
+        TouchPoint(x, y, pressure, size, tiltX, tiltY, timestamp)
     }
 
-    boundingBox.inset(-strokeSize, -strokeSize)
-
-    val stroke = Stroke(
-        size = strokeSize,
-        pen = pen,
-        pageId = page.id,
-        top = boundingBox.top,
-        bottom = boundingBox.bottom,
-        left = boundingBox.left,
-        right = boundingBox.right,
-        points = points2,
-        color = color
-    )
-    page.addStrokes(listOf(stroke))
-    page.drawArea(pageAreaToCanvasArea(strokeBounds(stroke).toRect(), page.scroll))
-    historyBucket.add(stroke.id)
+    handleDraw(page, historyBucket, strokeSize, color, pen, points2)
 }
-
-
-
 
 
 inline fun Modifier.ifTrue(predicate: Boolean, builder: () -> Modifier) =
@@ -502,7 +456,7 @@ fun offsetStroke(stroke: Stroke, offset: Offset): Stroke {
         bottom = stroke.bottom + offset.y,
         left = stroke.left + offset.x,
         right = stroke.right + offset.x,
-        )
+    )
 }
 
 public class Provider : FileProvider(R.xml.paths) {
