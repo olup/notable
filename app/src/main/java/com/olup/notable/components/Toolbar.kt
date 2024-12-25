@@ -384,7 +384,7 @@ fun Toolbar(
                 }
                 // Add Library Button
                 ToolbarButton(
-                    iconId = R.drawable.library, // Replace with your library icon resource
+                    iconId = R.drawable.home, // Replace with your library icon resource
                     contentDescription = "library",
                     onSelect = {
                         navController.navigate("library") // Navigate to main library
