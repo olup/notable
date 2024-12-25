@@ -10,6 +10,7 @@ import com.onyx.android.sdk.data.note.TouchPoint
 import com.onyx.android.sdk.pen.NeoBrushPen
 import com.onyx.android.sdk.pen.NeoCharcoalPen
 import com.onyx.android.sdk.pen.NeoFountainPen
+import com.onyx.android.sdk.pen.NeoMarkerPen
 import kotlin.math.abs
 
 
@@ -78,7 +79,8 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
             null, canvas, paint, points, stroke.color, stroke.size, ShapeCreateArgs(), Matrix(),false
         )
         Pen.BRUSH -> NeoBrushPen.drawStroke(canvas, paint, points, stroke.size, pressure, false)
-        Pen.MARKER -> drawMarkerStroke(canvas, paint, stroke.size, points)
+        Pen.MARKER -> NeoMarkerPen.drawStroke(canvas, paint, points, stroke.size, false)
+        //Pen.MARKER -> drawMarkerStroke(canvas, paint, stroke.size, points)
         Pen.FOUNTAIN -> NeoFountainPen.drawStroke(
             canvas, paint, points, 1f, stroke.size, pressure, false
         )
