@@ -73,13 +73,12 @@ fun ToolbarMenu(
                                     SnackConf(text = "Exporting the page to PDF...")
                                 )
                             delay(10L) // Why do I need this ?
-
-                            exportPage(context, state.pageId)
-
+                            val message = exportPage(context, state.pageId)
                             removeSnack()
                             snackManager.displaySnack(
-                                SnackConf(text = "Page exported successfully to PDF", duration = 2000)
+                                SnackConf(text = message, duration = 2000)
                             )
+
                             onClose()
                         }
                     }
@@ -95,12 +94,10 @@ fun ToolbarMenu(
                                     SnackConf(text = "Exporting the page to PNG...")
                                 )
                             delay(10L) // Why do I need this ?
-
-                            exportPageToPng(context, state.pageId)
-
+                            val message = exportPageToPng(context, state.pageId)
                             removeSnack()
                             snackManager.displaySnack(
-                                SnackConf(text = "Page exported successfully to PNG", duration = 2000)
+                                SnackConf(text = message, duration = 2000)
                             )
                             onClose()
                         }
@@ -135,11 +132,10 @@ fun ToolbarMenu(
                                 )
                             delay(10L) // Why do I need this ?
 
-                            exportPageToJpeg(context, state.pageId)
-
+                            val message = exportPageToJpeg(context, state.pageId)
                             removeSnack()
                             snackManager.displaySnack(
-                                SnackConf(text = "Page exported successfully to JPEG", duration = 2000)
+                                SnackConf(text = message, duration = 2000)
                             )
                             onClose()
                         }
@@ -161,14 +157,10 @@ fun ToolbarMenu(
                                     )
                                 delay(10L) // Why do I need this ?
 
-                                exportBook(context, state.bookId ?: return@launch)
-
+                                val message = exportBook(context, state.bookId ?: return@launch)
                                 removeSnack()
                                 snackManager.displaySnack(
-                                    SnackConf(
-                                        text = "Book exported successfully to PDF",
-                                        duration = 3000
-                                    )
+                                    SnackConf(text = message, duration = 2000)
                                 )
                                 onClose()
                             }
@@ -180,36 +172,36 @@ fun ToolbarMenu(
                     Modifier
                         .padding(10.dp)
                         .noRippleClickable {
-                                scope.launch {
-                                    val removeSnack =
-                                        snackManager.displaySnack(
-                                            SnackConf(
-                                                text = "Exporting the book to PNG...",
-                                                id = "exportSnack"
-                                            )
-                                        )
-                                    delay(10L) // Why do I need this ?
-
-                                    exportBookToPng(context, state.bookId ?: return@launch)
-
-                                    removeSnack()
+                            scope.launch {
+                                val removeSnack =
                                     snackManager.displaySnack(
                                         SnackConf(
-                                            text = "Book exported successfully to PNG",
-                                            duration = 3000
+                                            text = "Exporting the book to PNG...",
+                                            id = "exportSnack"
                                         )
                                     )
-                                    onClose()
-                                }
+                                delay(10L) // Why do I need this ?
+
+
+                                val message =
+                                    exportBookToPng(context, state.bookId ?: return@launch)
+
+                                removeSnack()
+                                snackManager.displaySnack(
+                                    SnackConf(text = message, duration = 2000)
+                                )
+                                onClose()
                             }
-                    ) { Text("Export book to PNG") }
+                        }
+                ) { Text("Export book to PNG") }
 
             if (state.selectionState.selectedBitmap != null) {
                 Box(
                     Modifier
                         .fillMaxWidth()
                         .height(0.5.dp)
-                        .background(Color.Black))
+                        .background(Color.Black)
+                )
                 Box(
                     Modifier
                         .padding(10.dp)
@@ -223,7 +215,8 @@ fun ToolbarMenu(
                 Modifier
                     .fillMaxWidth()
                     .height(0.5.dp)
-                    .background(Color.Black))
+                    .background(Color.Black)
+            )
             Box(
                 Modifier
                     .padding(10.dp)
