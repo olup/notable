@@ -6,7 +6,10 @@ import io.shipbook.shipbooksdk.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.unit.dp
+import com.olup.notable.db.Image
 import com.onyx.android.sdk.api.device.epd.EpdController
 import com.onyx.android.sdk.data.note.TouchPoint
 import com.onyx.android.sdk.pen.RawInputCallback
@@ -14,6 +17,7 @@ import com.onyx.android.sdk.pen.TouchHelper
 import com.onyx.android.sdk.pen.data.TouchPointList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
@@ -43,6 +47,10 @@ class DrawCanvas(
         var refreshUi = MutableSharedFlow<Unit>()
         var isDrawing = MutableSharedFlow<Boolean>()
         var restartAfterConfChange = MutableSharedFlow<Unit>()
+
+        // It might be bad idea, but plan is to insert graphic in this, and then take it from it
+        // There is probably better way
+        var addImage = MutableStateFlow<ImageBitmap?>(null)
     }
 
     fun getActualState(): EditorState {
@@ -97,14 +105,16 @@ class DrawCanvas(
                 }
 
                 if (getActualState().mode == Mode.Line) {
+                    // draw line
                     handleLine(
                         page = this@DrawCanvas.page,
                         historyBucket = strokeHistoryBatch,
                         strokeSize = getActualState().penSettings[getActualState().pen.penName]!!.strokeSize,
                         color = getActualState().penSettings[getActualState().pen.penName]!!.color,
                         pen = getActualState().pen,
-                        touchPoints =  plist.points
+                        touchPoints = plist.points
                     )
+                    //make it visible
                     drawCanvasToView()
                     refreshUi()
                 }
@@ -214,6 +224,72 @@ class DrawCanvas(
             }
         }
 
+
+        coroutineScope.launch {
+            addImage.collect { image ->
+                Log.i(TAG, "Received image!")
+
+                if (image != null) {
+                    try {
+                        // Convert the image to a software-backed bitmap
+                        val softwareBitmap =
+                            image.asAndroidBitmap().copy(Bitmap.Config.ARGB_8888, true)
+
+                        // Get the image dimensions
+                        val imageWidth = softwareBitmap.width
+                        val imageHeight = softwareBitmap.height
+
+                        // Calculate the center position for the image
+                        val centerX = (page.viewWidth - imageWidth) / 2
+                        val centerY = (imageHeight) / 2
+
+                        // Log the calculated position and image size
+                        Log.i(
+                            TAG,
+                            "Drawing image at center: X=$centerX, Y=$centerY, ImageWidth=$imageWidth, ImageHeight=$imageHeight"
+                        )
+
+                        // Draw the bitmap on the canvas at the center of the page
+                        page.windowedCanvas.drawBitmap(
+                            softwareBitmap,
+                            Rect(0, 0, imageWidth, imageHeight),  // Source rectangle (full image)
+                            Rect(
+                                centerX,
+                                centerY,
+                                centerX + imageWidth,
+                                centerY + imageHeight
+                            ), // Destination rectangle (centered)
+                            null // Optional Paint object (null for default)
+                        )
+
+                        // Log after drawing
+                        Log.i(TAG, "Image drawn successfully at center!")
+
+                        // Convert the bitmap to a byte array
+                        val byteArray = softwareBitmap.toString().toByteArray()
+
+                        // Prepare the Image object with initial placement at center
+                        val imageToSave = Image(
+                            x = centerX.toFloat(),
+                            y = centerY.toFloat(),
+                            height = imageHeight.toFloat(),
+                            width = imageWidth.toFloat(),
+                            bitmap = byteArray,
+                            pageId = page.id
+                        )
+
+                        // Save the image (add it to the page)
+                        page.addImage(imageToSave)
+
+                        // Enable dragging functionality for the image
+//                        setupImageDrag(page, imageToSave, page.windowedCanvas)
+
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error while processing and drawing the image: ${e.message}")
+                    }
+                }
+            }
+        }
 
         // observe restartcount
         coroutineScope.launch {

@@ -305,6 +305,11 @@ fun handleDraw(
     }
 }
 
+/*
+* Gets list of points, and return line from first point to last.
+* The line consist of 100 points, I do not know how it works (for 20 it want draw correctly)
+* Then it cals handle draw to make mark on canvas.
+ */
 fun handleLine(
     page: PageView,
     historyBucket: MutableList<String>,

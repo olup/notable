@@ -10,6 +10,7 @@ class AppRepository(context: Context) {
     val bookRepository = BookRepository(context)
     val pageRepository = PageRepository(context)
     val strokeRepository = StrokeRepository(context)
+    val imageRepository = ImageRepository(context)
     val folderRepository = FolderRepository(context)
     val kvRepository = KvRepository(context)
     val kvProxy = KvProxy(context)
@@ -46,6 +47,7 @@ class AppRepository(context: Context) {
 
     fun duplicatePage(pageId: String) {
         val pageWithStrokes = pageRepository.getWithStrokeById(pageId) ?: return
+        val pageWithImages = pageRepository.getWithImageById(pageId) ?: return
         val duplicatedPage = pageWithStrokes.page.copy(
             id = UUID.randomUUID().toString(),
             scroll = 0,
@@ -61,9 +63,25 @@ class AppRepository(context: Context) {
                 createdAt = Date()
             )
         })
+        imageRepository.create(pageWithImages.images.map {
+            it.copy(
+                id = UUID.randomUUID().toString(),
+                pageId = duplicatedPage.id,
+                updatedAt = Date(),
+                createdAt = Date()
+            )
+        })
         if(pageWithStrokes.page.notebookId != null) {
             val book = bookRepository.getById(pageWithStrokes.page.notebookId) ?: return
             val pageIndex = book.pageIds.indexOf(pageWithStrokes.page.id)
+            if(pageIndex == -1) return
+            val pageIds = book.pageIds.toMutableList()
+            pageIds.add(pageIndex+1, duplicatedPage.id)
+            bookRepository.update(book.copy(pageIds = pageIds))
+        }
+        if(pageWithImages.page.notebookId != null) {
+            val book = bookRepository.getById(pageWithImages.page.notebookId) ?: return
+            val pageIndex = book.pageIds.indexOf(pageWithImages.page.id)
             if(pageIndex == -1) return
             val pageIds = book.pageIds.toMutableList()
             pageIds.add(pageIndex+1, duplicatedPage.id)

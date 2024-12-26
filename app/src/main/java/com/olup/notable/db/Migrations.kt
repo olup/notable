@@ -25,9 +25,17 @@ val MIGRATION_17_18 = object : Migration(17, 18) {
 
 val MIGRATION_22_23 = object : Migration(22, 23) {
     override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL("DELETE FROM Page " +
-                "WHERE notebookId IS NOT NULL " +
-                "AND notebookId NOT IN (SELECT id FROM Notebook);")
+        database.execSQL(
+            "DELETE FROM Page " +
+                    "WHERE notebookId IS NOT NULL " +
+                    "AND notebookId NOT IN (SELECT id FROM Notebook);"
+        )
     }
 }
 
+val MIGRATION_29_30 = object : Migration(29, 30) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE Image ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
+        database.execSQL("ALTER TABLE Image ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+    }
+}

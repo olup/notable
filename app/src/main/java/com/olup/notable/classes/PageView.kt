@@ -2,7 +2,6 @@ package com.olup.notable
 
 import android.content.Context
 import android.graphics.*
-import io.shipbook.shipbooksdk.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -11,6 +10,8 @@ import androidx.core.graphics.toRect
 import com.olup.notable.db.AppDatabase
 import com.olup.notable.db.Page
 import com.olup.notable.db.Stroke
+import com.olup.notable.db.Image
+import io.shipbook.shipbooksdk.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
@@ -22,6 +23,11 @@ import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.math.max
 import kotlin.system.measureTimeMillis
+
+
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+
 
 class PageView(
     val context: Context,
@@ -36,6 +42,8 @@ class PageView(
     val windowedCanvas = Canvas(windowedBitmap)
     var strokes = listOf<Stroke>()
     var strokesById: HashMap<String, Stroke> = hashMapOf()
+    var images = listOf<Image>()
+    var imagesById: HashMap<String, Image> = hashMapOf()
     var scroll by mutableStateOf(0) // is observed by ui
     val saveTopic = MutableSharedFlow<Unit>()
 
@@ -43,7 +51,9 @@ class PageView(
 
     var pageFromDb = AppRepository(context).pageRepository.getById(id)
 
-    var db = AppDatabase.getDatabase(context)?.strokeDao()!!
+    var dbStrokes = AppDatabase.getDatabase(context)?.strokeDao()!!
+    var dbImages = AppDatabase.getDatabase(context)?.ImageDao()!!
+
 
     init {
         coroutineScope.launch {
@@ -66,6 +76,12 @@ class PageView(
         }
     }
 
+    fun indexImages() {
+        coroutineScope.launch {
+            imagesById = hashMapOf(*images.map { img -> img.id to img }.toTypedArray())
+        }
+    }
+
     private fun initFromPersistLayer(isCached: Boolean) {
         // pageInfos
         // TODO page might not exists yet
@@ -74,8 +90,11 @@ class PageView(
 
         coroutineScope.launch {
             val pageWithStrokes = AppRepository(context).pageRepository.getWithStrokeById(id)
+            val pageWithImages = AppRepository(context).pageRepository.getWithImageById(id)
             strokes = pageWithStrokes.strokes
+            images = pageWithImages.images
             indexStrokes()
+            indexImages()
             computeHeight()
 
             if (!isCached) {
@@ -115,8 +134,38 @@ class PageView(
     }
 
     private fun saveStrokesToPersistLayer(strokes: List<Stroke>) {
-        db.create(strokes)
+        dbStrokes.create(strokes)
     }
+
+    private fun saveImagesToPersistLayer(image: List<Image>) {
+        dbImages.create(image)
+    }
+
+
+    fun addImage(imageToAdd: Image) {
+        images += listOf(imageToAdd) // Val cannot be reassigned
+        val bottomPlusPadding = imageToAdd.x + imageToAdd.height + 50
+        if (bottomPlusPadding > height) height = bottomPlusPadding.toInt()
+
+        saveImagesToPersistLayer(listOf(imageToAdd))
+        indexImages()
+
+        persistBitmapDebounced()
+    }
+
+    fun removeImage(imageIds: List<String>) {
+        strokes = strokes.filter { s -> !imageIds.contains(s.id) }
+        removeStrokesFromPersistLayer(imageIds)
+        indexStrokes()
+        computeHeight()
+
+        persistBitmapDebounced()
+    }
+
+    fun getImage(imageId: String): Image? {
+        return imagesById[imageId]
+    }
+
 
     fun computeHeight() {
         if (strokes.isEmpty()) {
@@ -137,6 +186,10 @@ class PageView(
 
     private fun removeStrokesFromPersistLayer(strokeIds: List<String>) {
         AppRepository(context).strokeRepository.deleteAll(strokeIds)
+    }
+
+    private fun removeImagesFromPersistLayer(imageIds: List<String>) {
+        AppRepository(context).strokeRepository.deleteAll(imageIds)
     }
 
     private fun loadBitmap(): Boolean {
