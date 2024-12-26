@@ -70,20 +70,35 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
 
     val points = strokeToTouchPoints(offsetStroke(stroke, offset.toOffset()))
 
-    when (stroke.pen) {
-        Pen.BALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
-        Pen.REDBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
-        Pen.GREENBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
-        Pen.BLUEBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
-        Pen.PENCIL -> NeoCharcoalPen.drawNormalStroke(
-            null, canvas, paint, points, stroke.color, stroke.size, ShapeCreateArgs(), Matrix(),false
-        )
-        Pen.BRUSH -> NeoBrushPen.drawStroke(canvas, paint, points, stroke.size, pressure, false)
-        Pen.MARKER -> NeoMarkerPen.drawStroke(canvas, paint, points, stroke.size, false)
-        //Pen.MARKER -> drawMarkerStroke(canvas, paint, stroke.size, points)
-        Pen.FOUNTAIN -> NeoFountainPen.drawStroke(
-            canvas, paint, points, 1f, stroke.size, pressure, false
-        )
+    // Trying to find what throws error when drawing quickly
+    try {
+        when (stroke.pen) {
+            Pen.BALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+            Pen.REDBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+            Pen.GREENBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+            Pen.BLUEBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+            Pen.PENCIL -> NeoCharcoalPen.drawNormalStroke(
+                null,
+                canvas,
+                paint,
+                points,
+                stroke.color,
+                stroke.size,
+                ShapeCreateArgs(),
+                Matrix(),
+                false
+            )
+
+            Pen.BRUSH -> NeoBrushPen.drawStroke(canvas, paint, points, stroke.size, pressure, false)
+            Pen.MARKER -> NeoMarkerPen.drawStroke(canvas, paint, points, stroke.size, false)
+            //Pen.MARKER -> drawMarkerStroke(canvas, paint, stroke.size, points)
+            Pen.FOUNTAIN -> NeoFountainPen.drawStroke(
+                canvas, paint, points, 1f, stroke.size, pressure, false
+            )
+
+        }
+    } catch (e: Exception) {
+        Log.e(TAG, "draw.kt: Drawing strokes failed: ${e.message}")
     }
     //canvas.restore()
 }
@@ -179,13 +194,13 @@ fun drawSquaredBg(canvas: Canvas, scroll: Int) {
     }
 }
 
-fun drawBg(canvas: Canvas, nativeTemplate: String, scroll: Int){
-    when(nativeTemplate){
+fun drawBg(canvas: Canvas, nativeTemplate: String, scroll: Int) {
+    when (nativeTemplate) {
         "blank" -> canvas.drawColor(Color.WHITE)
         "dotted" -> drawDottedBg(canvas, scroll)
         "lined" -> drawLinedBg(canvas, scroll)
         "squared" -> drawSquaredBg(canvas, scroll)
-     }
+    }
 }
 
 val selectPaint = Paint().apply {

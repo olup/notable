@@ -148,7 +148,7 @@ class PageView(
                 windowedCanvas.drawBitmap(imgBitmap, 0f, 0f, Paint());
                 Log.i(TAG, "Page rendered from cache")
                 // let's control that the last preview fits the present orientation. Otherwise we'll ask for a redraw.
-                if(imgBitmap.height == windowedCanvas.height && imgBitmap.width == windowedCanvas.width){
+                if (imgBitmap.height == windowedCanvas.height && imgBitmap.width == windowedCanvas.width) {
                     return true
                 } else {
                     Log.i(TAG, "Image preview does not fit canvas area - redrawing")
@@ -199,17 +199,23 @@ class PageView(
         Log.i(TAG, "Took $timeToBg to draw the BG")
 
         val timeToDraw = measureTimeMillis {
-            strokes.forEach { stroke ->
-                if (ignoredStrokeIds.contains(stroke.id)) return@forEach
-                val bounds = strokeBounds(stroke)
-                // if stroke is not inside page section
-                if (!bounds.toRect().intersect(pageArea)) return@forEach
+            // Trying to find what throws error when drawing quickly
+            try {
+                strokes.forEach { stroke ->
+                    if (ignoredStrokeIds.contains(stroke.id)) return@forEach
+                    val bounds = strokeBounds(stroke)
+                    // if stroke is not inside page section
+                    if (!bounds.toRect().intersect(pageArea)) return@forEach
 
-                drawStroke(
-                    activeCanvas, stroke, IntOffset(0, -scroll)
-                )
+                    drawStroke(
+                        activeCanvas, stroke, IntOffset(0, -scroll)
+                    )
 
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "PageView.kt: Drawing strokes failed: ${e.message}")
             }
+
         }
         Log.i(TAG, "Drew area in ${timeToDraw}ms")
         activeCanvas.restore();

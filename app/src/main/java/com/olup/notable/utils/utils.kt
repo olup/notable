@@ -262,43 +262,47 @@ fun handleDraw(
     pen: Pen,
     touchPoints: List<TouchPoint>
 ) {
-    val initialPoint = touchPoints[0]
-    val boundingBox = RectF(
-        initialPoint.x,
-        initialPoint.y + page.scroll,
-        initialPoint.x,
-        initialPoint.y + page.scroll
-    )
-
-    val points = touchPoints.map {
-        boundingBox.union(it.x, it.y + page.scroll)
-        StrokePoint(
-            x = it.x,
-            y = it.y + page.scroll,
-            pressure = it.pressure,
-            size = it.size,
-            tiltX = it.tiltX,
-            tiltY = it.tiltY,
-            timestamp = it.timestamp,
+    try {
+        val initialPoint = touchPoints[0]
+        val boundingBox = RectF(
+            initialPoint.x,
+            initialPoint.y + page.scroll,
+            initialPoint.x,
+            initialPoint.y + page.scroll
         )
+
+        val points = touchPoints.map {
+            boundingBox.union(it.x, it.y + page.scroll)
+            StrokePoint(
+                x = it.x,
+                y = it.y + page.scroll,
+                pressure = it.pressure,
+                size = it.size,
+                tiltX = it.tiltX,
+                tiltY = it.tiltY,
+                timestamp = it.timestamp,
+            )
+        }
+
+        boundingBox.inset(-strokeSize, -strokeSize)
+
+        val stroke = Stroke(
+            size = strokeSize,
+            pen = pen,
+            pageId = page.id,
+            top = boundingBox.top,
+            bottom = boundingBox.bottom,
+            left = boundingBox.left,
+            right = boundingBox.right,
+            points = points,
+            color = color
+        )
+        page.addStrokes(listOf(stroke))
+        page.drawArea(pageAreaToCanvasArea(strokeBounds(stroke).toRect(), page.scroll))
+        historyBucket.add(stroke.id)
+    } catch (e: Exception) {
+        Log.e(TAG, "Handle Draw: An error occurred while handling the drawing: ${e.message}")
     }
-
-    boundingBox.inset(-strokeSize, -strokeSize)
-
-    val stroke = Stroke(
-        size = strokeSize,
-        pen = pen,
-        pageId = page.id,
-        top = boundingBox.top,
-        bottom = boundingBox.bottom,
-        left = boundingBox.left,
-        right = boundingBox.right,
-        points = points,
-        color = color
-    )
-    page.addStrokes(listOf(stroke))
-    page.drawArea(pageAreaToCanvasArea(strokeBounds(stroke).toRect(), page.scroll))
-    historyBucket.add(stroke.id)
 }
 
 fun handleLine(
@@ -327,7 +331,7 @@ fun handleLine(
     val points2 = List<TouchPoint>(numberOfPoints) { i ->
         val fraction = i.toFloat() / (numberOfPoints - 1)
         val x = lerp(startPoint.x, endPoint.x, fraction)
-        val y = lerp(startPoint.y , endPoint.y , fraction)
+        val y = lerp(startPoint.y, endPoint.y, fraction)
         val pressure = lerp(startPoint.pressure, endPoint.pressure, fraction)
         val size = lerp(startPoint.size, endPoint.size, fraction)
         val tiltX = (lerp(startPoint.tiltX.toFloat(), endPoint.tiltX.toFloat(), fraction)).toInt()
