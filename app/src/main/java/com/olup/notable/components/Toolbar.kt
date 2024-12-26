@@ -129,9 +129,10 @@ fun Toolbar(
                 Color.Blue,
                 Color.Cyan,
                 Color.Magenta,
+                Color.Yellow,
                 Color.Gray,
                 Color.DarkGray,
-                Color.Yellow
+                Color.Black,
             ) // List of color options
         )
     }

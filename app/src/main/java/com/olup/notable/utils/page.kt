@@ -21,8 +21,10 @@ import java.nio.file.Files
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.div
 import java.io.IOException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-fun exportBook(context: Context, bookId: String): String {
+suspend fun exportBook(context: Context, bookId: String): String {
     val book = BookRepository(context).getById(bookId) ?: return "Book ID not found"
     val pages = PageRepository(context)
     val message = exportPdf(context, "Notebooks", book.title) {
@@ -42,7 +44,7 @@ fun copyBookPdfLinkForObsidian(context: Context, bookId: String, bookName: Strin
     clipboard.setPrimaryClip(clip)
 }
 
-fun exportPage(context: Context, pageId: String): String {
+suspend fun exportPage(context: Context, pageId: String): String {
     val pages = PageRepository(context)
     return exportPdf(context, "pages", "notable-page-${pageId}") {
         writePage(1, pages, pageId)
@@ -196,13 +198,13 @@ fun exportBookToPng(context: Context, bookId: String): String {
     }
 }
 
-private inline fun exportPdf(
+private suspend fun exportPdf(
     context: Context,
     dir: String,
     name: String,
     write: PdfDocument.() -> Unit
-): String {
-    return try {
+): String = withContext(Dispatchers.IO) {
+    try {
         val document = PdfDocument()
         document.write()
 

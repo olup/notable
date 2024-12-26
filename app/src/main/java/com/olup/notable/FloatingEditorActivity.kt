@@ -11,10 +11,14 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.olup.notable.ui.theme.InkaTheme
 import com.olup.notable.views.FloatingEditorView
 import com.olup.notable.db.Page
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class FloatingEditorActivity : ComponentActivity() {
     private lateinit var appRepository: AppRepository
@@ -119,9 +123,9 @@ class FloatingEditorActivity : ComponentActivity() {
         }
         bookId?.let { id ->
             // Auto-export to PDF when the activity is destroyed
-            Thread {
-                exportBook(this, id)
-            }.start()
+            lifecycleScope.launch(Dispatchers.IO) {
+                exportBook(this@FloatingEditorActivity, id)
+            }
         }
     }
 
