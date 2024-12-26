@@ -44,7 +44,7 @@ fun ToolbarButton(
                 painter = painterResource(id = iconId),
                 contentDescription,
                 Modifier,
-                if(penColor==Color.Black) Color.White else if (isSelected) Color.White else Color.Black
+                if(penColor==Color.Black || penColor==Color.DarkGray) Color.White else if (isSelected) Color.White else Color.Black
             )
         }
 
