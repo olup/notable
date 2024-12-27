@@ -333,6 +333,7 @@ fun handleDraw(
             color = color
         )
         page.addStrokes(listOf(stroke))
+        // this is causing lagging and crushing, neo pens are not good
         page.drawArea(pageAreaToCanvasArea(strokeBounds(stroke).toRect(), page.scroll))
         historyBucket.add(stroke.id)
     } catch (e: Exception) {

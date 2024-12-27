@@ -82,6 +82,8 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
             Pen.REDBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
             Pen.GREENBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
             Pen.BLUEBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+            // TODO: this functions for drawing are slow and unreliable
+            // replace them with something better
             Pen.PENCIL -> NeoCharcoalPen.drawNormalStroke(
                 null,
                 canvas,
@@ -93,10 +95,9 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
                 Matrix(),
                 false
             )
-
             Pen.BRUSH -> NeoBrushPen.drawStroke(canvas, paint, points, stroke.size, pressure, false)
-            Pen.MARKER -> NeoMarkerPen.drawStroke(canvas, paint, points, stroke.size, false)
-            //Pen.MARKER -> drawMarkerStroke(canvas, paint, stroke.size, points)
+            //Pen.MARKER -> NeoMarkerPen.drawStroke(canvas, paint, points, stroke.size, false)
+            Pen.MARKER -> drawMarkerStroke(canvas, paint, stroke.size, points)
             Pen.FOUNTAIN -> NeoFountainPen.drawStroke(
                 canvas, paint, points, 1f, stroke.size, pressure, false
             )
