@@ -1,7 +1,5 @@
 package com.olup.notable
 
-import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
@@ -13,7 +11,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -23,18 +20,14 @@ import kotlinx.coroutines.launch
 
 
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
-import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.asImageBitmap
-import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.ui.layout.ContentScale
-import com.onyx.android.sdk.base.lite.extension.add
+import com.olup.notable.db.Image
 import io.shipbook.shipbooksdk.Log
 
 fun PresentlyUsedToolIcon(mode: Mode, pen: Pen): Int {
@@ -105,17 +98,11 @@ fun Toolbar(
                 // Grant read URI permission to access the selected URI
                 val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
                 context.contentResolver.takePersistableUriPermission(uri, flag)
-
-                // Convert the URI to a Bitmap and set it as the imageBitmap
-                imageBitmap = uriToBitmap(context, it)?.asImageBitmap()
-
                 // Set isImageLoaded to true
                 isImageLoaded = true
-                Log.i("InsertImage", "Hura! ${uri}")
+                Log.i("InsertImage", "Hura! We have uri: ${uri}")
+                DrawCanvas.addImageByUri.value = uri
 
-                DrawCanvas.addImage.value = imageBitmap!!
-
-                imageBitmap = null
             }
         }
     // for getting images, ugly for now

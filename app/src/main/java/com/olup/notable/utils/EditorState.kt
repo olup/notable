@@ -63,6 +63,7 @@ class SelectionState {
 
     fun reset() {
         selectedStrokes = null
+        selectedImages = null
         secondPageCut = null
         firstPageCut = null
         selectedBitmap = null

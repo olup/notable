@@ -73,12 +73,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContentProviderCompat.requireContext
 
 suspend fun exportBook(context: Context, bookId: String): String {
     val book = BookRepository(context).getById(bookId) ?: return "Book ID not found"
     val pages = PageRepository(context)
     val message = exportPdf(context, "Notebooks", book.title) {
-        book.pageIds.forEachIndexed { i, pageId -> writePage(i + 1, pages, pageId) }
+        book.pageIds.forEachIndexed {i, pageId -> writePage(context, i + 1, pages, pageId) }
     }
     copyBookPdfLinkForObsidian(context, bookId, book.title)
     return message
@@ -97,7 +98,7 @@ fun copyBookPdfLinkForObsidian(context: Context, bookId: String, bookName: Strin
 suspend fun exportPage(context: Context, pageId: String): String {
     val pages = PageRepository(context)
     return exportPdf(context, "pages", "notable-page-${pageId}") {
-        writePage(1, pages, pageId)
+        writePage(context,1, pages, pageId)
     }
 }
 
@@ -177,6 +178,7 @@ fun exportPageToJpeg(context: Context, pageId: String): String {
     for (stroke in strokes) {
         drawStroke(canvas, stroke, IntOffset(0, 0))
     }
+    //TODO Draw images
 
     return try {
         // Save the bitmap as JPEG
@@ -230,6 +232,7 @@ fun exportBookToPng(context: Context, bookId: String): String {
             for (stroke in strokes) {
                 drawStroke(canvas, stroke, IntOffset(0, 0))
             }
+            //TODO Draw images
 
             val filePath = dirPath / "notable-page-${pageId}.png"
             FileOutputStream(filePath.toString()).use { out ->
@@ -295,8 +298,10 @@ private suspend fun exportPdf(
 }
 
 
-private fun PdfDocument.writePage(number: Int, repo: PageRepository, id: String) {
+private fun PdfDocument.writePage(context: Context, number: Int, repo: PageRepository, id: String) {
     val (page, strokes) = repo.getWithStrokeById(id)
+    //TODO: improve that function
+    val (page2, images) = repo.getWithImageById(id)
 
     val strokeHeight = if (strokes.isEmpty()) 0 else strokes.maxOf(Stroke::bottom).toInt() + 50
     val strokeWidth = if (strokes.isEmpty()) 0 else strokes.maxOf(Stroke::right).toInt() + 50
@@ -311,6 +316,11 @@ private fun PdfDocument.writePage(number: Int, repo: PageRepository, id: String)
 
     for (stroke in strokes) {
         drawStroke(documentPage.canvas, stroke, IntOffset(0, 0))
+    }
+
+    for(image in images)
+    {
+        drawImage(context,documentPage.canvas, image, IntOffset(0, 0))
     }
 
     finishPage(documentPage)

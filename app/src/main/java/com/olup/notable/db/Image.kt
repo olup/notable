@@ -5,7 +5,10 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.room.*
 import com.olup.notable.Pen
 import java.util.*
-
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Log
+import androidx.compose.ui.graphics.asAndroidBitmap // To convert ImageBitmap to Bitmap
 
 
 // Entity class for images
@@ -15,16 +18,20 @@ import java.util.*
         parentColumns = arrayOf("id"),
         childColumns = arrayOf("pageId"),
         onDelete = ForeignKey.CASCADE
-    )])
+    )]
+)
 data class Image(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
 
-    var x: Float,
-    var y: Float,
-    val height: Float,
-    val width: Float,
-    val bitmap: ByteArray,
+    var x: Int = 0,
+    var y: Int = 0,
+    val height: Int,
+    val width: Int,
+
+    // use uri instead of bytearray
+    //val bitmap: ByteArray,
+    val uri: String? = null,
 
     @ColumnInfo(index = true)
     val pageId: String,
@@ -59,6 +66,28 @@ class ImageRepository(context: Context) {
 
     fun create(image: Image): Long {
         return db.create(image)
+    }
+
+    fun create(
+        imageUri: String,
+        x: Int,
+        y: Int,
+        pageId: String,
+        width: Int,
+        height: Int
+    ): Long {
+        // Prepare the Image object with specified placement
+        val imageToSave = Image(
+            x = x,
+            y = y,
+            width = width,
+            height = height,
+            uri = imageUri,
+            pageId = pageId
+        )
+
+        // Save the image to the database
+        return db.create(imageToSave)
     }
 
     fun create(images: List<Image>) {

@@ -2,12 +2,14 @@ package com.olup.notable
 
 import android.content.Context
 import android.graphics.*
+import android.net.Uri
 import io.shipbook.shipbooksdk.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.olup.notable.db.Image
 import com.onyx.android.sdk.api.device.epd.EpdController
@@ -50,7 +52,7 @@ class DrawCanvas(
 
         // It might be bad idea, but plan is to insert graphic in this, and then take it from it
         // There is probably better way
-        var addImage = MutableStateFlow<ImageBitmap?>(null)
+        var addImageByUri = MutableStateFlow<Uri?>(null)
     }
 
     fun getActualState(): EditorState {
@@ -226,68 +228,70 @@ class DrawCanvas(
 
 
         coroutineScope.launch {
-            addImage.collect { image ->
+            addImageByUri.collect { imageUri ->
                 Log.i(TAG, "Received image!")
 
-                if (image != null) {
-                    try {
-                        // Convert the image to a software-backed bitmap
-                        val softwareBitmap =
-                            image.asAndroidBitmap().copy(Bitmap.Config.ARGB_8888, true)
+                if (imageUri != null) {
+                    // Convert the image to a software-backed bitmap
+                    val imageBitmap = uriToBitmap(context, imageUri)?.asImageBitmap()
+
+                    val softwareBitmap =
+                        imageBitmap?.asAndroidBitmap()?.copy(Bitmap.Config.ARGB_8888, true)
+                    if (softwareBitmap != null) {
+                        DrawCanvas.addImageByUri.value = null
 
                         // Get the image dimensions
                         val imageWidth = softwareBitmap.width
                         val imageHeight = softwareBitmap.height
 
-                        // Calculate the center position for the image
+                        // Calculate the center position for the image relative to the page dimensions
                         val centerX = (page.viewWidth - imageWidth) / 2
-                        val centerY = (imageHeight) / 2
+                        val centerY = (page.viewHeight - imageHeight) / 2
 
-                        // Log the calculated position and image size
-                        Log.i(
-                            TAG,
-                            "Drawing image at center: X=$centerX, Y=$centerY, ImageWidth=$imageWidth, ImageHeight=$imageHeight"
-                        )
-
-                        // Draw the bitmap on the canvas at the center of the page
-                        page.windowedCanvas.drawBitmap(
-                            softwareBitmap,
-                            Rect(0, 0, imageWidth, imageHeight),  // Source rectangle (full image)
-                            Rect(
-                                centerX,
-                                centerY,
-                                centerX + imageWidth,
-                                centerY + imageHeight
-                            ), // Destination rectangle (centered)
-                            null // Optional Paint object (null for default)
-                        )
-
-                        // Log after drawing
-                        Log.i(TAG, "Image drawn successfully at center!")
-
-                        // Convert the bitmap to a byte array
-                        val byteArray = softwareBitmap.toString().toByteArray()
-
-                        // Prepare the Image object with initial placement at center
                         val imageToSave = Image(
-                            x = centerX.toFloat(),
-                            y = centerY.toFloat(),
-                            height = imageHeight.toFloat(),
-                            width = imageWidth.toFloat(),
-                            bitmap = byteArray,
+                            x = 0,
+                            y = 0,
+                            height = imageHeight,
+                            width = imageWidth,
+                            uri = imageUri.toString(),
                             pageId = page.id
                         )
-
-                        // Save the image (add it to the page)
+                        // Add the image to the page
                         page.addImage(imageToSave)
-
-                        // Enable dragging functionality for the image
-//                        setupImageDrag(page, imageToSave, page.windowedCanvas)
-
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error while processing and drawing the image: ${e.message}")
+                        drawImage(
+                            context, page.windowedCanvas, imageToSave, IntOffset(0, -page.scroll)
+                        )
+                        //handle selection:
+                        val pageBounds = imageBoundsInt(imageToSave)
+                        val padding = 30
+                        pageBounds.inset(-padding, -padding)
+                        val bounds = pageAreaToCanvasArea(pageBounds, page.scroll)
+                        val selectedBitmap = Bitmap.createBitmap(
+                            imageToSave.width,
+                            imageToSave.height,
+                            Bitmap.Config.ARGB_8888
+                        )
+                        val selectedCanvas = Canvas(selectedBitmap)
+                        drawImage(context,
+                                selectedCanvas,
+                                imageToSave,
+                                IntOffset(0, -page.scroll)
+                            )
+                        // set state
+                        state.selectionState.selectedImages = listOf<Image>(imageToSave)
+                        state.selectionState.selectedBitmap = selectedBitmap
+                        state.selectionState.selectionStartOffset = IntOffset(bounds.left, bounds.top)
+                        state.selectionState.selectionRect = bounds
+                        state.selectionState.selectionDisplaceOffset = IntOffset(0, 0)
+                        state.selectionState.placementMode = PlacementMode.Move
+                        page.drawArea(bounds, ignoredImageIds=listOf<Image>(imageToSave).map { it.id })
+                    } else {
+                        // Handle cases where the bitmap could not be created
+                        Log.e("ImageProcessing", "Failed to create software bitmap from URI.")
                     }
-                }
+
+                } else
+                    Log.e(TAG, "Image uri is empty")
             }
         }
 
@@ -411,18 +415,22 @@ class DrawCanvas(
             Mode.Draw -> touchHelper.setStrokeStyle(penToStroke(state.pen))
                 ?.setStrokeWidth(state.penSettings[state.pen.penName]!!.strokeSize)
                 ?.setStrokeColor(state.penSettings[state.pen.penName]!!.color)
+
             Mode.Erase -> {
                 when (state.eraser) {
                     Eraser.PEN -> touchHelper.setStrokeStyle(penToStroke(Pen.MARKER))
                         ?.setStrokeWidth(30f)
                         ?.setStrokeColor(Color.GRAY)
+
                     Eraser.SELECT -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))
                         ?.setStrokeWidth(3f)
                         ?.setStrokeColor(Color.GRAY)
                 }
             }
+
             Mode.Select -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))?.setStrokeWidth(3f)
                 ?.setStrokeColor(Color.GRAY)
+
             Mode.Line -> {
             }
         }

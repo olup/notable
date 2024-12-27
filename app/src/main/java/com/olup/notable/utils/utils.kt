@@ -159,7 +159,42 @@ enum class SelectPointPosition {
     CENTER
 }
 
-// points is in page coodinates
+
+/** Written by GPT:
+ * Handles selection of strokes and areas on a page, enabling either lasso selection or
+ * page-cut-based selection for further manipulation or operations.
+ *
+ * This function performs the following steps:
+ *
+ * 1. **Page Cut Selection**:
+ *    - Identifies if the selection points cross the left or right edge of the page (`Page cut` case).
+ *    - Determines the direction of the cut and creates a complete selection area spanning the page.
+ *    - For the first page cut, it registers the cut coordinates.
+ *    - For the second page cut, it orders the cuts, divides the strokes into sections based on these cuts,
+ *      and assigns the strokes in the middle section to `selectedStrokes`.
+ *
+ * 2. **Lasso Selection**:
+ *    - For non-page-cut cases, it performs lasso selection using the provided points.
+ *    - Creates a `Path` from the selection points and identifies strokes within this lasso area.
+ *    - Computes the bounding box (`pageBounds`) for the selected strokes and expands it with padding.
+ *    - Maps the page-relative bounds to the canvas coordinate space.
+ *    - Renders the selected strokes onto a new bitmap using the calculated bounds.
+ *    - Updates the editor's selection state with:
+ *      - The selected strokes.
+ *      - The created bitmap and its position on the canvas.
+ *      - The selection rectangle and displacement offset.
+ *      - Enabling the "Move" placement mode for manipulation.
+ *    - Optionally, redraws the affected area without the selected strokes.
+ *
+ * 3. **UI Refresh**:
+ *    - Notifies the UI to refresh and disables the drawing mode.
+ *
+ * @param scope The `CoroutineScope` used to perform asynchronous operations, such as UI refresh.
+ * @param page The `PageView` object representing the current page, including its strokes and dimensions.
+ * @param editorState The `EditorState` object storing the current state of the editor, such as selected strokes.
+ * @param points A list of `SimplePointF` objects defining the user's selection path in page coordinates.
+ * points is in page coodinates
+ */
 fun handleSelect(
     scope: CoroutineScope,
     page: PageView,
@@ -243,7 +278,7 @@ fun handleSelect(
         state.placementMode = PlacementMode.Move
 
 //        page.removeStrokes(selectedStrokes.map{it.id})
-        page.drawArea(bounds, selectedStrokes.map { it.id })
+        page.drawArea(bounds, ignoredStrokeIds = selectedStrokes.map { it.id })
 
         scope.launch {
             DrawCanvas.refreshUi.emit(Unit)
@@ -379,6 +414,16 @@ fun strokeBounds(stroke: Stroke): RectF {
     )
 }
 
+fun imageBounds(image: Image): RectF {
+    return RectF(
+        image.x.toFloat(),
+        image.y.toFloat(),
+        image.x + image.width.toFloat(),
+        image.y + image.height.toFloat()
+    )
+}
+
+
 fun strokeBounds(strokes: List<Stroke>): Rect {
     if (strokes.size == 0) return Rect()
     val stroke = strokes[0]
@@ -393,6 +438,15 @@ fun strokeBounds(strokes: List<Stroke>): Rect {
         )
     }
     return rect
+}
+
+fun imageBoundsInt(image: Image): Rect {
+    return Rect(
+        image.x,
+        image.y,
+        image.x + image.width,
+        image.y + image.height
+    )
 }
 
 data class SimplePoint(val x: Int, val y: Int)
@@ -467,6 +521,18 @@ fun offsetStroke(stroke: Stroke, offset: Offset): Stroke {
         right = stroke.right + offset.x,
     )
 }
+
+fun offsetImage(image: Image, offset: Offset): Image {
+    return image.copy(
+        x = image.x + offset.x.toInt(),
+        y = image.y + offset.y.toInt(),
+        height = image.height,
+        width = image.width,
+        uri = image.uri,
+        pageId = image.pageId
+    )
+}
+
 
 public class Provider : FileProvider(R.xml.paths) {
 }
