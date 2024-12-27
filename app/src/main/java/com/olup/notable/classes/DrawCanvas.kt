@@ -2,11 +2,16 @@ package com.olup.notable
 
 import android.content.Context
 import android.graphics.*
+import android.net.Uri
 import io.shipbook.shipbooksdk.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.olup.notable.db.Image
 import com.onyx.android.sdk.api.device.epd.EpdController
 import com.onyx.android.sdk.data.note.TouchPoint
 import com.onyx.android.sdk.pen.RawInputCallback
@@ -14,6 +19,7 @@ import com.onyx.android.sdk.pen.TouchHelper
 import com.onyx.android.sdk.pen.data.TouchPointList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
@@ -43,6 +49,10 @@ class DrawCanvas(
         var refreshUi = MutableSharedFlow<Unit>()
         var isDrawing = MutableSharedFlow<Boolean>()
         var restartAfterConfChange = MutableSharedFlow<Unit>()
+
+        // It might be bad idea, but plan is to insert graphic in this, and then take it from it
+        // There is probably better way
+        var addImageByUri = MutableStateFlow<Uri?>(null)
     }
 
     fun getActualState(): EditorState {
@@ -97,14 +107,16 @@ class DrawCanvas(
                 }
 
                 if (getActualState().mode == Mode.Line) {
+                    // draw line
                     handleLine(
                         page = this@DrawCanvas.page,
                         historyBucket = strokeHistoryBatch,
                         strokeSize = getActualState().penSettings[getActualState().pen.penName]!!.strokeSize,
                         color = getActualState().penSettings[getActualState().pen.penName]!!.color,
                         pen = getActualState().pen,
-                        touchPoints =  plist.points
+                        touchPoints = plist.points
                     )
+                    //make it visible
                     drawCanvasToView()
                     refreshUi()
                 }
@@ -214,6 +226,74 @@ class DrawCanvas(
             }
         }
 
+
+        coroutineScope.launch {
+            addImageByUri.collect { imageUri ->
+                Log.i(TAG, "Received image!")
+
+                if (imageUri != null) {
+                    // Convert the image to a software-backed bitmap
+                    val imageBitmap = uriToBitmap(context, imageUri)?.asImageBitmap()
+
+                    val softwareBitmap =
+                        imageBitmap?.asAndroidBitmap()?.copy(Bitmap.Config.ARGB_8888, true)
+                    if (softwareBitmap != null) {
+                        DrawCanvas.addImageByUri.value = null
+
+                        // Get the image dimensions
+                        val imageWidth = softwareBitmap.width
+                        val imageHeight = softwareBitmap.height
+
+                        // Calculate the center position for the image relative to the page dimensions
+                        val centerX = (page.viewWidth - imageWidth) / 2
+                        val centerY = (page.viewHeight - imageHeight) / 2
+
+                        val imageToSave = Image(
+                            x = 0,
+                            y = 0,
+                            height = imageHeight,
+                            width = imageWidth,
+                            uri = imageUri.toString(),
+                            pageId = page.id
+                        )
+                        // Add the image to the page
+                        page.addImage(imageToSave)
+                        drawImage(
+                            context, page.windowedCanvas, imageToSave, IntOffset(0, -page.scroll)
+                        )
+                        //handle selection:
+                        val pageBounds = imageBoundsInt(imageToSave)
+                        val padding = 30
+                        pageBounds.inset(-padding, -padding)
+                        val bounds = pageAreaToCanvasArea(pageBounds, page.scroll)
+                        val selectedBitmap = Bitmap.createBitmap(
+                            imageToSave.width,
+                            imageToSave.height,
+                            Bitmap.Config.ARGB_8888
+                        )
+                        val selectedCanvas = Canvas(selectedBitmap)
+                        drawImage(context,
+                                selectedCanvas,
+                                imageToSave,
+                                IntOffset(0, -page.scroll)
+                            )
+                        // set state
+                        state.selectionState.selectedImages = listOf<Image>(imageToSave)
+                        state.selectionState.selectedBitmap = selectedBitmap
+                        state.selectionState.selectionStartOffset = IntOffset(bounds.left, bounds.top)
+                        state.selectionState.selectionRect = bounds
+                        state.selectionState.selectionDisplaceOffset = IntOffset(0, 0)
+                        state.selectionState.placementMode = PlacementMode.Move
+                        page.drawArea(bounds, ignoredImageIds=listOf<Image>(imageToSave).map { it.id })
+                    } else {
+                        // Handle cases where the bitmap could not be created
+                        Log.e("ImageProcessing", "Failed to create software bitmap from URI.")
+                    }
+
+                } else
+                    Log.e(TAG, "Image uri is empty")
+            }
+        }
 
         // observe restartcount
         coroutineScope.launch {
@@ -335,18 +415,22 @@ class DrawCanvas(
             Mode.Draw -> touchHelper.setStrokeStyle(penToStroke(state.pen))
                 ?.setStrokeWidth(state.penSettings[state.pen.penName]!!.strokeSize)
                 ?.setStrokeColor(state.penSettings[state.pen.penName]!!.color)
+
             Mode.Erase -> {
                 when (state.eraser) {
                     Eraser.PEN -> touchHelper.setStrokeStyle(penToStroke(Pen.MARKER))
                         ?.setStrokeWidth(30f)
                         ?.setStrokeColor(Color.GRAY)
+
                     Eraser.SELECT -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))
                         ?.setStrokeWidth(3f)
                         ?.setStrokeColor(Color.GRAY)
                 }
             }
+
             Mode.Select -> touchHelper.setStrokeStyle(penToStroke(Pen.BALLPEN))?.setStrokeWidth(3f)
                 ?.setStrokeColor(Color.GRAY)
+
             Mode.Line -> {
             }
         }

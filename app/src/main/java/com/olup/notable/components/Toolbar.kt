@@ -1,5 +1,7 @@
 package com.olup.notable
 
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Text
@@ -8,12 +10,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
+
+
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
+import com.olup.notable.db.Image
+import io.shipbook.shipbooksdk.Log
 
 fun PresentlyUsedToolIcon(mode: Mode, pen: Pen): Int {
     return when (mode) {
@@ -29,11 +44,13 @@ fun PresentlyUsedToolIcon(mode: Mode, pen: Pen): Int {
                 Pen.PENCIL -> R.drawable.pencil
             }
         }
+
         Mode.Erase -> R.drawable.eraser
         Mode.Select -> R.drawable.lasso
         Mode.Line -> R.drawable.line
     }
 }
+
 fun isSelected(state: EditorState, penType: Pen): Boolean {
     return if (state.mode == Mode.Draw && state.pen == penType) {
         true
@@ -43,7 +60,6 @@ fun isSelected(state: EditorState, penType: Pen): Boolean {
         false
     }
 }
-
 
 @Composable
 @ExperimentalComposeUiApi
@@ -69,6 +85,33 @@ fun Toolbar(
 
     val context = LocalContext.current
 
+    // Create a remembered variable to store the loaded image bitmap
+    var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+
+    // Create a remembered variable to track whether an image is loaded
+    var isImageLoaded by remember { mutableStateOf(false) }
+
+    // Create an activity result launcher for picking visual media (images in this case)
+    val pickMedia =
+        rememberLauncherForActivityResult(contract = PickVisualMedia()) { uri ->
+            uri?.let {
+                // Grant read URI permission to access the selected URI
+                val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                context.contentResolver.takePersistableUriPermission(uri, flag)
+                // Set isImageLoaded to true
+                isImageLoaded = true
+                Log.i("InsertImage", "Hura! We have uri: ${uri}")
+                DrawCanvas.addImageByUri.value = uri
+
+            }
+        }
+    // for getting images, ugly for now
+    // TODO: improve code quality
+    if (state.isDialogOpen) {
+        Log.i("InsertImage", "Launching image picker...")
+        pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        state.isDialogOpen = false
+    }
     LaunchedEffect(isMenuOpen) {
         state.isDrawing = !isMenuOpen
     }
@@ -195,17 +238,17 @@ fun Toolbar(
                     penSetting = state.penSettings[Pen.BLUEBALLPEN.penName] ?: return,
                     onChangeSetting = { onChangeStrokeSetting(Pen.BLUEBALLPEN.penName, it) },
                 )
-
-                PenToolbarButton(
-                    onStrokeMenuOpenChange = { state.isDrawing = !it },
-                    pen = Pen.GREENBALLPEN,
-                    icon = R.drawable.ballpengreen,
-                    isSelected = isSelected(state, Pen.GREENBALLPEN),
-                    onSelect = { handleChangePen(Pen.GREENBALLPEN) },
-                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
-                    penSetting = state.penSettings[Pen.GREENBALLPEN.penName] ?: return,
-                    onChangeSetting = { onChangeStrokeSetting(Pen.GREENBALLPEN.penName, it) },
-                )
+//              Removed to make space for insert tool
+//                PenToolbarButton(
+//                    onStrokeMenuOpenChange = { state.isDrawing = !it },
+//                    pen = Pen.GREENBALLPEN,
+//                    icon = R.drawable.ballpengreen,
+//                    isSelected = isSelected(state, Pen.GREENBALLPEN),
+//                    onSelect = { handleChangePen(Pen.GREENBALLPEN) },
+//                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
+//                    penSetting = state.penSettings[Pen.GREENBALLPEN.penName] ?: return,
+//                    onChangeSetting = { onChangeStrokeSetting(Pen.GREENBALLPEN.penName, it) },
+//                )
 
                 PenToolbarButton(
                     onStrokeMenuOpenChange = { state.isDrawing = !it },
@@ -222,7 +265,7 @@ fun Toolbar(
                     onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.BRUSH,
                     icon = R.drawable.brush,
-                    isSelected =isSelected(state, Pen.BRUSH),
+                    isSelected = isSelected(state, Pen.BRUSH),
                     onSelect = { handleChangePen(Pen.BRUSH) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.BRUSH.penName] ?: return,
@@ -233,7 +276,7 @@ fun Toolbar(
                     onStrokeMenuOpenChange = { state.isDrawing = !it },
                     pen = Pen.FOUNTAIN,
                     icon = R.drawable.fountain,
-                    isSelected =isSelected(state, Pen.FOUNTAIN),
+                    isSelected = isSelected(state, Pen.FOUNTAIN),
                     onSelect = { handleChangePen(Pen.FOUNTAIN) },
                     sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
                     penSetting = state.penSettings[Pen.FOUNTAIN.penName] ?: return,
@@ -244,7 +287,7 @@ fun Toolbar(
                     onStrokeMenuOpenChange = { state.isDrawing = !it },
                     icon = R.drawable.line,
                     isSelected = state.mode == Mode.Line,
-                    onSelect = {handleLine() },
+                    onSelect = { handleLine() },
                 )
 
                 Box(
@@ -307,6 +350,14 @@ fun Toolbar(
                     contentDescription = "palette",
                     onSelect = {
                         isColorSelectionDialogOpen = true // Open the color selection dialog
+                    }
+                )
+                ToolbarButton(
+                    iconId = R.drawable.image,
+                    contentDescription = "library",
+                    onSelect = {
+                        // Call insertImage when the button is tapped
+                        state.isDialogOpen = true
                     }
                 )
                 Box(

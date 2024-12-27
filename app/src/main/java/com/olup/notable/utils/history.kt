@@ -1,6 +1,7 @@
 package com.olup.notable
 
 import android.graphics.Rect
+import com.olup.notable.db.Image
 import com.olup.notable.db.Stroke
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -10,6 +11,9 @@ import kotlinx.coroutines.launch
 sealed class Operation {
     data class DeleteStroke(val strokeIds: List<String>) : Operation()
     data class AddStroke(val strokes: List<Stroke>) : Operation()
+    // TODO
+    data class AddImage(val strokes: List<Image>) : Operation()
+
 }
 
 typealias OperationBlock = List<Operation>

@@ -31,6 +31,11 @@ data class PageWithStrokes(
         parentColumn = "id", entityColumn = "pageId", entity = Stroke::class
     ) val strokes: List<Stroke>
 )
+data class PageWithImages(
+    @Embedded val page: Page, @Relation(
+        parentColumn = "id", entityColumn = "pageId", entity = Image::class
+    ) val images: List<Image>
+)
 
 // DAO
 @Dao
@@ -44,6 +49,10 @@ interface PageDao {
     @Transaction
     @Query("SELECT * FROM page WHERE id =:pageId")
     fun getPageWithStrokesById(pageId: String): PageWithStrokes
+
+    @Transaction
+    @Query("SELECT * FROM page WHERE id =:pageId")
+    fun getPageWithImagesById(pageId: String): PageWithImages
 
     @Query("UPDATE page SET scroll=:scroll WHERE id =:pageId")
     fun updateScroll(pageId: String, scroll: Int)
@@ -78,6 +87,9 @@ class PageRepository(context: Context) {
 
     fun getWithStrokeById(pageId: String): PageWithStrokes {
         return db.getPageWithStrokesById(pageId)
+    }
+    fun getWithImageById(pageId: String): PageWithImages {
+        return db.getPageWithImagesById(pageId)
     }
 
     fun getSinglePagesInFolder(folderId: String? = null): LiveData<List<Page>> {

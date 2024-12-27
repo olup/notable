@@ -23,12 +23,63 @@ import kotlin.io.path.div
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import android.app.Activity
+import android.content.ContentResolver
+import android.content.Intent
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
+import android.provider.OpenableColumns
+import android.widget.Toast
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
+
+
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
+import androidx.compose.foundation.Image
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import kotlinx.coroutines.launch
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+
+
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContentProviderCompat.requireContext
 
 suspend fun exportBook(context: Context, bookId: String): String {
     val book = BookRepository(context).getById(bookId) ?: return "Book ID not found"
     val pages = PageRepository(context)
     val message = exportPdf(context, "Notebooks", book.title) {
-        book.pageIds.forEachIndexed { i, pageId -> writePage(i + 1, pages, pageId) }
+        book.pageIds.forEachIndexed {i, pageId -> writePage(context, i + 1, pages, pageId) }
     }
     copyBookPdfLinkForObsidian(context, bookId, book.title)
     return message
@@ -47,7 +98,7 @@ fun copyBookPdfLinkForObsidian(context: Context, bookId: String, bookName: Strin
 suspend fun exportPage(context: Context, pageId: String): String {
     val pages = PageRepository(context)
     return exportPdf(context, "pages", "notable-page-${pageId}") {
-        writePage(1, pages, pageId)
+        writePage(context,1, pages, pageId)
     }
 }
 
@@ -71,6 +122,8 @@ fun exportPageToPng(context: Context, pageId: String): String {
     for (stroke in strokes) {
         drawStroke(canvas, stroke, IntOffset(0, 0))
     }
+
+    //TODO Draw images
     return try {
         // Save the bitmap as PNG
         val filePath = Environment.getExternalStorageDirectory().toPath() /
@@ -125,6 +178,7 @@ fun exportPageToJpeg(context: Context, pageId: String): String {
     for (stroke in strokes) {
         drawStroke(canvas, stroke, IntOffset(0, 0))
     }
+    //TODO Draw images
 
     return try {
         // Save the bitmap as JPEG
@@ -178,6 +232,7 @@ fun exportBookToPng(context: Context, bookId: String): String {
             for (stroke in strokes) {
                 drawStroke(canvas, stroke, IntOffset(0, 0))
             }
+            //TODO Draw images
 
             val filePath = dirPath / "notable-page-${pageId}.png"
             FileOutputStream(filePath.toString()).use { out ->
@@ -243,8 +298,10 @@ private suspend fun exportPdf(
 }
 
 
-private fun PdfDocument.writePage(number: Int, repo: PageRepository, id: String) {
+private fun PdfDocument.writePage(context: Context, number: Int, repo: PageRepository, id: String) {
     val (page, strokes) = repo.getWithStrokeById(id)
+    //TODO: improve that function
+    val (page2, images) = repo.getWithImageById(id)
 
     val strokeHeight = if (strokes.isEmpty()) 0 else strokes.maxOf(Stroke::bottom).toInt() + 50
     val strokeWidth = if (strokes.isEmpty()) 0 else strokes.maxOf(Stroke::right).toInt() + 50
@@ -261,5 +318,37 @@ private fun PdfDocument.writePage(number: Int, repo: PageRepository, id: String)
         drawStroke(documentPage.canvas, stroke, IntOffset(0, 0))
     }
 
+    for(image in images)
+    {
+        drawImage(context,documentPage.canvas, image, IntOffset(0, 0))
+    }
+
     finishPage(documentPage)
+}
+
+
+/**
+ * Converts a URI to a Bitmap using the provided [context] and [uri].
+ *
+ * @param context The context used to access the content resolver.
+ * @param uri The URI of the image to be converted to a Bitmap.
+ * @return The Bitmap representation of the image, or null if conversion fails.
+ * https://medium.com/@munbonecci/how-to-display-an-image-loaded-from-the-gallery-using-pick-visual-media-in-jetpack-compose-df83c78a66bf
+ */
+fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
+    // Obtain the content resolver from the context
+    val contentResolver: ContentResolver = context.contentResolver
+
+    // Check the API level to use the appropriate method for decoding the Bitmap
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        // For Android P (API level 28) and higher, use ImageDecoder to decode the Bitmap
+        val source = ImageDecoder.createSource(contentResolver, uri)
+        ImageDecoder.decodeBitmap(source)
+    } else {
+        // For versions prior to Android P, use BitmapFactory to decode the Bitmap
+        val bitmap = context.contentResolver.openInputStream(uri)?.use { stream ->
+            Bitmap.createBitmap(BitmapFactory.decodeStream(stream))
+        }
+        bitmap
+    }
 }
