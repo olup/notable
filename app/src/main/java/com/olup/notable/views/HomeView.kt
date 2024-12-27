@@ -256,16 +256,6 @@ fun Library(navController: NavController, folderId: String? = null) {
                                 .border(1.dp, Color.Black, RectangleShape)
                                 .background(Color.White)
                                 .clip(RoundedCornerShape(2))
-                                .combinedClickable(
-                                    onClick = {
-                                        val bookId = item.id
-                                        val pageId = item.openPageId ?: item.pageIds[0]
-                                        navController.navigate("books/$bookId/pages/$pageId")
-                                    },
-                                    onLongClick = {
-                                        isSettingsOpen = true
-                                    },
-                                )
                         ) {
                             Box {
                                 val pageId = item.pageIds[0]
@@ -276,7 +266,12 @@ fun Library(navController: NavController, folderId: String? = null) {
                                         .border(1.dp, Color.Black, RectangleShape)
                                         .combinedClickable(
                                             onClick = {
-                                                navController.navigate("books/${item.id}/pages/$pageId")
+                                                val bookId = item.id
+                                                val pageId = item.openPageId ?: item.pageIds[0]
+                                                navController.navigate("books/$bookId/pages/$pageId")
+                                            },
+                                            onLongClick = {
+                                                isSettingsOpen = true
                                             },
                                         ), pageId
                                 )
