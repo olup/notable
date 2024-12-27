@@ -28,7 +28,7 @@
 [Features](#features) •
 [Download](#download) •
 [Gestures](#gestures) •
-[Supported Devices](#supported-devices) •
+[Supported Devices](#devices) •
 [Contribute](#contribute)
   
 </div>
