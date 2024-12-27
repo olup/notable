@@ -1,15 +1,21 @@
 package com.olup.notable
 
+import android.content.Context
 import android.graphics.*
+import android.net.Uri
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import io.shipbook.shipbooksdk.Log
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.toOffset
+import com.olup.notable.db.Image
 import com.olup.notable.db.Stroke
 import com.onyx.android.sdk.data.note.ShapeCreateArgs
 import com.onyx.android.sdk.data.note.TouchPoint
 import com.onyx.android.sdk.pen.NeoBrushPen
 import com.onyx.android.sdk.pen.NeoCharcoalPen
 import com.onyx.android.sdk.pen.NeoFountainPen
+import com.onyx.android.sdk.pen.NeoMarkerPen
 import kotlin.math.abs
 
 
@@ -49,8 +55,7 @@ fun drawMarkerStroke(
         this.strokeCap = Paint.Cap.ROUND
         this.strokeJoin = Paint.Join.ROUND
         this.isAntiAlias = true
-        this.color = Color.LTGRAY
-        this.alpha = 100
+        this.alpha = 30
 
     }
 
@@ -64,24 +69,94 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
     //canvas.translate(offset.x.toFloat(), offset.y.toFloat())
 
     val paint = Paint().apply {
-        color = Color.BLACK
+        color = stroke.color
         this.strokeWidth = stroke.size
     }
 
     val points = strokeToTouchPoints(offsetStroke(stroke, offset.toOffset()))
 
-    when (stroke.pen) {
-        Pen.BALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
-        Pen.PENCIL -> NeoCharcoalPen.drawNormalStroke(
-            null, canvas, paint, points, -16777216, stroke.size, ShapeCreateArgs(), Matrix(),false
-        )
-        Pen.BRUSH -> NeoBrushPen.drawStroke(canvas, paint, points, stroke.size, pressure, false)
-        Pen.MARKER -> drawMarkerStroke(canvas, paint, stroke.size, points)
-        Pen.FOUNTAIN -> NeoFountainPen.drawStroke(
-            canvas, paint, points, 1f, stroke.size, pressure, false
-        )
+    // Trying to find what throws error when drawing quickly
+    try {
+        when (stroke.pen) {
+            Pen.BALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+            Pen.REDBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+            Pen.GREENBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+            Pen.BLUEBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+            Pen.PENCIL -> NeoCharcoalPen.drawNormalStroke(
+                null,
+                canvas,
+                paint,
+                points,
+                stroke.color,
+                stroke.size,
+                ShapeCreateArgs(),
+                Matrix(),
+                false
+            )
+
+            Pen.BRUSH -> NeoBrushPen.drawStroke(canvas, paint, points, stroke.size, pressure, false)
+            Pen.MARKER -> NeoMarkerPen.drawStroke(canvas, paint, points, stroke.size, false)
+            //Pen.MARKER -> drawMarkerStroke(canvas, paint, stroke.size, points)
+            Pen.FOUNTAIN -> NeoFountainPen.drawStroke(
+                canvas, paint, points, 1f, stroke.size, pressure, false
+            )
+
+        }
+    } catch (e: Exception) {
+        Log.e(TAG, "draw.kt: Drawing strokes failed: ${e.message}")
     }
     //canvas.restore()
+}
+
+
+/**
+ * Draws an image onto the provided Canvas at a specified location and size, using its URI.
+ *
+ * This function performs the following steps:
+ * 1. Converts the URI of the image into a `Bitmap` object.
+ * 2. Converts the `ImageBitmap` to a software-backed `Bitmap` for compatibility.
+ * 3. Clears the value of `DrawCanvas.addImageByUri` to null.
+ * 4. Draws the specified bitmap onto the provided Canvas within a destination rectangle
+ *    defined by the `Image` object coordinates (`x`, `y`) and its dimensions (`width`, `height`),
+ *    adjusted by the `offset`.
+ * 5. Logs the success or failure of the operation.
+ *
+ * @param context The context used to retrieve the image from the URI.
+ * @param canvas The Canvas object where the image will be drawn.
+ * @param image The `Image` object containing details about the image (URI, position, and size).
+ * @param offset The `IntOffset` used to adjust the drawing position relative to the Canvas.
+ */
+fun drawImage(context: Context, canvas: Canvas, image: Image, offset: IntOffset) {
+    val imageBitmap = uriToBitmap(context, Uri.parse(image.uri))?.asImageBitmap()
+    if (imageBitmap != null) {
+        // Convert the image to a software-backed bitmap
+        val softwareBitmap =
+            imageBitmap.asAndroidBitmap().copy(Bitmap.Config.ARGB_8888, true)
+
+        DrawCanvas.addImageByUri.value = null
+
+        // Draw the bitmap on the canvas at the center of the page
+        canvas.drawBitmap(
+            softwareBitmap,
+            Rect(
+                0,
+                0,
+                imageBitmap.width,
+                imageBitmap.height
+            ),  // Source rectangle (full image)
+            Rect(
+                image.x,
+                image.y,
+                image.x+image.width,
+                image.y+image.height
+            ), // Destination rectangle (centered)
+            null // Optional Paint object (null for default)
+        )
+
+        // Log after drawing
+        Log.i(TAG, "Image drawn successfully at center!")
+    } else
+        Log.e(TAG, "Could not get image from: ${image.uri}")
 }
 
 
@@ -175,13 +250,13 @@ fun drawSquaredBg(canvas: Canvas, scroll: Int) {
     }
 }
 
-fun drawBg(canvas: Canvas, nativeTemplate: String, scroll: Int){
-    when(nativeTemplate){
+fun drawBg(canvas: Canvas, nativeTemplate: String, scroll: Int) {
+    when (nativeTemplate) {
         "blank" -> canvas.drawColor(Color.WHITE)
         "dotted" -> drawDottedBg(canvas, scroll)
         "lined" -> drawLinedBg(canvas, scroll)
         "squared" -> drawSquaredBg(canvas, scroll)
-     }
+    }
 }
 
 val selectPaint = Paint().apply {

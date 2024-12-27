@@ -28,6 +28,7 @@
 [Features](#features) •
 [Download](#download) •
 [Gestures](#gestures) •
+[Supported Devices](#supported-devices) •
 [Contribute](#contribute)
   
 </div>
@@ -75,6 +76,22 @@ Notable features intuitive gestures controls within Editor's Mode, to optimize t
 #### 🔲 Selection
 * **Drag:** Move the selected writing around.
 * **Double tap:** Copy the selected writing.
+
+## Supported Devices
+
+The list below lists devices which users confirm to be supported by Notable. It does not imply any
+commitment from the developers. Feel free to add your device to the list.
+
+* [ONYX BOOX Go 10.3](https://onyxboox.com/boox_go103)
+* [Onyx Boox Note Air 4 C](https://onyxboox.pl/en/ebook-readers/onyx-boox-note-air-4-c)
+
+## Screenshots
+
+<img src="https://github.com/user-attachments/assets/1e89afb6-5232-4be4-9c86-346e759bed4c" alt="drawing" style="width:200px;"/>
+<img src="https://github.com/user-attachments/assets/475b2262-5928-4324-b444-a7cdbf70fa7a" alt="drawing" style="width:200px;"/>
+<img src="https://github.com/user-attachments/assets/dcc08484-7487-4958-9983-07a1fefdb1ae" alt="drawing" style="width:200px;"/>
+
+
 
 ## Contribute
 Notable is an open-source project and welcomes contributions from the community. 

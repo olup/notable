@@ -4,6 +4,9 @@ import com.onyx.android.sdk.pen.style.StrokeStyle
 
 enum class Pen (val penName : String) {
     BALLPEN("BALLPEN"),
+    REDBALLPEN("REDBALLPEN"),
+    GREENBALLPEN("GREENBALLPEN"),
+    BLUEBALLPEN("BLUEBALLPEN"),
     PENCIL("PENCIL"),
     BRUSH("BRUSH"),
     MARKER("MARKER"),
@@ -13,6 +16,9 @@ enum class Pen (val penName : String) {
 fun penToStroke(pen: Pen): Int {
     return when (pen) {
         Pen.BALLPEN -> StrokeStyle.PENCIL
+        Pen.REDBALLPEN -> StrokeStyle.PENCIL
+        Pen.GREENBALLPEN -> StrokeStyle.PENCIL
+        Pen.BLUEBALLPEN -> StrokeStyle.PENCIL
         Pen.PENCIL -> StrokeStyle.CHARCOAL
         Pen.BRUSH -> StrokeStyle.NEO_BRUSH
         Pen.MARKER -> StrokeStyle.MARKER

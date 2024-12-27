@@ -8,6 +8,13 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.Date
+import android.os.Environment
+import androidx.room.AutoMigration
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import java.io.File
 
 class Converters {
     @TypeConverter
@@ -33,8 +40,8 @@ class Converters {
 
 
 @Database(
-    entities = [Folder::class, Notebook::class, Page::class, Stroke::class, Kv::class],
-    version = 28,
+    entities = [Folder::class, Notebook::class, Page::class, Stroke::class, Image::class, Kv::class],
+    version = 30,
     autoMigrations = [
         AutoMigration(19,20),
         AutoMigration(20,21),
@@ -44,7 +51,9 @@ class Converters {
         AutoMigration(25,26),
         AutoMigration(26,27),
         AutoMigration(27,28),
-    ]
+        AutoMigration(28,29),
+        AutoMigration(29,30),
+    ], exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -54,21 +63,30 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notebookDao(): NotebookDao
     abstract fun pageDao(): PageDao
     abstract fun strokeDao(): StrokeDao
+    abstract fun ImageDao(): ImageDao
 
     companion object {
         private var INSTANCE: AppDatabase? = null
+
         fun getDatabase(context: Context): AppDatabase {
             if (INSTANCE == null) {
                 synchronized(this) {
-                    INSTANCE =
-                        Room.databaseBuilder(context, AppDatabase::class.java, "app_database")
-                            .allowMainThreadQueries()
-                            //.fallbackToDestructiveMigration()
-                            .addMigrations(
-                                MIGRATION_16_17,
-                                MIGRATION_17_18,
-                                        MIGRATION_22_23)
-                            .build()
+                    val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                    // val dbDir = File(documentsDir, "Obsidian/MinimalNotes/99-Meta/backups/notabledb")
+                    val dbDir = File(documentsDir, "notabledb")
+                    if (!dbDir.exists()) {
+                        dbDir.mkdirs()
+                    }
+                    val dbFile = File(dbDir, "app_database")
+                    INSTANCE = Room.databaseBuilder(context, AppDatabase::class.java, dbFile.absolutePath)
+                        .allowMainThreadQueries()
+                        //.fallbackToDestructiveMigration()
+                        .addMigrations(
+                            MIGRATION_16_17,
+                            MIGRATION_17_18,
+                            MIGRATION_22_23
+                        )
+                        .build()
                 }
             }
             return INSTANCE!!

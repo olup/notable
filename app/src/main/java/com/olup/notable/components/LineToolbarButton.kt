@@ -10,14 +10,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 
 @Composable
-fun PenToolbarButton(
-    pen: Pen,
+fun LineToolbarButton(
     icon: Int,
     isSelected: Boolean,
     onSelect: () -> Unit,
-    sizes: List<Pair<String, Float>>,
-    penSetting: PenSetting,
-    onChangeSetting: (PenSetting) -> Unit,
     onStrokeMenuOpenChange: ((Boolean) -> Unit)? = null
 ) {
     var isStrokeMenuOpen by remember { mutableStateOf(false) }
@@ -37,18 +33,9 @@ fun PenToolbarButton(
                 if (isSelected) isStrokeMenuOpen = !isStrokeMenuOpen
                 else onSelect()
             },
-            penColor = Color(penSetting.color),
+            penColor = Color.LightGray,
             iconId = icon,
-            contentDescription = pen.penName
+            contentDescription = "Lines!"
         )
-
-        if (isStrokeMenuOpen) {
-            StrokeMenu(
-                value = penSetting,
-                onChange = { onChangeSetting(it) },
-                onClose = { isStrokeMenuOpen = false },
-                options = sizes
-            )
-        }
     }
 }

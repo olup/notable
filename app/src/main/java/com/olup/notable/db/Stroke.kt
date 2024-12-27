@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.*
 import com.olup.notable.Pen
 import java.util.*
+import android.graphics.*
 
 @kotlinx.serialization.Serializable
 data class StrokePoint(
@@ -29,6 +30,8 @@ data class Stroke(
     val id: String = UUID.randomUUID().toString(),
     val size: Float,
     val pen: Pen,
+    @ColumnInfo(defaultValue = "0xFF000000") 
+    val color: Int = 0xFF000000.toInt(),
 
     var top: Float,
     var bottom: Float,

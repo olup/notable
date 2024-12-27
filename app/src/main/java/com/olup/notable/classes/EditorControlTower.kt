@@ -1,6 +1,7 @@
 package com.olup.notable
 
 import android.graphics.Rect
+import android.util.Log
 import androidx.compose.ui.unit.toOffset
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -61,37 +62,64 @@ class EditorControlTower(
         page!!.updateScroll(delta)
     }
 
+
+    //Now we can have selected images or selected strokes
     fun applySelectionDisplace() {
-        val selectedStrokes = state.selectionState.selectedStrokes!!
+        val selectedStrokes = state.selectionState.selectedStrokes
+        val selectedImages = state.selectionState.selectedImages
         val offset = state.selectionState.selectionDisplaceOffset!!
         val finalZone = Rect(state.selectionState.selectionRect!!)
         finalZone.offset(offset.x, offset.y)
 
-        val displacedStrokes = selectedStrokes.map {
-            offsetStroke(it, offset = offset.toOffset())
+        if (selectedStrokes != null) {
+
+            val displacedStrokes = selectedStrokes.map {
+                offsetStroke(it, offset = offset.toOffset())
+            }
+
+            if (state.selectionState.placementMode == PlacementMode.Move)
+                page.removeStrokes(selectedStrokes.map { it.id })
+
+            page.addStrokes(displacedStrokes)
+            page.drawArea(finalZone)
+
+
+            if (offset.x > 0 || offset.y > 0) {
+                // A displacement happened, we can create a history for this
+                var operationList =
+                    listOf<Operation>(Operation.DeleteStroke(displacedStrokes.map { it.id }))
+                // in case we are on a move operation, this history point re-adds the original strokes
+                if (state.selectionState.placementMode == PlacementMode.Move)
+                    operationList += Operation.AddStroke(selectedStrokes)
+                history.addOperationsToHistory(operationList)
+            }
         }
+        if(selectedImages!=null){
+            val displacedImages = selectedImages.map {
+                offsetImage(it, offset = offset.toOffset())
+            }
+            if (state.selectionState.placementMode == PlacementMode.Move)
+                page.removeImage(selectedImages.map { it.id })
 
-        if (state.selectionState.placementMode == PlacementMode.Move) page.removeStrokes(selectedStrokes.map{it.id})
-
-        page.addStrokes(displacedStrokes)
-        page.drawArea(finalZone)
+            page.addImage(displacedImages)
+            page.drawArea(finalZone)
 
 
-        if (offset.x > 0 || offset.y > 0) {
-            // A displacement happened, we can create a history for this
-            var operationList =
-                listOf<Operation>(Operation.DeleteStroke(displacedStrokes.map { it.id }))
-            // in case we are on a move operation, this history point re-adds the original strokes
-            if (state.selectionState.placementMode == PlacementMode.Move) operationList += Operation.AddStroke(
-                selectedStrokes
-            )
-            history.addOperationsToHistory(operationList)
+            if (offset.x > 0 || offset.y > 0) {
+                // A displacement happened, we can create a history for this
+                var operationList =
+                    listOf<Operation>(Operation.DeleteStroke(displacedImages.map { it.id }))
+                // TODO: in case we are on a move operation, this history point re-adds the original strokes
+                // if (state.selectionState.placementMode == PlacementMode.Move)
+                //    operationList += Operation.AddImage(selectedImages)
+                //history.addOperationsToHistory(operationList)
+            }
+
         }
-
-
         scope.launch {
             DrawCanvas.refreshUi.emit(Unit)
         }
     }
+
 
 }
