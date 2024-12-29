@@ -162,8 +162,8 @@ fun drawImage(context: Context, canvas: Canvas, image: Image, offset: IntOffset)
 
 
 const val padding = 0
-const val lineHeight = 50
-const val dotSize = 4f
+const val lineHeight = 80
+const val dotSize = 6f
 
 fun drawLinedBg(canvas: Canvas, scroll: Int) {
     val height = canvas.height
