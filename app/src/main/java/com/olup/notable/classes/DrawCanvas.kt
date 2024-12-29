@@ -291,7 +291,7 @@ class DrawCanvas(
                     }
 
                 } else
-                    Log.e(TAG, "Image uri is empty")
+                    Log.i(TAG, "Image uri is empty")
             }
         }
 
@@ -352,8 +352,9 @@ class DrawCanvas(
         }
 
         coroutineScope.launch {
+            //After 500ms add to history strokes
             commitHistorySignal.debounce(500).collect {
-                Log.i(TAG, "Commiting")
+                Log.i(TAG, "Commiting to history")
                 if (strokeHistoryBatch.size > 0) history.addOperationsToHistory(
                     operations = listOf(
                         Operation.DeleteStroke(strokeHistoryBatch.map { it })

@@ -61,7 +61,8 @@ class History(coroutineScope: CoroutineScope, pageView: PageView) {
                         if (zoneAffected != null) {
                             pageView.drawArea(pageAreaToCanvasArea(zoneAffected, pageView.scroll))
                             //moved to refresh after drawing
-                            DrawCanvas.refreshUi.emit(Unit)
+//                            DrawCanvas.refreshUi.emit(Unit)
+                            DrawCanvas.forceUpdate.emit(zoneAffected)
                         } else {
                             Log.i(TAG, "Received Undo/Redo commend. Nothing changed in canvas.")
                         }
