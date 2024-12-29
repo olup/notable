@@ -214,7 +214,8 @@ private fun resolveGesture(
             Log.i(TAG, "Undo")
             scope.launch {
                 History.moveHistory(UndoRedoType.Undo)
-                DrawCanvas.refreshUi.emit(Unit)
+//                moved to history operation - avoids unnecessary refresh, and ensures that it will be done after drawing.
+//                DrawCanvas.refreshUi.emit(Unit)
             }
         }
 
@@ -222,7 +223,7 @@ private fun resolveGesture(
             Log.i(TAG, "Redo")
             scope.launch {
                 History.moveHistory(UndoRedoType.Redo)
-                DrawCanvas.refreshUi.emit(Unit)
+//                DrawCanvas.refreshUi.emit(Unit)
             }
         }
     }
