@@ -50,8 +50,10 @@ fun EditorGestureReceiver(
                     var inputsCount = 0
 
                     // ignore non-touch
-                    if (down.type != PointerType.Touch) return@awaitEachGesture
-
+                    if (down.type != PointerType.Touch) {
+                        Log.i(TAG, "Ignoring non-touch input")
+                        return@awaitEachGesture
+                    }
 
                     do {
                         val event = awaitPointerEvent()
@@ -73,15 +75,20 @@ fun EditorGestureReceiver(
                         if (fingerChange.any { !it.pressed }) break
                     } while (true)
 
-                    Log.i(TAG, "leaving gesture")
-
                     val totalDelta = (initialPosition - lastPosition).getDistance()
                     val gestureDuration = lastTimestamp - initialTimestamp
+                    Log.i(TAG, "Leaving gesture. totalDelta: ${totalDelta}, gestureDuration: ${gestureDuration} ")
 
                     if (totalDelta == 0f && gestureDuration < 150) {
                         // in case of double tap
-                        if (withTimeoutOrNull(100) {
-                                awaitFirstDown()
+                        //Time for double click 170ms, as it seams better:
+                        if (withTimeoutOrNull(170) {
+                             val secondDown = awaitFirstDown()
+                                Log.i(TAG, "Second down detected: ${secondDown.type}, position: ${secondDown.position}")
+                                if (secondDown.type != PointerType.Touch) {
+                                    Log.i(TAG, "Ignoring non-touch input during double-tap detection")
+                                    return@withTimeoutOrNull null
+                                }
                                 if (inputsCount == 1) {
                                     resolveGesture(
                                         settings = appSettings,
@@ -93,6 +100,7 @@ fun EditorGestureReceiver(
                                         nextPage = goToNextPage,
                                     )
                                 }
+                                true
                             } != null) return@awaitEachGesture
 
                         // in case of single tap
