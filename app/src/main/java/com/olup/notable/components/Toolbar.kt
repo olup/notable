@@ -272,16 +272,16 @@ fun Toolbar(
 //                    onChangeSetting = { onChangeStrokeSetting(Pen.BRUSH.penName, it) },
 //                )
 
-//                PenToolbarButton(
-//                    onStrokeMenuOpenChange = { state.isDrawing = !it },
-//                    pen = Pen.FOUNTAIN,
-//                    icon = R.drawable.fountain,
-//                    isSelected = isSelected(state, Pen.FOUNTAIN),
-//                    onSelect = { handleChangePen(Pen.FOUNTAIN) },// Neo-tool! Usage not recommended
-//                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
-//                    penSetting = state.penSettings[Pen.FOUNTAIN.penName] ?: return,
-//                    onChangeSetting = { onChangeStrokeSetting(Pen.FOUNTAIN.penName, it) },
-//                )
+                PenToolbarButton(
+                    onStrokeMenuOpenChange = { state.isDrawing = !it },
+                    pen = Pen.FOUNTAIN,
+                    icon = R.drawable.fountain,
+                    isSelected = isSelected(state, Pen.FOUNTAIN),
+                    onSelect = { handleChangePen(Pen.FOUNTAIN) },// Neo-tool! Usage not recommended
+                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
+                    penSetting = state.penSettings[Pen.FOUNTAIN.penName] ?: return,
+                    onChangeSetting = { onChangeStrokeSetting(Pen.FOUNTAIN.penName, it) },
+                )
 
                 LineToolbarButton(
                     onStrokeMenuOpenChange = { state.isDrawing = !it },

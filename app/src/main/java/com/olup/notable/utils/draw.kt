@@ -17,6 +17,8 @@ import com.onyx.android.sdk.pen.NeoCharcoalPen
 import com.onyx.android.sdk.pen.NeoFountainPen
 import com.onyx.android.sdk.pen.NeoMarkerPen
 import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 
 
 fun drawBallPenStroke(
@@ -55,13 +57,46 @@ fun drawMarkerStroke(
         this.strokeCap = Paint.Cap.ROUND
         this.strokeJoin = Paint.Join.ROUND
         this.isAntiAlias = true
-        this.alpha = 30
+        this.alpha = 100
 
     }
 
     val path = pointsToPath(points.map { SimplePointF(it.x, it.y) })
 
     canvas.drawPath(path, copyPaint)
+}
+
+fun drawFountainPenStroke(
+    canvas: Canvas, paint: Paint, strokeSize: Float, points: List<TouchPoint>
+) {
+    val copyPaint = Paint(paint).apply {
+        this.strokeWidth = strokeSize
+        this.style = Paint.Style.STROKE
+        this.strokeCap = Paint.Cap.BUTT
+        this.strokeJoin = Paint.Join.ROUND
+
+        this.isAntiAlias = true
+    }
+
+    val path = Path()
+    val prePoint = PointF(points[0].x, points[0].y)
+    path.moveTo(prePoint.x, prePoint.y)
+
+    for (point in points) {
+        // skip strange jump point.
+        if (abs(prePoint.y - point.y) >= 30) continue
+        path.quadTo(prePoint.x, prePoint.y, point.x, point.y)
+        prePoint.x = point.x
+        prePoint.y = point.y
+        copyPaint.strokeWidth = strokeSize *(1-cos( 0.5f*3.14f*point.pressure/ pressure))
+        point.tiltX
+        point.tiltY
+        point.timestamp
+
+        canvas.drawPath(path, copyPaint)
+        path.reset()
+        path.moveTo(point.x, point.y)
+    }
 }
 
 fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
@@ -81,7 +116,7 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
             Pen.BALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
             Pen.REDBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
             Pen.GREENBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
-            Pen.BLUEBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
+            Pen.BLUEBALLPEN -> drawFountainPenStroke(canvas, paint, stroke.size, points)
             // TODO: this functions for drawing are slow and unreliable
             // replace them with something better
             Pen.PENCIL -> NeoCharcoalPen.drawNormalStroke(
@@ -98,9 +133,10 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
             Pen.BRUSH -> NeoBrushPen.drawStroke(canvas, paint, points, stroke.size, pressure, false)
             //Pen.MARKER -> NeoMarkerPen.drawStroke(canvas, paint, points, stroke.size, false)
             Pen.MARKER -> drawMarkerStroke(canvas, paint, stroke.size, points)
-            Pen.FOUNTAIN -> NeoFountainPen.drawStroke(
-                canvas, paint, points, 1f, stroke.size, pressure, false
-            )
+            Pen.FOUNTAIN -> drawFountainPenStroke(canvas, paint, stroke.size, points)
+//            Pen.FOUNTAIN -> NeoFountainPen.drawStroke(
+//                canvas, paint, points, 1f, stroke.size, pressure, false
+//            )
 
         }
     } catch (e: Exception) {
