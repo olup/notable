@@ -12,6 +12,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -41,10 +42,10 @@ fun EditorGestureReceiver(
                     val down = awaitFirstDown()
                     val inputId = down.id
 
-                    val initialPosition = down.position
+                    val initialPositions = mutableMapOf(inputId to down.position)
                     val initialTimestamp = System.currentTimeMillis()
 
-                    var lastPosition = initialPosition
+                    val lastPositions = mutableMapOf(inputId to down.position)
                     var lastTimestamp = initialTimestamp
 
                     var inputsCount = 0
@@ -63,132 +64,160 @@ fun EditorGestureReceiver(
                             Log.i(TAG, "Canceling gesture - already consumed")
                             return@awaitEachGesture
                         }
-                        fingerChange.forEach { it.consume() }
+                        fingerChange.forEach { change ->
+                            // Consume changes and update positions
+                            change.consume()
+                            lastPositions[change.id] = change.position // Update latest position
+                        }
 
                         val eventReference =
                             fingerChange.find { it.id.value == inputId.value } ?: break
 
-                        lastPosition = eventReference.position
                         lastTimestamp = System.currentTimeMillis()
                         inputsCount = fingerChange.size
 
                         if (fingerChange.any { !it.pressed }) break
                     } while (true)
 
-                    val totalDelta = (initialPosition - lastPosition).getDistance()
+                    // Calculate the total delta (movement distance) for all pointers
+                    // how much it was moved
+                    val totalDelta = initialPositions.keys
+                        .sumOf { id ->
+                            val initial = initialPositions[id] ?: Offset.Zero
+                            val last = lastPositions[id] ?: Offset.Zero
+                            (initial - last)
+                                .getDistance()
+                                .toDouble()
+                        }
+                        .toFloat() //TODO: fix unnecessary conversions
                     val gestureDuration = lastTimestamp - initialTimestamp
-                    Log.i(TAG, "Leaving gesture. totalDelta: ${totalDelta}, gestureDuration: ${gestureDuration} ")
+                    Log.i(
+                        TAG,
+                        "Leaving gesture. totalDelta: ${totalDelta}, gestureDuration: ${gestureDuration} "
+                    )
+                    //Tolerance of 15 f for movement of fingers
+                    if (totalDelta < 15f && gestureDuration < 150) {
+                        // check how many fingers touched
+                        when (inputsCount) {
+                            1 -> {
+                                //Time for double click 170ms, as it seams better:
+                                if (withTimeoutOrNull(170) {
+                                        val secondDown = awaitFirstDown()
+                                        Log.i(
+                                            TAG,
+                                            "Second down detected: ${secondDown.type}, position: ${secondDown.position}"
+                                        )
+                                        if (secondDown.type != PointerType.Touch) {
+                                            Log.i(
+                                                TAG,
+                                                "Ignoring non-touch input during double-tap detection"
+                                            )
+                                            return@withTimeoutOrNull null
+                                        }
+                                        if (inputsCount == 1) {
+                                            resolveGesture(
+                                                settings = appSettings,
+                                                default = AppSettings.defaultDoubleTapAction,
+                                                override = AppSettings::doubleTapAction,
+                                                state = state,
+                                                scope = coroutineScope,
+                                                previousPage = goToPreviousPage,
+                                                nextPage = goToNextPage,
+                                            )
+                                        }
+                                        true
+                                    } != null) return@awaitEachGesture
 
-                    if (totalDelta == 0f && gestureDuration < 150) {
-                        // in case of double tap
-                        //Time for double click 170ms, as it seams better:
-                        if (withTimeoutOrNull(170) {
-                             val secondDown = awaitFirstDown()
-                                Log.i(TAG, "Second down detected: ${secondDown.type}, position: ${secondDown.position}")
-                                if (secondDown.type != PointerType.Touch) {
-                                    Log.i(TAG, "Ignoring non-touch input during double-tap detection")
-                                    return@withTimeoutOrNull null
-                                }
-                                if (inputsCount == 1) {
-                                    resolveGesture(
-                                        settings = appSettings,
-                                        default = AppSettings.defaultDoubleTapAction,
-                                        override = AppSettings::doubleTapAction,
-                                        state = state,
-                                        scope = coroutineScope,
-                                        previousPage = goToPreviousPage,
-                                        nextPage = goToNextPage,
+                            }
+                            2 -> {
+                                resolveGesture(
+                                    settings = appSettings,
+                                    default = AppSettings.defaultTwoFingerTapAction,
+                                    override = AppSettings::twoFingerTapAction,
+                                    state = state,
+                                    scope = coroutineScope,
+                                    previousPage = goToPreviousPage,
+                                    nextPage = goToNextPage,
+                                )
+                            }
+
+                        }
+
+                    }
+                    val lastPosition = lastPositions[inputId]
+                    val initialPosition = initialPositions[inputId]
+                    if (inputsCount == 1 && lastPosition!=null && initialPosition!=null) {
+                        val verticalDrag = lastPosition.y - initialPosition.y
+                        val horizontalDrag = lastPosition.x - initialPosition.x
+
+
+                        if (verticalDrag < -200) {
+                            if (inputsCount == 1) {
+                                coroutineScope.launch {
+                                    controlTower.onSingleFingerVerticalSwipe(
+                                        SimplePointF(
+                                            initialPosition.x, initialPosition.y
+                                        ), verticalDrag.toInt()
                                     )
                                 }
-                                true
-                            } != null) return@awaitEachGesture
-
-                        // in case of single tap
-                        if (inputsCount == 2) {
-                            resolveGesture(
-                                settings = appSettings,
-                                default = AppSettings.defaultTwoFingerTapAction,
-                                override = AppSettings::twoFingerTapAction,
-                                state = state,
-                                scope = coroutineScope,
-                                previousPage = goToPreviousPage,
-                                nextPage = goToNextPage,
-                            )
+                            }
                         }
-                        return@awaitEachGesture
-
-                    }
-
-                    val verticalDrag = lastPosition.y - initialPosition.y
-                    val horizontalDrag = lastPosition.x - initialPosition.x
-
-
-                    if (verticalDrag < -200) {
-                        if (inputsCount == 1) {
-                            coroutineScope.launch {
-                                controlTower.onSingleFingerVerticalSwipe(
-                                    SimplePointF(
-                                        initialPosition.x, initialPosition.y
-                                    ), verticalDrag.toInt()
+                        if (verticalDrag > 200) {
+                            if (inputsCount == 1) {
+                                coroutineScope.launch {
+                                    controlTower.onSingleFingerVerticalSwipe(
+                                        SimplePointF(
+                                            initialPosition.x, initialPosition.y
+                                        ), verticalDrag.toInt()
+                                    )
+                                }
+                            }
+                        }
+                        if (horizontalDrag < -200) {
+                            if (inputsCount == 1) {
+                                resolveGesture(
+                                    settings = appSettings,
+                                    default = AppSettings.defaultSwipeLeftAction,
+                                    override = AppSettings::swipeLeftAction,
+                                    state = state,
+                                    scope = coroutineScope,
+                                    previousPage = goToPreviousPage,
+                                    nextPage = goToNextPage,
+                                )
+                            } else if (inputsCount == 2) {
+                                resolveGesture(
+                                    settings = appSettings,
+                                    default = AppSettings.defaultTwoFingerSwipeLeftAction,
+                                    override = AppSettings::twoFingerSwipeLeftAction,
+                                    state = state,
+                                    scope = coroutineScope,
+                                    previousPage = goToPreviousPage,
+                                    nextPage = goToNextPage,
                                 )
                             }
                         }
-                    }
-                    if (verticalDrag > 200) {
-                        if (inputsCount == 1) {
-                            coroutineScope.launch {
-                                controlTower.onSingleFingerVerticalSwipe(
-                                    SimplePointF(
-                                        initialPosition.x, initialPosition.y
-                                    ), verticalDrag.toInt()
+                        if (horizontalDrag > 200) {
+                            if (inputsCount == 1) {
+                                resolveGesture(
+                                    settings = appSettings,
+                                    default = AppSettings.defaultSwipeRightAction,
+                                    override = AppSettings::swipeRightAction,
+                                    state = state,
+                                    scope = coroutineScope,
+                                    previousPage = goToPreviousPage,
+                                    nextPage = goToNextPage,
+                                )
+                            } else if (inputsCount == 2) {
+                                resolveGesture(
+                                    settings = appSettings,
+                                    default = AppSettings.defaultTwoFingerSwipeRightAction,
+                                    override = AppSettings::twoFingerSwipeRightAction,
+                                    state = state,
+                                    scope = coroutineScope,
+                                    previousPage = goToPreviousPage,
+                                    nextPage = goToNextPage,
                                 )
                             }
-                        }
-                    }
-                    if (horizontalDrag < -200) {
-                        if (inputsCount == 1) {
-                            resolveGesture(
-                                settings = appSettings,
-                                default = AppSettings.defaultSwipeLeftAction,
-                                override = AppSettings::swipeLeftAction,
-                                state = state,
-                                scope = coroutineScope,
-                                previousPage = goToPreviousPage,
-                                nextPage = goToNextPage,
-                            )
-                        } else if (inputsCount == 2) {
-                            resolveGesture(
-                                settings = appSettings,
-                                default = AppSettings.defaultTwoFingerSwipeLeftAction,
-                                override = AppSettings::twoFingerSwipeLeftAction,
-                                state = state,
-                                scope = coroutineScope,
-                                previousPage = goToPreviousPage,
-                                nextPage = goToNextPage,
-                            )
-                        }
-                    }
-                    if (horizontalDrag > 200) {
-                        if (inputsCount == 1) {
-                            resolveGesture(
-                                settings = appSettings,
-                                default = AppSettings.defaultSwipeRightAction,
-                                override = AppSettings::swipeRightAction,
-                                state = state,
-                                scope = coroutineScope,
-                                previousPage = goToPreviousPage,
-                                nextPage = goToNextPage,
-                            )
-                        } else if (inputsCount == 2) {
-                            resolveGesture(
-                                settings = appSettings,
-                                default = AppSettings.defaultTwoFingerSwipeRightAction,
-                                override = AppSettings::twoFingerSwipeRightAction,
-                                state = state,
-                                scope = coroutineScope,
-                                previousPage = goToPreviousPage,
-                                nextPage = goToNextPage,
-                            )
                         }
                     }
                 }
