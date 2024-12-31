@@ -72,9 +72,9 @@ fun drawFountainPenStroke(
     val copyPaint = Paint(paint).apply {
         this.strokeWidth = strokeSize
         this.style = Paint.Style.STROKE
-        this.strokeCap = Paint.Cap.BUTT
+        this.strokeCap = Paint.Cap.ROUND
         this.strokeJoin = Paint.Join.ROUND
-
+//        this.blendMode = BlendMode.OVERLAY
         this.isAntiAlias = true
     }
 
@@ -88,7 +88,7 @@ fun drawFountainPenStroke(
         path.quadTo(prePoint.x, prePoint.y, point.x, point.y)
         prePoint.x = point.x
         prePoint.y = point.y
-        copyPaint.strokeWidth = strokeSize *(1-cos( 0.5f*3.14f*point.pressure/ pressure))
+        copyPaint.strokeWidth = (1.5f-strokeSize/40f)*strokeSize *(1-cos( 0.5f*3.14f*point.pressure/ pressure))
         point.tiltX
         point.tiltY
         point.timestamp
@@ -116,7 +116,7 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
             Pen.BALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
             Pen.REDBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
             Pen.GREENBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
-            Pen.BLUEBALLPEN -> drawFountainPenStroke(canvas, paint, stroke.size, points)
+            Pen.BLUEBALLPEN -> drawBallPenStroke(canvas, paint, stroke.size, points)
             // TODO: this functions for drawing are slow and unreliable
             // replace them with something better
             Pen.PENCIL -> NeoCharcoalPen.drawNormalStroke(

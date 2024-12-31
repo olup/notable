@@ -17,6 +17,7 @@ import com.onyx.android.sdk.data.note.TouchPoint
 import com.onyx.android.sdk.pen.RawInputCallback
 import com.onyx.android.sdk.pen.TouchHelper
 import com.onyx.android.sdk.pen.data.TouchPointList
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,7 +42,7 @@ class DrawCanvas(
 ) : SurfaceView(_context) {
 
     private val strokeHistoryBatch = mutableListOf<String>()
-    private val commitHistorySignal = MutableSharedFlow<Unit>()
+//    private val commitHistorySignal = MutableSharedFlow<Unit>()
 
 
     companion object {
@@ -49,6 +50,10 @@ class DrawCanvas(
         var refreshUi = MutableSharedFlow<Unit>()
         var isDrawing = MutableSharedFlow<Boolean>()
         var restartAfterConfChange = MutableSharedFlow<Unit>()
+        // before undo we need to commit changes
+        val commitHistorySignal = MutableSharedFlow<Unit>()
+        // used for checking if commit was completed
+        var commitCompletion = CompletableDeferred<Unit>()
 
         // It might be bad idea, but plan is to insert graphic in this, and then take it from it
         // There is probably better way
@@ -361,6 +366,8 @@ class DrawCanvas(
                     )
                 )
                 strokeHistoryBatch.clear()
+                // give signal that commit was successful
+                commitCompletion.complete(Unit)
             }
         }
 

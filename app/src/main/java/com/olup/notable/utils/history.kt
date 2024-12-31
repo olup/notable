@@ -4,6 +4,7 @@ import android.graphics.Rect
 import android.util.Log
 import com.olup.notable.db.Image
 import com.olup.notable.db.Stroke
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -57,12 +58,16 @@ class History(coroutineScope: CoroutineScope, pageView: PageView) {
             historyBus.collect {
                 when (it) {
                     is HistoryBusActions.MoveHistory -> {
+                        // Wait for commit to history to complete
+                        DrawCanvas.commitCompletion = CompletableDeferred()
+                        DrawCanvas.commitHistorySignal.emit(Unit)
+                        DrawCanvas.commitCompletion.await()
                         val zoneAffected = undoRedo(type = it.type)
                         if (zoneAffected != null) {
                             pageView.drawArea(pageAreaToCanvasArea(zoneAffected, pageView.scroll))
                             //moved to refresh after drawing
 //                            DrawCanvas.refreshUi.emit(Unit)
-                            DrawCanvas.forceUpdate.emit(zoneAffected)
+                            DrawCanvas.refreshUi.emit(Unit)
                         } else {
                             Log.i(TAG, "Received Undo/Redo commend. Nothing changed in canvas.")
                         }
