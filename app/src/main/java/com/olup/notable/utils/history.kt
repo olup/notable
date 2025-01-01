@@ -69,6 +69,10 @@ class History(coroutineScope: CoroutineScope, pageView: PageView) {
 //                            DrawCanvas.refreshUi.emit(Unit)
                             DrawCanvas.refreshUi.emit(Unit)
                         } else {
+                            SnackState.globalSnackFlow.emit(SnackConf(
+                                text = "Nothing to undo/redo",
+                                duration = 3000,
+                            ))
                             Log.i(TAG, "Received Undo/Redo commend. Nothing changed in canvas.")
                         }
                     }

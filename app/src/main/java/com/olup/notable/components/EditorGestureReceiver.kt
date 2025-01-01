@@ -143,7 +143,7 @@ fun EditorGestureReceiver(
                     }
                     val lastPosition = lastPositions[inputId]
                     val initialPosition = initialPositions[inputId]
-                    if (inputsCount == 1 && lastPosition!=null && initialPosition!=null) {
+                    if (lastPosition!=null && initialPosition!=null) {
                         val verticalDrag = lastPosition.y - initialPosition.y
                         val horizontalDrag = lastPosition.x - initialPosition.x
 

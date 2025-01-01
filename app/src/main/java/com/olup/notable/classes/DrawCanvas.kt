@@ -205,7 +205,7 @@ class DrawCanvas(
         // observe forceUpdate
         coroutineScope.launch {
             forceUpdate.collect { zoneAffected ->
-                Log.i(TAG, "Observer: Force update zone $zoneAffected")
+                Log.i(TAG+"Observer", "Force update zone $zoneAffected")
 
                 if (zoneAffected != null) page.drawArea(
                     area = Rect(
