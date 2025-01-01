@@ -259,7 +259,7 @@ class DrawCanvas(
                     val imageToSelect = withContext(Dispatchers.IO) {
                         ImageRepository(context).getImageAtPoint(point.first, point.second+page.scroll, page.id)
                     }
-
+                    imageCoordinateToSelect.value = null
                     if (imageToSelect != null) {
                         selectImage(imageToSelect)
                     } else {
