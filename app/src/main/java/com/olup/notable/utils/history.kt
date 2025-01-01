@@ -73,7 +73,6 @@ class History(coroutineScope: CoroutineScope, pageView: PageView) {
                                 text = "Nothing to undo/redo",
                                 duration = 3000,
                             ))
-                            Log.i(TAG, "Received Undo/Redo commend. Nothing changed in canvas.")
                         }
                     }
 

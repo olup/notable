@@ -263,7 +263,10 @@ class DrawCanvas(
                     if (imageToSelect != null) {
                         selectImage(imageToSelect)
                     } else {
-                        Log.i(TAG + "Observer", "No image found at point $point")
+                        SnackState.globalSnackFlow.emit(SnackConf(
+                            text = "There is no image at this position",
+                            duration = 3000,
+                        ))
                     }
                 }
             }
