@@ -58,6 +58,17 @@ interface ImageDao {
     @Transaction
     @Query("SELECT * FROM Image WHERE id = :imageId")
     fun getById(imageId: String): Image
+
+    @Query(
+        """
+    SELECT * FROM Image 
+    WHERE :x >= x AND :x <= (x + width) 
+      AND :y >= y AND :y <= (y + height)
+      AND pageId= :pageId
+    """
+    )
+    fun getImageAtPoint(x: Int, y: Int, pageId: String): Image?
+
 }
 
 // Repository for stroke operations
@@ -104,6 +115,10 @@ class ImageRepository(context: Context) {
 
     fun getImageWithPointsById(imageId: String): Image {
         return db.getById(imageId)
+    }
+
+    fun getImageAtPoint(x: Int, y: Int, pageId: String): Image? {
+        return db.getImageAtPoint(x, y,pageId)
     }
 }
 

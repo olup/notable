@@ -126,6 +126,7 @@ fun EditorGestureReceiver(
                                     } != null) return@awaitEachGesture
 
                             }
+
                             2 -> {
                                 resolveGesture(
                                     settings = appSettings,
@@ -141,9 +142,23 @@ fun EditorGestureReceiver(
                         }
 
                     }
+                    if (totalDelta < 15f && gestureDuration > 400) {
+                        if (inputsCount == 1)
+                            resolveGesture(
+                                settings = appSettings,
+                                default = AppSettings.defaultHoldAction,
+                                override = AppSettings::holdAction,
+                                state = state,
+                                scope = coroutineScope,
+                                previousPage = goToPreviousPage,
+                                nextPage = goToNextPage,
+                                x= lastPositions[inputId]?.x ?: 0f,
+                                y= lastPositions[inputId]?.y ?: 0f
+                            )
+                    }
                     val lastPosition = lastPositions[inputId]
                     val initialPosition = initialPositions[inputId]
-                    if (lastPosition!=null && initialPosition!=null) {
+                    if (lastPosition != null && initialPosition != null) {
                         val verticalDrag = lastPosition.y - initialPosition.y
                         val horizontalDrag = lastPosition.x - initialPosition.x
 
@@ -232,6 +247,8 @@ private fun resolveGesture(
     scope: CoroutineScope,
     previousPage: () -> Unit,
     nextPage: () -> Unit,
+    x: Float = 0f,
+    y: Float = 0f
 ) {
     when (if (settings != null) override(settings) else default) {
         null -> Log.i(TAG, "No Action")
@@ -258,6 +275,13 @@ private fun resolveGesture(
             scope.launch {
                 History.moveHistory(UndoRedoType.Redo)
 //                DrawCanvas.refreshUi.emit(Unit)
+            }
+        }
+
+        AppSettings.GestureAction.Select -> {
+            Log.i(TAG, "select")
+            scope.launch {
+                DrawCanvas.imageCoordinateToSelect.emit(Pair<Int,Int> (x.toInt(),y.toInt()))
             }
         }
     }
