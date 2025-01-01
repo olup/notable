@@ -89,21 +89,24 @@ class PageView(
         scroll = page!!.scroll
 
         coroutineScope.launch {
-            val pageWithStrokes = AppRepository(context).pageRepository.getWithStrokeById(id)
-            val pageWithImages = AppRepository(context).pageRepository.getWithImageById(id)
-            strokes = pageWithStrokes.strokes
-            images = pageWithImages.images
-            indexStrokes()
-            indexImages()
-            computeHeight()
+            val timeToLoad = measureTimeMillis {
+                val pageWithStrokes = AppRepository(context).pageRepository.getWithStrokeById(id)
+                val pageWithImages = AppRepository(context).pageRepository.getWithImageById(id)
+                strokes = pageWithStrokes.strokes
+                images = pageWithImages.images
+                indexStrokes()
+                indexImages()
+                computeHeight()
 
-            if (!isCached) {
-                // we draw and cache
-                drawBg(windowedCanvas, page.nativeTemplate, scroll)
-                drawArea(Rect(0, 0, windowedCanvas.width, windowedCanvas.height))
-                persistBitmap()
-                persistBitmapThumbnail()
+                if (!isCached) {
+                    // we draw and cache
+                    drawBg(windowedCanvas, page.nativeTemplate, scroll)
+                    drawArea(Rect(0, 0, windowedCanvas.width, windowedCanvas.height))
+                    persistBitmap()
+                    persistBitmapThumbnail()
+                }
             }
+            Log.i(TAG, "initializing from persistent layer took ${timeToLoad}ms")
         }
 
         //TODO: Images loading
@@ -154,6 +157,7 @@ class PageView(
 
         persistBitmapDebounced()
     }
+
     fun addImage(imageToAdd: List<Image>) {
         images += imageToAdd
         imageToAdd.forEach {
@@ -248,7 +252,12 @@ class PageView(
 
     // ignored strokes are used in handleSelect
     // TODO: find way for selecting images
-    fun drawArea(area: Rect, ignoredStrokeIds: List<String> = listOf(), ignoredImageIds: List<String> = listOf(), canvas: Canvas? = null) {
+    fun drawArea(
+        area: Rect,
+        ignoredStrokeIds: List<String> = listOf(),
+        ignoredImageIds: List<String> = listOf(),
+        canvas: Canvas? = null
+    ) {
         val activeCanvas = canvas ?: windowedCanvas
         val pageArea = Rect(
             area.left,
@@ -286,7 +295,7 @@ class PageView(
                     val bounds = imageBounds(image)
                     // if stroke is not inside page section
                     if (!bounds.toRect().intersect(pageArea)) return@forEach
-                    drawImage(context, activeCanvas,image,IntOffset(0, -scroll))
+                    drawImage(context, activeCanvas, image, IntOffset(0, -scroll))
 
                 }
             } catch (e: Exception) {

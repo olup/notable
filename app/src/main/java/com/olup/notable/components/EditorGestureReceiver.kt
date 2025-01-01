@@ -91,10 +91,7 @@ fun EditorGestureReceiver(
                         }
                         .toFloat() //TODO: fix unnecessary conversions
                     val gestureDuration = lastTimestamp - initialTimestamp
-                    Log.i(
-                        TAG,
-                        "Leaving gesture. totalDelta: ${totalDelta}, gestureDuration: ${gestureDuration} "
-                    )
+//                    Log.i(TAG, "Leaving gesture. totalDelta: ${totalDelta}, gestureDuration: ${gestureDuration} ")
                     //Tolerance of 15 f for movement of fingers
                     if (totalDelta < 15f && gestureDuration < 150) {
                         // check how many fingers touched
