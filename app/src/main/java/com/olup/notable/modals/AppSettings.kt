@@ -38,12 +38,12 @@ data class AppSettings(
 
     ) {
     companion object {
-        val defaultDoubleTapAction get() = GestureAction.ToggleZen
+        val defaultDoubleTapAction get() = GestureAction.Undo
         val defaultTwoFingerTapAction get() = GestureAction.ChangeTool
         val defaultSwipeLeftAction get() = GestureAction.NextPage
         val defaultSwipeRightAction get() = GestureAction.PreviousPage
-        val defaultTwoFingerSwipeLeftAction get() = GestureAction.Redo
-        val defaultTwoFingerSwipeRightAction get() = GestureAction.Undo
+        val defaultTwoFingerSwipeLeftAction get() = GestureAction.ToggleZen
+        val defaultTwoFingerSwipeRightAction get() = GestureAction.ToggleZen
         val defaultHoldAction get() = GestureAction.Select
     }
 

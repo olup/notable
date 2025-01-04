@@ -114,7 +114,12 @@ fun Library(navController: NavController, folderId: String? = null) {
                     modifier = Modifier
                         .noRippleClickable {
                             appRepository.bookRepository.create(
-                                Notebook(parentFolderId = folderId)
+                                Notebook(
+                                    parentFolderId = folderId,
+                                    defaultNativeTemplate = appRepository.kvProxy.get(
+                                        "APP_SETTINGS", AppSettings.serializer()
+                                    )?.defaultNativeTemplate ?: "blank"
+                                )
                             )
                         }
                         .padding(10.dp))
