@@ -535,7 +535,7 @@ fun offsetImage(image: Image, offset: Offset): Image {
 }
 
 
-public class Provider : FileProvider(R.xml.paths) {
+public class Provider : FileProvider(R.xml.file_paths) {
 }
 
 fun shareBitmap(context: Context, bitmap: Bitmap) {
@@ -548,7 +548,6 @@ fun shareBitmap(context: Context, bitmap: Bitmap) {
     val cachePath = File(context.cacheDir, "images")
     Log.i(TAG, cachePath.toString())
     cachePath.mkdirs()
-
     try {
         val stream =
             FileOutputStream("$cachePath/share.png")
