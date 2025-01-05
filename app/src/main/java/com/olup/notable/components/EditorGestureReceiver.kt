@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -48,7 +49,8 @@ fun EditorGestureReceiver(
                     val lastPositions = mutableMapOf(inputId to down.position)
                     var lastTimestamp = initialTimestamp
 
-                    var inputsCount = 0
+                    var inputsCount = 1
+                    var holdConsumed = false
 
                     // ignore non-touch
                     if (down.type != PointerType.Touch) {
@@ -57,39 +59,56 @@ fun EditorGestureReceiver(
                     }
 
                     do {
-                        val event = awaitPointerEvent()
-                        val fingerChange = event.changes.filter { it.type == PointerType.Touch }
-                        // is already consumed return
-                        if (fingerChange.find { it.isConsumed } != null) {
-                            Log.i(TAG, "Canceling gesture - already consumed")
-                            return@awaitEachGesture
-                        }
-                        fingerChange.forEach { change ->
-                            // Consume changes and update positions
-                            change.consume()
-                            lastPositions[change.id] = change.position // Update latest position
-                        }
+                        // Wait for a pointer event or a timeout (e.g., 100ms)
+                        val event = withTimeoutOrNull(1000L) { awaitPointerEvent() }
 
-                        val eventReference =
-                            fingerChange.find { it.id.value == inputId.value } ?: break
+                        if (event != null) {
+                            val fingerChange = event.changes.filter { it.type == PointerType.Touch }
 
+                            // is already consumed return
+                            if (fingerChange.find { it.isConsumed } != null) {
+                                Log.i(TAG, "Canceling gesture - already consumed")
+                                return@awaitEachGesture
+                            }
+                            fingerChange.forEach { change ->
+                                // Consume changes and update positions
+                                change.consume()
+                                lastPositions[change.id] = change.position // Update latest position
+                            }
+
+                            val eventReference =
+                                fingerChange.find { it.id.value == inputId.value } ?: break
+                            inputsCount = fingerChange.size
+                            if (fingerChange.any { !it.pressed }){
+                                lastTimestamp = System.currentTimeMillis()
+                                break
+                            }
+                        }
+                        // events are only send on change, so we need to check for holding in place separately
                         lastTimestamp = System.currentTimeMillis()
-                        inputsCount = fingerChange.size
 
-                        if (fingerChange.any { !it.pressed }) break
+                        val elapsedTime = lastTimestamp - initialTimestamp
+                        if (elapsedTime >= 300 && inputsCount == 1  && !holdConsumed) {
+                            Log.i(TAG, "Held for ${elapsedTime}ms")
+                            if (calculateTotalDelta(initialPositions, lastPositions) < 15f)
+                                resolveGesture(
+                                    settings = appSettings,
+                                    default = AppSettings.defaultHoldAction,
+                                    override = AppSettings::holdAction,
+                                    state = state,
+                                    scope = coroutineScope,
+                                    previousPage = goToPreviousPage,
+                                    nextPage = goToNextPage,
+                                    x = lastPositions[inputId]?.x ?: 0f,
+                                    y = lastPositions[inputId]?.y ?: 0f
+                                )
+                            holdConsumed = true
+                        }
+
                     } while (true)
 
                     // Calculate the total delta (movement distance) for all pointers
-                    // how much it was moved
-                    val totalDelta = initialPositions.keys
-                        .sumOf { id ->
-                            val initial = initialPositions[id] ?: Offset.Zero
-                            val last = lastPositions[id] ?: Offset.Zero
-                            (initial - last)
-                                .getDistance()
-                                .toDouble()
-                        }
-                        .toFloat() //TODO: fix unnecessary conversions
+                    val totalDelta = calculateTotalDelta(initialPositions, lastPositions)
                     val gestureDuration = lastTimestamp - initialTimestamp
                     Log.i(TAG, "Leaving gesture. totalDelta: ${totalDelta}, gestureDuration: ${gestureDuration} ")
                     //Tolerance of 15 f for movement of fingers
@@ -141,20 +160,6 @@ fun EditorGestureReceiver(
 
                         }
 
-                    }
-                    if (totalDelta < 15f && gestureDuration > 400) {
-                        if (inputsCount == 1)
-                            resolveGesture(
-                                settings = appSettings,
-                                default = AppSettings.defaultHoldAction,
-                                override = AppSettings::holdAction,
-                                state = state,
-                                scope = coroutineScope,
-                                previousPage = goToPreviousPage,
-                                nextPage = goToNextPage,
-                                x= lastPositions[inputId]?.x ?: 0f,
-                                y= lastPositions[inputId]?.y ?: 0f
-                            )
                     }
                     val lastPosition = lastPositions[inputId]
                     val initialPosition = initialPositions[inputId]
@@ -281,8 +286,20 @@ private fun resolveGesture(
         AppSettings.GestureAction.Select -> {
             Log.i(TAG, "select")
             scope.launch {
-                DrawCanvas.imageCoordinateToSelect.emit(Pair<Int,Int> (x.toInt(),y.toInt()))
+                DrawCanvas.imageCoordinateToSelect.emit(Pair<Int, Int>(x.toInt(), y.toInt()))
             }
         }
     }
+}
+
+// Calculate movement of fingers since touched
+fun calculateTotalDelta(
+    initialPositions: Map<PointerId, Offset>,
+    lastPositions: Map<PointerId, Offset>
+): Float {
+    return initialPositions.keys.sumOf { id ->
+        val initial = initialPositions[id] ?: Offset.Zero
+        val last = lastPositions[id] ?: Offset.Zero
+        (initial - last).getDistance().toDouble()
+    }.toFloat()
 }

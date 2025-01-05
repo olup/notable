@@ -262,6 +262,10 @@ class DrawCanvas(
                     imageCoordinateToSelect.value = null
                     if (imageToSelect != null) {
                         selectImage(imageToSelect)
+                        SnackState.globalSnackFlow.emit(SnackConf(
+                            text = "Image selected!",
+                            duration = 3000,
+                        ))
                     } else {
                         SnackState.globalSnackFlow.emit(SnackConf(
                             text = "There is no image at this position",
