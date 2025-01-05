@@ -40,7 +40,7 @@ class SnackState {
 
     // TODO: check if this is a good approach,
     // this does work, but I have doubts if it is a proper way for doing it
-    // Register Observers for Global Actions (Optional)
+    // Register Observers for Global Actions
     companion object {
         val globalSnackFlow = MutableSharedFlow<SnackConf>()
     }

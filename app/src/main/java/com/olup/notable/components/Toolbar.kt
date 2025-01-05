@@ -85,8 +85,6 @@ fun Toolbar(
 
     val context = LocalContext.current
 
-    // Create a remembered variable to store the loaded image bitmap
-    var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
     // Create a remembered variable to track whether an image is loaded
     var isImageLoaded by remember { mutableStateOf(false) }
@@ -105,13 +103,7 @@ fun Toolbar(
 
             }
         }
-    // for getting images, ugly for now
-    // TODO: improve code quality
-    if (state.isDialogOpen) {
-        Log.i("InsertImage", "Launching image picker...")
-        pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-        state.isDialogOpen = false
-    }
+
     LaunchedEffect(isMenuOpen) {
         state.isDrawing = !isMenuOpen
     }
@@ -357,7 +349,8 @@ fun Toolbar(
                     contentDescription = "library",
                     onSelect = {
                         // Call insertImage when the button is tapped
-                        state.isDialogOpen = true
+                        Log.i("InsertImage", "Launching image picker...")
+                        pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     }
                 )
                 Box(

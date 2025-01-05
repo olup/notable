@@ -312,6 +312,7 @@ private fun PdfDocument.writePage(context: Context, number: Int, repo: PageRepos
     val scaleFactor = A4_WIDTH.toFloat() / SCREEN_WIDTH
 
     // todo do not rely on this anymore
+    // I slightly modified it, should be better
     val contentHeight = strokeHeight.coerceAtLeast(SCREEN_HEIGHT)
     val pageHeight = (contentHeight*scaleFactor).toInt()
     val contentWidth = strokeWidth.coerceAtLeast(SCREEN_WIDTH)
