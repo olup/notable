@@ -74,7 +74,7 @@ fun SelectedBitmap(
                     indication = null, interactionSource = remember { MutableInteractionSource() },
                     onClick = {},
                     onDoubleClick = {
-                        // finish ongoind movement
+                        // finish ongoing movement
                         controlTower.applySelectionDisplace()
                         // set operation to paste only
                         selectionState.placementMode = PlacementMode.Paste
