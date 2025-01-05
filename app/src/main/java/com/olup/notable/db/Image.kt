@@ -81,9 +81,11 @@ class ImageRepository(context: Context) {
 
     fun create(
         imageUri: String,
+        //position on canvas
         x: Int,
         y: Int,
         pageId: String,
+        //size on canvas
         width: Int,
         height: Int
     ): Long {

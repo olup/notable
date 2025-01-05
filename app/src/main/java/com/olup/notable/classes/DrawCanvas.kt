@@ -13,6 +13,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.olup.notable.db.Image
 import com.olup.notable.db.ImageRepository
+import com.olup.notable.db.handleSelect
+import com.olup.notable.db.selectImage
 import com.onyx.android.sdk.api.device.epd.EpdController
 import com.onyx.android.sdk.data.note.TouchPoint
 import com.onyx.android.sdk.pen.RawInputCallback
@@ -261,7 +263,7 @@ class DrawCanvas(
                     }
                     imageCoordinateToSelect.value = null
                     if (imageToSelect != null) {
-                        selectImage(imageToSelect)
+                        selectImage(page,state, imageToSelect)
                         SnackState.globalSnackFlow.emit(SnackConf(
                             text = "Image selected!",
                             duration = 3000,
@@ -392,42 +394,14 @@ class DrawCanvas(
             drawImage(
                 context, page.windowedCanvas, imageToSave, IntOffset(0, -page.scroll)
             )
-            selectImage(imageToSave)
+            selectImage(page,state, imageToSave)
         } else {
             // Handle cases where the bitmap could not be created
             Log.e("ImageProcessing", "Failed to create software bitmap from URI.")
         }
     }
 
-    fun selectImage(
-        imageToSelect: Image
-    ) {
-        //handle selection:
-        val pageBounds = imageBoundsInt(imageToSelect)
-        val padding = 30
-        pageBounds.inset(-padding, -padding)
-        val bounds = pageAreaToCanvasArea(pageBounds, page.scroll)
-        val selectedBitmap = Bitmap.createBitmap(
-            imageToSelect.width,
-            imageToSelect.height,
-            Bitmap.Config.ARGB_8888
-        )
-        val selectedCanvas = Canvas(selectedBitmap)
-        drawImage(
-            context,
-            selectedCanvas,
-            imageToSelect,
-            IntOffset(0, -page.scroll)
-        )
-        // set state
-        state.selectionState.selectedImages = listOf<Image>(imageToSelect)
-        state.selectionState.selectedBitmap = selectedBitmap
-        state.selectionState.selectionStartOffset = IntOffset(bounds.left, bounds.top)
-        state.selectionState.selectionRect = bounds
-        state.selectionState.selectionDisplaceOffset = IntOffset(0, 0)
-        state.selectionState.placementMode = PlacementMode.Move
-        page.drawArea(bounds, ignoredImageIds = listOf<Image>(imageToSelect).map { it.id })
-    }
+
 
     fun drawCanvasToView() {
         val canvas = this.holder.lockCanvas() ?: return

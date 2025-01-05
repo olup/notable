@@ -174,23 +174,15 @@ fun drawImage(context: Context, canvas: Canvas, image: Image, offset: IntOffset)
 
         DrawCanvas.addImageByUri.value = null
 
-        // Draw the bitmap on the canvas at the center of the page
-        canvas.drawBitmap(
-            softwareBitmap,
-            Rect(
-                0,
-                0,
-                imageBitmap.width,
-                imageBitmap.height
-            ),  // Source rectangle (full image)
-            Rect(
-                image.x,
-                image.y,
-                image.x + image.width,
-                image.y + image.height
-            ), // Destination rectangle (centered)
-            null // Optional Paint object (null for default)
+        val rectOnImage = Rect(0, 0, imageBitmap.width, imageBitmap.height)
+        val rectOnCanvas = Rect(
+            image.x + offset.x,
+            image.y + offset.y,
+            image.x + image.width + offset.x,
+            image.y + image.height + offset.y
         )
+        // Draw the bitmap on the canvas at the center of the page
+        canvas.drawBitmap(softwareBitmap, rectOnImage, rectOnCanvas, null)
 
         // Log after drawing
         Log.i(TAG, "Image drawn successfully at center!")
