@@ -263,7 +263,7 @@ class DrawCanvas(
                     }
                     imageCoordinateToSelect.value = null
                     if (imageToSelect != null) {
-                        selectImage(page,state, imageToSelect)
+                        selectImage(  coroutineScope, page,state, imageToSelect)
                         SnackState.globalSnackFlow.emit(SnackConf(
                             text = "Image selected!",
                             duration = 3000,
@@ -394,7 +394,7 @@ class DrawCanvas(
             drawImage(
                 context, page.windowedCanvas, imageToSave, IntOffset(0, -page.scroll)
             )
-            selectImage(page,state, imageToSave)
+            selectImage(coroutineScope, page,state, imageToSave)
         } else {
             // Handle cases where the bitmap could not be created
             Log.e("ImageProcessing", "Failed to create software bitmap from URI.")

@@ -22,7 +22,7 @@ import io.shipbook.shipbooksdk.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-fun selectImage(
+fun selectImage(    scope: CoroutineScope,
     page: PageView,
     editorState: EditorState,
     imageToSelect: Image
@@ -52,6 +52,11 @@ fun selectImage(
     editorState.selectionState.selectionDisplaceOffset = IntOffset(0, 0)
     editorState.selectionState.placementMode = PlacementMode.Move
     page.drawArea(bounds, ignoredImageIds = listOf<Image>(imageToSelect).map { it.id })
+
+    scope.launch {
+        DrawCanvas.refreshUi.emit(Unit)
+        editorState.isDrawing = false
+    }
 }
 
 
