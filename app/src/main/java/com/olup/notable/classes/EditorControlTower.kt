@@ -127,7 +127,14 @@ class EditorControlTower(
             Log.i(TAG, "removing images")
             page.removeImage(imageIds)
         }
+        val selectedStrokes = state.selectionState.selectedStrokes
+        if (!selectedStrokes.isNullOrEmpty()) {
+            val imageIds: List<String> = selectedStrokes.map { it.id }
+            Log.i(TAG, "removing strokes")
+            page.removeStrokes(imageIds)
+        }
         state.selectionState.reset()
+        state.isDrawing = true
         scope.launch {
             DrawCanvas.refreshUi.emit(Unit)
         }
