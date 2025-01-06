@@ -17,6 +17,8 @@ import com.onyx.android.sdk.pen.NeoCharcoalPen
 import com.onyx.android.sdk.pen.NeoFountainPen
 import com.onyx.android.sdk.pen.NeoMarkerPen
 import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 
 
 fun drawBallPenStroke(
@@ -55,13 +57,47 @@ fun drawMarkerStroke(
         this.strokeCap = Paint.Cap.ROUND
         this.strokeJoin = Paint.Join.ROUND
         this.isAntiAlias = true
-        this.alpha = 30
+        this.alpha = 100
 
     }
 
     val path = pointsToPath(points.map { SimplePointF(it.x, it.y) })
 
     canvas.drawPath(path, copyPaint)
+}
+
+fun drawFountainPenStroke(
+    canvas: Canvas, paint: Paint, strokeSize: Float, points: List<TouchPoint>
+) {
+    val copyPaint = Paint(paint).apply {
+        this.strokeWidth = strokeSize
+        this.style = Paint.Style.STROKE
+        this.strokeCap = Paint.Cap.ROUND
+        this.strokeJoin = Paint.Join.ROUND
+//        this.blendMode = BlendMode.OVERLAY
+        this.isAntiAlias = true
+    }
+
+    val path = Path()
+    val prePoint = PointF(points[0].x, points[0].y)
+    path.moveTo(prePoint.x, prePoint.y)
+
+    for (point in points) {
+        // skip strange jump point.
+        if (abs(prePoint.y - point.y) >= 30) continue
+        path.quadTo(prePoint.x, prePoint.y, point.x, point.y)
+        prePoint.x = point.x
+        prePoint.y = point.y
+        copyPaint.strokeWidth =
+            (1.5f - strokeSize / 40f) * strokeSize * (1 - cos(0.5f * 3.14f * point.pressure / pressure))
+        point.tiltX
+        point.tiltY
+        point.timestamp
+
+        canvas.drawPath(path, copyPaint)
+        path.reset()
+        path.moveTo(point.x, point.y)
+    }
 }
 
 fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
@@ -95,12 +131,14 @@ fun drawStroke(canvas: Canvas, stroke: Stroke, offset: IntOffset) {
                 Matrix(),
                 false
             )
+
             Pen.BRUSH -> NeoBrushPen.drawStroke(canvas, paint, points, stroke.size, pressure, false)
             //Pen.MARKER -> NeoMarkerPen.drawStroke(canvas, paint, points, stroke.size, false)
             Pen.MARKER -> drawMarkerStroke(canvas, paint, stroke.size, points)
-            Pen.FOUNTAIN -> NeoFountainPen.drawStroke(
-                canvas, paint, points, 1f, stroke.size, pressure, false
-            )
+            Pen.FOUNTAIN -> drawFountainPenStroke(canvas, paint, stroke.size, points)
+//            Pen.FOUNTAIN -> NeoFountainPen.drawStroke(
+//                canvas, paint, points, 1f, stroke.size, pressure, false
+//            )
 
         }
     } catch (e: Exception) {
@@ -136,23 +174,15 @@ fun drawImage(context: Context, canvas: Canvas, image: Image, offset: IntOffset)
 
         DrawCanvas.addImageByUri.value = null
 
-        // Draw the bitmap on the canvas at the center of the page
-        canvas.drawBitmap(
-            softwareBitmap,
-            Rect(
-                0,
-                0,
-                imageBitmap.width,
-                imageBitmap.height
-            ),  // Source rectangle (full image)
-            Rect(
-                image.x,
-                image.y,
-                image.x+image.width,
-                image.y+image.height
-            ), // Destination rectangle (centered)
-            null // Optional Paint object (null for default)
+        val rectOnImage = Rect(0, 0, imageBitmap.width, imageBitmap.height)
+        val rectOnCanvas = Rect(
+            image.x + offset.x,
+            image.y + offset.y,
+            image.x + image.width + offset.x,
+            image.y + image.height + offset.y
         )
+        // Draw the bitmap on the canvas at the center of the page
+        canvas.drawBitmap(softwareBitmap, rectOnImage, rectOnCanvas, null)
 
         // Log after drawing
         Log.i(TAG, "Image drawn successfully at center!")
@@ -162,12 +192,12 @@ fun drawImage(context: Context, canvas: Canvas, image: Image, offset: IntOffset)
 
 
 const val padding = 0
-const val lineHeight = 50
-const val dotSize = 4f
+const val lineHeight = 80
+const val dotSize = 6f
 
-fun drawLinedBg(canvas: Canvas, scroll: Int) {
-    val height = canvas.height
-    val width = canvas.width
+fun drawLinedBg(canvas: Canvas, scroll: Int, scale: Float) {
+    val height = (canvas.height / scale).toInt()
+    val width = (canvas.width / scale).toInt()
 
     // white bg
     canvas.drawColor(Color.WHITE)
@@ -189,9 +219,9 @@ fun drawLinedBg(canvas: Canvas, scroll: Int) {
     }
 }
 
-fun drawDottedBg(canvas: Canvas, offset: Int) {
-    val height = canvas.height
-    val width = canvas.width
+fun drawDottedBg(canvas: Canvas, offset: Int, scale: Float) {
+    val height = (canvas.height / scale).toInt()
+    val width = (canvas.width / scale).toInt()
 
     // white bg
     canvas.drawColor(Color.WHITE)
@@ -220,10 +250,9 @@ fun drawDottedBg(canvas: Canvas, offset: Int) {
 
 }
 
-fun drawSquaredBg(canvas: Canvas, scroll: Int) {
-    Log.i(TAG, "Drawing BG")
-    val height = canvas.height
-    val width = canvas.width
+fun drawSquaredBg(canvas: Canvas, scroll: Int, scale: Float) {
+    val height = (canvas.height / scale).toInt()
+    val width = (canvas.width / scale).toInt()
 
     // white bg
     canvas.drawColor(Color.WHITE)
@@ -251,12 +280,12 @@ fun drawSquaredBg(canvas: Canvas, scroll: Int) {
     }
 }
 
-fun drawBg(canvas: Canvas, nativeTemplate: String, scroll: Int) {
+fun drawBg(canvas: Canvas, nativeTemplate: String, scroll: Int, scale: Float = 1f) {
     when (nativeTemplate) {
         "blank" -> canvas.drawColor(Color.WHITE)
-        "dotted" -> drawDottedBg(canvas, scroll)
-        "lined" -> drawLinedBg(canvas, scroll)
-        "squared" -> drawSquaredBg(canvas, scroll)
+        "dotted" -> drawDottedBg(canvas, scroll, scale)
+        "lined" -> drawLinedBg(canvas, scroll, scale)
+        "squared" -> drawSquaredBg(canvas, scroll, scale)
     }
 }
 

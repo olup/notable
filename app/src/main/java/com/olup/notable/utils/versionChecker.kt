@@ -3,6 +3,9 @@ package com.olup.notable
 import android.content.Context
 import android.content.pm.PackageManager
 import io.shipbook.shipbooksdk.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.net.URL
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -71,6 +74,14 @@ fun isLatestVersion(context: Context, force: Boolean = false): Boolean {
         val version = getCurrentVersionName(context)
         val latestVersion = getLatestReleaseVersion("olup", "notable")
         Log.i(TAG, "Version is ${version} and latest on repo is ${latestVersion}")
+        CoroutineScope(Dispatchers.Default).launch {
+            SnackState.globalSnackFlow.emit(
+                SnackConf(
+                    text = "Version is $version and latest on repo is $latestVersion",
+                    duration = 1000,
+                )
+            )
+        }
 
         // If either version is null, we can't compare them
         if (latestVersion == null || version == null) {

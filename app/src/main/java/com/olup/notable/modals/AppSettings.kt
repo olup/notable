@@ -34,18 +34,21 @@ data class AppSettings(
     val swipeRightAction: GestureAction? = defaultSwipeRightAction,
     val twoFingerSwipeLeftAction: GestureAction? = defaultTwoFingerSwipeLeftAction,
     val twoFingerSwipeRightAction: GestureAction? = defaultTwoFingerSwipeRightAction,
-) {
+    val holdAction: GestureAction? = defaultHoldAction,
+
+    ) {
     companion object {
-        val defaultDoubleTapAction get() = GestureAction.ToggleZen
+        val defaultDoubleTapAction get() = GestureAction.Undo
         val defaultTwoFingerTapAction get() = GestureAction.ChangeTool
         val defaultSwipeLeftAction get() = GestureAction.NextPage
         val defaultSwipeRightAction get() = GestureAction.PreviousPage
-        val defaultTwoFingerSwipeLeftAction get() = GestureAction.Redo
-        val defaultTwoFingerSwipeRightAction get() = GestureAction.Undo
+        val defaultTwoFingerSwipeLeftAction get() = GestureAction.ToggleZen
+        val defaultTwoFingerSwipeRightAction get() = GestureAction.ToggleZen
+        val defaultHoldAction get() = GestureAction.Select
     }
 
     enum class GestureAction {
-        Undo, Redo, PreviousPage, NextPage, ChangeTool, ToggleZen,
+        Undo, Redo, PreviousPage, NextPage, ChangeTool, ToggleZen, Select
     }
 }
 

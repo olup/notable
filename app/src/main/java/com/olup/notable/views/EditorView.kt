@@ -79,7 +79,7 @@ fun EditorView(
             editorState.penSettings,
             editorState.mode
         ) {
-            Log.i(TAG, "saving")
+            Log.i(TAG, "EditorView: saving")
             EditorSettingCacheManager.setEditorSettings(
                 context,
                 EditorSettingCacheManager.EditorSettings(

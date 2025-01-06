@@ -85,8 +85,6 @@ fun Toolbar(
 
     val context = LocalContext.current
 
-    // Create a remembered variable to store the loaded image bitmap
-    var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
     // Create a remembered variable to track whether an image is loaded
     var isImageLoaded by remember { mutableStateOf(false) }
@@ -105,13 +103,7 @@ fun Toolbar(
 
             }
         }
-    // for getting images, ugly for now
-    // TODO: improve code quality
-    if (state.isDialogOpen) {
-        Log.i("InsertImage", "Launching image picker...")
-        pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-        state.isDialogOpen = false
-    }
+
     LaunchedEffect(isMenuOpen) {
         state.isDrawing = !isMenuOpen
     }
@@ -239,38 +231,38 @@ fun Toolbar(
                     onChangeSetting = { onChangeStrokeSetting(Pen.BLUEBALLPEN.penName, it) },
                 )
 //              Removed to make space for insert tool
+                PenToolbarButton(
+                    onStrokeMenuOpenChange = { state.isDrawing = !it },
+                    pen = Pen.GREENBALLPEN,
+                    icon = R.drawable.ballpengreen,
+                    isSelected = isSelected(state, Pen.GREENBALLPEN),
+                    onSelect = { handleChangePen(Pen.GREENBALLPEN) },
+                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
+                    penSetting = state.penSettings[Pen.GREENBALLPEN.penName] ?: return,
+                    onChangeSetting = { onChangeStrokeSetting(Pen.GREENBALLPEN.penName, it) },
+                )
+
 //                PenToolbarButton(
 //                    onStrokeMenuOpenChange = { state.isDrawing = !it },
-//                    pen = Pen.GREENBALLPEN,
-//                    icon = R.drawable.ballpengreen,
-//                    isSelected = isSelected(state, Pen.GREENBALLPEN),
-//                    onSelect = { handleChangePen(Pen.GREENBALLPEN) },
+//                    pen = Pen.PENCIL,
+//                    icon = R.drawable.pencil,
+//                    isSelected = isSelected(state, Pen.PENCIL),
+//                    onSelect = { handleChangePen(Pen.PENCIL) }, // Neo-tool! Usage not recommended
 //                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
-//                    penSetting = state.penSettings[Pen.GREENBALLPEN.penName] ?: return,
-//                    onChangeSetting = { onChangeStrokeSetting(Pen.GREENBALLPEN.penName, it) },
+//                    penSetting = state.penSettings[Pen.PENCIL.penName] ?: return,
+//                    onChangeSetting = { onChangeStrokeSetting(Pen.PENCIL.penName, it) },
 //                )
 
-                PenToolbarButton(
-                    onStrokeMenuOpenChange = { state.isDrawing = !it },
-                    pen = Pen.PENCIL,
-                    icon = R.drawable.pencil,
-                    isSelected = isSelected(state, Pen.PENCIL),
-                    onSelect = { handleChangePen(Pen.PENCIL) }, // Neo-tool! Usage not recommended
-                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
-                    penSetting = state.penSettings[Pen.PENCIL.penName] ?: return,
-                    onChangeSetting = { onChangeStrokeSetting(Pen.PENCIL.penName, it) },
-                )
-
-                PenToolbarButton(
-                    onStrokeMenuOpenChange = { state.isDrawing = !it },
-                    pen = Pen.BRUSH,
-                    icon = R.drawable.brush,
-                    isSelected = isSelected(state, Pen.BRUSH),
-                    onSelect = { handleChangePen(Pen.BRUSH) }, // Neo-tool! Usage not recommended
-                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
-                    penSetting = state.penSettings[Pen.BRUSH.penName] ?: return,
-                    onChangeSetting = { onChangeStrokeSetting(Pen.BRUSH.penName, it) },
-                )
+//                PenToolbarButton(
+//                    onStrokeMenuOpenChange = { state.isDrawing = !it },
+//                    pen = Pen.BRUSH,
+//                    icon = R.drawable.brush,
+//                    isSelected = isSelected(state, Pen.BRUSH),
+//                    onSelect = { handleChangePen(Pen.BRUSH) }, // Neo-tool! Usage not recommended
+//                    sizes = listOf("S" to 3f, "M" to 5f, "L" to 10f, "XL" to 20f),
+//                    penSetting = state.penSettings[Pen.BRUSH.penName] ?: return,
+//                    onChangeSetting = { onChangeStrokeSetting(Pen.BRUSH.penName, it) },
+//                )
 
                 PenToolbarButton(
                     onStrokeMenuOpenChange = { state.isDrawing = !it },
@@ -357,7 +349,8 @@ fun Toolbar(
                     contentDescription = "library",
                     onSelect = {
                         // Call insertImage when the button is tapped
-                        state.isDialogOpen = true
+                        Log.i("InsertImage", "Launching image picker...")
+                        pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     }
                 )
                 Box(

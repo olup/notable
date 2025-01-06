@@ -38,9 +38,6 @@ class EditorState(val bookId: String? = null, val pageId: String, val pageView: 
             Pen.FOUNTAIN.penName to PenSetting(5f, Color.BLACK)
         )
     )
-    // needed for images, should be removed
-    var isDialogOpen by mutableStateOf(false)
-
 
     val selectionState = SelectionState()
 }

@@ -9,6 +9,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collect
@@ -29,10 +31,25 @@ data class SnackConf(
 class SnackState {
     val snackFlow = MutableSharedFlow<SnackConf?>()
     val cancelSnackFlow = MutableSharedFlow<String?>()
-    suspend fun displaySnack(conf: SnackConf) : suspend ()->Unit {
+    suspend fun displaySnack(conf: SnackConf): suspend () -> Unit {
         snackFlow.emit(conf)
         return suspend {
             removeSnack(conf.id)
+        }
+    }
+
+    // TODO: check if this is a good approach,
+    // this does work, but I have doubts if it is a proper way for doing it
+    // Register Observers for Global Actions
+    companion object {
+        val globalSnackFlow = MutableSharedFlow<SnackConf>()
+    }
+
+    fun registerGlobalSnackObserver() {
+        CoroutineScope(Dispatchers.Main).launch {
+            globalSnackFlow.collect {
+                displaySnack(it)
+            }
         }
     }
 

@@ -12,18 +12,25 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.olup.notable.db.Image
+import com.olup.notable.db.ImageRepository
+import com.olup.notable.db.handleSelect
+import com.olup.notable.db.selectImage
 import com.onyx.android.sdk.api.device.epd.EpdController
 import com.onyx.android.sdk.data.note.TouchPoint
 import com.onyx.android.sdk.pen.RawInputCallback
 import com.onyx.android.sdk.pen.TouchHelper
 import com.onyx.android.sdk.pen.data.TouchPointList
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.concurrent.thread
+import kotlin.system.measureTimeMillis
 
 
 val pressure = EpdController.getMaxTouchPressure()
@@ -41,7 +48,7 @@ class DrawCanvas(
 ) : SurfaceView(_context) {
 
     private val strokeHistoryBatch = mutableListOf<String>()
-    private val commitHistorySignal = MutableSharedFlow<Unit>()
+//    private val commitHistorySignal = MutableSharedFlow<Unit>()
 
 
     companion object {
@@ -50,9 +57,16 @@ class DrawCanvas(
         var isDrawing = MutableSharedFlow<Boolean>()
         var restartAfterConfChange = MutableSharedFlow<Unit>()
 
+        // before undo we need to commit changes
+        val commitHistorySignal = MutableSharedFlow<Unit>()
+
+        // used for checking if commit was completed
+        var commitCompletion = CompletableDeferred<Unit>()
+
         // It might be bad idea, but plan is to insert graphic in this, and then take it from it
         // There is probably better way
         var addImageByUri = MutableStateFlow<Uri?>(null)
+        var imageCoordinateToSelect = MutableStateFlow<Pair<Int, Int>?>(null)
     }
 
     fun getActualState(): EditorState {
@@ -152,7 +166,7 @@ class DrawCanvas(
     }
 
     fun init() {
-        Log.i(TAG, "Initializing")
+        Log.i(TAG, "Initializing Canvas")
 
         val surfaceView = this
 
@@ -199,7 +213,7 @@ class DrawCanvas(
         // observe forceUpdate
         coroutineScope.launch {
             forceUpdate.collect { zoneAffected ->
-                Log.i(TAG, "Force update zone $zoneAffected")
+                Log.i(TAG + "Observer", "Force update zone $zoneAffected")
 
                 if (zoneAffected != null) page.drawArea(
                     area = Rect(
@@ -209,7 +223,6 @@ class DrawCanvas(
                         zoneAffected.bottom - page.scroll
                     ),
                 )
-
                 refreshUi()
             }
         }
@@ -217,11 +230,13 @@ class DrawCanvas(
         // observe refreshUi
         coroutineScope.launch {
             refreshUi.collect {
+                Log.i(TAG + "Observer", "Refreshing UI!")
                 refreshUi()
             }
         }
         coroutineScope.launch {
             isDrawing.collect {
+                Log.i(TAG + "Observer", "drawing state changed!")
                 state.isDrawing = it
             }
         }
@@ -229,98 +244,68 @@ class DrawCanvas(
 
         coroutineScope.launch {
             addImageByUri.collect { imageUri ->
-                Log.i(TAG, "Received image!")
+                Log.i(TAG + "Observer", "Received image!")
 
                 if (imageUri != null) {
-                    // Convert the image to a software-backed bitmap
-                    val imageBitmap = uriToBitmap(context, imageUri)?.asImageBitmap()
-
-                    val softwareBitmap =
-                        imageBitmap?.asAndroidBitmap()?.copy(Bitmap.Config.ARGB_8888, true)
-                    if (softwareBitmap != null) {
-                        DrawCanvas.addImageByUri.value = null
-
-                        // Get the image dimensions
-                        val imageWidth = softwareBitmap.width
-                        val imageHeight = softwareBitmap.height
-
-                        // Calculate the center position for the image relative to the page dimensions
-                        val centerX = (page.viewWidth - imageWidth) / 2
-                        val centerY = (page.viewHeight - imageHeight) / 2
-
-                        val imageToSave = Image(
-                            x = 0,
-                            y = 0,
-                            height = imageHeight,
-                            width = imageWidth,
-                            uri = imageUri.toString(),
-                            pageId = page.id
-                        )
-                        // Add the image to the page
-                        page.addImage(imageToSave)
-                        drawImage(
-                            context, page.windowedCanvas, imageToSave, IntOffset(0, -page.scroll)
-                        )
-                        //handle selection:
-                        val pageBounds = imageBoundsInt(imageToSave)
-                        val padding = 30
-                        pageBounds.inset(-padding, -padding)
-                        val bounds = pageAreaToCanvasArea(pageBounds, page.scroll)
-                        val selectedBitmap = Bitmap.createBitmap(
-                            imageToSave.width,
-                            imageToSave.height,
-                            Bitmap.Config.ARGB_8888
-                        )
-                        val selectedCanvas = Canvas(selectedBitmap)
-                        drawImage(context,
-                                selectedCanvas,
-                                imageToSave,
-                                IntOffset(0, -page.scroll)
-                            )
-                        // set state
-                        state.selectionState.selectedImages = listOf<Image>(imageToSave)
-                        state.selectionState.selectedBitmap = selectedBitmap
-                        state.selectionState.selectionStartOffset = IntOffset(bounds.left, bounds.top)
-                        state.selectionState.selectionRect = bounds
-                        state.selectionState.selectionDisplaceOffset = IntOffset(0, 0)
-                        state.selectionState.placementMode = PlacementMode.Move
-                        page.drawArea(bounds, ignoredImageIds=listOf<Image>(imageToSave).map { it.id })
-                    } else {
-                        // Handle cases where the bitmap could not be created
-                        Log.e("ImageProcessing", "Failed to create software bitmap from URI.")
-                    }
-
-                } else
-                    Log.e(TAG, "Image uri is empty")
+                    handleImage(imageUri)
+                } //else
+//                    Log.i(TAG, "Image uri is empty")
             }
         }
+        coroutineScope.launch {
+            imageCoordinateToSelect.collect { point ->
+                if(point!=null) {
+                    Log.i(TAG + "Observer", "position of image ${point}")
+
+                    // Query the database to find an image that coincides with the point
+                    val imageToSelect = withContext(Dispatchers.IO) {
+                        ImageRepository(context).getImageAtPoint(point.first, point.second+page.scroll, page.id)
+                    }
+                    imageCoordinateToSelect.value = null
+                    if (imageToSelect != null) {
+                        selectImage(  coroutineScope, page,state, imageToSelect)
+                        SnackState.globalSnackFlow.emit(SnackConf(
+                            text = "Image selected!",
+                            duration = 3000,
+                        ))
+                    } else {
+                        SnackState.globalSnackFlow.emit(SnackConf(
+                            text = "There is no image at this position",
+                            duration = 3000,
+                        ))
+                    }
+                }
+            }
+        }
+
 
         // observe restartcount
         coroutineScope.launch {
             restartAfterConfChange.collect {
+                Log.i(TAG + "Observer", "Configuration changed!")
                 init()
                 drawCanvasToView()
             }
         }
 
-        // observe paen and stroke size
+        // observe pen and stroke size
         coroutineScope.launch {
             snapshotFlow { state.pen }.drop(1).collect {
-                Log.i(TAG, "pen change: ${state.pen}")
+                Log.i(TAG + "Observer", "pen change: ${state.pen}")
                 updatePenAndStroke()
                 refreshUi()
             }
         }
         coroutineScope.launch {
             snapshotFlow { state.penSettings.toMap() }.drop(1).collect {
-                Log.i(TAG, "pen settings change: ${state.penSettings}")
+                Log.i(TAG + "Observer", "pen settings change: ${state.penSettings}")
                 updatePenAndStroke()
                 refreshUi()
             }
         }
         coroutineScope.launch {
             snapshotFlow { state.eraser }.drop(1).collect {
-                Log.i(TAG, "eraser change: ${state.eraser}")
+                Log.i(TAG + "Observer", "eraser change: ${state.eraser}")
                 updatePenAndStroke()
                 refreshUi()
             }
@@ -329,7 +314,7 @@ class DrawCanvas(
         // observe is drawing
         coroutineScope.launch {
             snapshotFlow { state.isDrawing }.drop(1).collect {
-                Log.i(TAG, "isDrawing change: ${state.isDrawing}")
+                Log.i(TAG + "Observer", "isDrawing change: ${state.isDrawing}")
                 updateIsDrawing()
             }
         }
@@ -337,7 +322,7 @@ class DrawCanvas(
         // observe toolbar open
         coroutineScope.launch {
             snapshotFlow { state.isToolbarOpen }.drop(1).collect {
-                Log.i(TAG, "istoolbaropen change: ${state.isToolbarOpen}")
+                Log.i(TAG + "Observer", "istoolbaropen change: ${state.isToolbarOpen}")
                 updateActiveSurface()
             }
         }
@@ -345,21 +330,24 @@ class DrawCanvas(
         // observe mode
         coroutineScope.launch {
             snapshotFlow { getActualState().mode }.drop(1).collect {
-                Log.i(TAG, "mode change: ${getActualState().mode}")
+                Log.i(TAG + "Observer", "mode change: ${getActualState().mode}")
                 updatePenAndStroke()
                 refreshUi()
             }
         }
 
         coroutineScope.launch {
+            //After 500ms add to history strokes
             commitHistorySignal.debounce(500).collect {
-                Log.i(TAG, "Commiting")
+                Log.i(TAG + "Observer", "Commiting to history")
                 if (strokeHistoryBatch.size > 0) history.addOperationsToHistory(
                     operations = listOf(
                         Operation.DeleteStroke(strokeHistoryBatch.map { it })
                     )
                 )
                 strokeHistoryBatch.clear()
+                // give signal that commit was successful
+                commitCompletion.complete(Unit)
             }
         }
 
@@ -376,25 +364,63 @@ class DrawCanvas(
         }
     }
 
+    private fun handleImage(imageUri: Uri) {
+        // Convert the image to a software-backed bitmap
+        val imageBitmap = uriToBitmap(context, imageUri)?.asImageBitmap()
+
+        val softwareBitmap =
+            imageBitmap?.asAndroidBitmap()?.copy(Bitmap.Config.ARGB_8888, true)
+        if (softwareBitmap != null) {
+            DrawCanvas.addImageByUri.value = null
+
+            // Get the image dimensions
+            val imageWidth = softwareBitmap.width
+            val imageHeight = softwareBitmap.height
+
+            // Calculate the center position for the image relative to the page dimensions
+            val centerX = (page.viewWidth - imageWidth) / 2
+            val centerY = (page.viewHeight - imageHeight) / 2
+
+            val imageToSave = Image(
+                x = 0,
+                y = 0,
+                height = imageHeight,
+                width = imageWidth,
+                uri = imageUri.toString(),
+                pageId = page.id
+            )
+            // Add the image to the page
+            page.addImage(imageToSave)
+            drawImage(
+                context, page.windowedCanvas, imageToSave, IntOffset(0, -page.scroll)
+            )
+            selectImage(coroutineScope, page,state, imageToSave)
+        } else {
+            // Handle cases where the bitmap could not be created
+            Log.e("ImageProcessing", "Failed to create software bitmap from URI.")
+        }
+    }
+
+
+
     fun drawCanvasToView() {
-        Log.i(TAG, "Draw canvas")
         val canvas = this.holder.lockCanvas() ?: return
         canvas.drawBitmap(page.windowedBitmap, 0f, 0f, Paint());
-
-        if (getActualState().mode == Mode.Select) {
-            // render selection
-            if (getActualState().selectionState.firstPageCut != null) {
-                Log.i(TAG, "rendercut")
-
-                val path = pointsToPath(getActualState().selectionState.firstPageCut!!.map {
-                    SimplePointF(
-                        it.x, it.y - page.scroll
-                    )
-                })
-                canvas.drawPath(path, selectPaint)
+        val timeToDraw = measureTimeMillis {
+            if (getActualState().mode == Mode.Select) {
+                // render selection
+                if (getActualState().selectionState.firstPageCut != null) {
+                    Log.i(TAG, "render cut")
+                    val path = pointsToPath(getActualState().selectionState.firstPageCut!!.map {
+                        SimplePointF(
+                            it.x, it.y - page.scroll
+                        )
+                    })
+                    canvas.drawPath(path, selectPaint)
+                }
             }
         }
-
+        Log.i(TAG, "drawCanvasToView: Took ${timeToDraw}ms.")
         // finish rendering
         this.holder.unlockCanvasAndPost(canvas)
     }

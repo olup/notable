@@ -303,16 +303,30 @@ private fun PdfDocument.writePage(context: Context, number: Int, repo: PageRepos
     //TODO: improve that function
     val (page2, images) = repo.getWithImageById(id)
 
+    // Define the target page size (A4 in points: 595 x 842)
+    val A4_WIDTH = 595
+    val A4_HEIGHT = 842
+
     val strokeHeight = if (strokes.isEmpty()) 0 else strokes.maxOf(Stroke::bottom).toInt() + 50
     val strokeWidth = if (strokes.isEmpty()) 0 else strokes.maxOf(Stroke::right).toInt() + 50
+    val scaleFactor = A4_WIDTH.toFloat() / SCREEN_WIDTH
 
-    val height = strokeHeight.coerceAtLeast(SCREEN_HEIGHT) // todo do not rely on this anymore
-    val width = strokeWidth.coerceAtLeast(SCREEN_WIDTH) // todo do not rely on this anymore
+    // todo do not rely on this anymore
+    // I slightly modified it, should be better
+    val contentHeight = strokeHeight.coerceAtLeast(SCREEN_HEIGHT)
+    val pageHeight = (contentHeight*scaleFactor).toInt()
+    val contentWidth = strokeWidth.coerceAtLeast(SCREEN_WIDTH)
+
 
     val documentPage =
-        startPage(PdfDocument.PageInfo.Builder(width, height, number).create())
+        startPage(PdfDocument.PageInfo.Builder(A4_WIDTH, pageHeight, number).create())
 
-    drawBg(documentPage.canvas, page.nativeTemplate, 0)
+    // Center content on the A4 page
+    val offsetX = (A4_WIDTH - (contentWidth * scaleFactor)) / 2
+    val offsetY = (A4_HEIGHT - (contentHeight * scaleFactor)) / 2
+
+    documentPage.canvas.scale( scaleFactor,scaleFactor)
+    drawBg(documentPage.canvas, page.nativeTemplate, 0, scaleFactor)
 
     for (stroke in strokes) {
         drawStroke(documentPage.canvas, stroke, IntOffset(0, 0))

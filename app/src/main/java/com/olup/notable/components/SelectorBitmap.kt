@@ -74,7 +74,7 @@ fun SelectedBitmap(
                     indication = null, interactionSource = remember { MutableInteractionSource() },
                     onClick = {},
                     onDoubleClick = {
-                        // finish ongoind movement
+                        // finish ongoing movement
                         controlTower.applySelectionDisplace()
                         // set operation to paste only
                         selectionState.placementMode = PlacementMode.Paste
@@ -92,18 +92,7 @@ fun SelectedBitmap(
                             x = selectionState.selectionDisplaceOffset!!.x + 50,
                             y = selectionState.selectionDisplaceOffset!!.y + 50,
                         )
-                        //TODO: implement similar for images
-                        if (selectionState != null) {
-                            // the same for images:
-                            selectionState.selectedImages = selectionState.selectedImages!!.map {
-                                it.copy(
-                                    id = UUID
-                                        .randomUUID()
-                                        .toString(),
-                                    createdAt = Date()
-                                )
-                            }
-                        }
+                        //TODO: implement coping for images
                     }
                 )
         )
