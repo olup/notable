@@ -312,12 +312,12 @@ fun strokeBounds(strokes: List<Stroke>): Rect {
     return rect
 }
 
-fun imageBoundsInt(image: Image): Rect {
+fun imageBoundsInt(image: Image, padding: Int = 0): Rect {
     return Rect(
-        image.x,
-        image.y,
-        image.x + image.width,
-        image.y + image.height
+        image.x + padding,
+        image.y + padding,
+        image.x + image.width + padding,
+        image.y + image.height + padding
     )
 }
 

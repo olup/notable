@@ -22,7 +22,8 @@ import io.shipbook.shipbooksdk.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-fun selectImage(    scope: CoroutineScope,
+fun selectImage(
+    scope: CoroutineScope,
     page: PageView,
     editorState: EditorState,
     imageToSelect: Image
@@ -58,7 +59,6 @@ fun selectImage(    scope: CoroutineScope,
         editorState.isDrawing = false
     }
 }
-
 
 
 /** Written by GPT:

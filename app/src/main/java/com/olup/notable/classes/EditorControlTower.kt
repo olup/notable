@@ -120,6 +120,17 @@ class EditorControlTower(
             DrawCanvas.refreshUi.emit(Unit)
         }
     }
-
+    fun deleteSelection(){
+        val selectedImages = state.selectionState.selectedImages
+        if (!selectedImages.isNullOrEmpty()) {
+            val imageIds: List<String> = selectedImages.map { it.id }
+            Log.i(TAG, "removing images")
+            page.removeImage(imageIds)
+        }
+        state.selectionState.reset()
+        scope.launch {
+            DrawCanvas.refreshUi.emit(Unit)
+        }
+    }
 
 }

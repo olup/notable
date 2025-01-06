@@ -172,6 +172,7 @@ class PageView(
 
     fun removeImage(imageIds: List<String>) {
         images = images.filter { s -> !imageIds.contains(s.id) }
+        Log.i(TAG, images.size.toString())
         removeImagesFromPersistLayer(imageIds)
         indexImages()
         computeHeight()
