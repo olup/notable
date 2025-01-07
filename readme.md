@@ -39,12 +39,14 @@ Notable is a **custom note-taking app designed specifically for BOOX e-ink devic
 *⚠️ This is alpha software with a couple of part time individuals pushing it further. We try to make it as stable as possible and to support a smooth update experience, but be prepared for the occasionnal bug and possible breaking changes.*
 
 ## Features
-* ⚡ **Fast Page Turn with Caching:** Notable leverages caching techniques to ensure smooth and swift page transitions, allowing you to navigate through your notes seamlessly.
+* ⚡ **Fast Page Turn with Caching:** Notable leverages caching techniques to ensure smooth and swift page transitions, allowing you to navigate through your notes seamlessly. (next and previus pages are cached)
 * ↕️ **Infinite Vertical Scroll:** Enjoy a virtually endless canvas for your notes. Scroll vertically without limitations.
 * 📝 **Quick Pages:** Quickly create a new page using the Quick Pages feature.
-* 📒 **Notebooks:** Keep related notes together and easily switch between different notebooks based on your needs.
+* 📒 **Notebooks:** Keep related notes together and easily switch between different noteboo︂︂ks based on your needs.
 * 📁 **Folders:** Create folders to organize your notes.
 * 🤏 **Editors' Mode Gestures:** [Intuitive gesture controls](#gestures) to enhance the editing experience.
+* 🌅 **Images:** Add, move, scale, and remove images
+* ︂︂᠋︁  **slection export** share selected text
 
 ## Download
 **Download the latest stable version of the [Notable app here.](https://github.com/olup/notable/releases/latest)**
@@ -68,7 +70,7 @@ Notable features intuitive gestures controls within Editor's Mode, to optimize t
 * **Swipe left or right:** Change to the previous/next page (only available in notebooks).
 * **Double tap:** Show or hide the toolbar.
 * **Double tap bottom part of the screen:** Show quick navigation.
-
+* **Hold** select image
 #### ✌️ 2 Fingers
 * **Swipe left or right:** Undo/redo your changes.
 * **Single tap:** Switch between writing modes and eraser modes.
@@ -79,17 +81,35 @@ Notable features intuitive gestures controls within Editor's Mode, to optimize t
 
 ## Supported Devices
 
-The list below lists devices which users confirm to be supported by Notable. It does not imply any
-commitment from the developers. Feel free to add your device to the list.
+The following table lists devices confirmed by users to be compatible with specific versions of Notable.  
+This does not imply any commitment from the developers. Feel free to add your device to the list if tested successfully.
 
-* [ONYX BOOX Go 10.3](https://onyxboox.com/boox_go103)
-* [Onyx Boox Note Air 4 C](https://onyxboox.pl/en/ebook-readers/onyx-boox-note-air-4-c)
+| Device Name                                     | v0.0.10 | v0.0.11dev |   |  |  |
+|------------------------------------------------|---------|-----------|---------|---------|---------|
+| [ONYX BOOX Go 10.3](https://onyxboox.com/boox_go103) | ✔       | ?         |       |        |        |
+| [Onyx Boox Note Air 4 C](https://onyxboox.pl/en/ebook-readers/onyx-boox-note-air-4-c) | ✘       | ✔         |        |        |        |
+| [Onyx Boox Note Air 3 C](https://onyxboox.pl/en/ebook-readers/onyx-boox-note-air-3-c) | ✘       | ✔         |        |        |        |
+
+
 
 ## Screenshots
 
-<img src="https://github.com/user-attachments/assets/1e89afb6-5232-4be4-9c86-346e759bed4c" alt="drawing" style="width:200px;"/>
-<img src="https://github.com/user-attachments/assets/475b2262-5928-4324-b444-a7cdbf70fa7a" alt="drawing" style="width:200px;"/>
-<img src="https://github.com/user-attachments/assets/dcc08484-7487-4958-9983-07a1fefdb1ae" alt="drawing" style="width:200px;"/>
+<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+
+<img src="https://github.com/user-attachments/assets/1dc04156-06f3-424c-92ee-9671c48fb83d" alt="screenshot-1" style="width:200px;"/>
+
+<img src="https://github.com/user-attachments/assets/83895c63-7ffa-4558-8a5e-4742460d0e17" alt="screenshot-2" style="width:200px;"/>
+
+<img src="https://github.com/user-attachments/assets/784c1954-d83b-4d43-8dfb-65478a8a1d9e" alt="screenshot-3" style="width:200px;"/>
+
+
+<img src="https://github.com/user-attachments/assets/152265d5-b520-4d99-919c-754c8e6a7f8e" alt="screenshot-5" style="width:200px;"/>
+
+<img src="https://github.com/user-attachments/assets/15a9f0a7-5326-4b5d-880c-a31b95a4d9bd" alt="screenshot-6" style="width:200px;"/>
+
+<img src="https://github.com/user-attachments/assets/ac9f9138-948d-47d5-b94f-e721429f886f" alt="screenshot-7" style="width:200px;"/>
+
+</div>
 
 
 
