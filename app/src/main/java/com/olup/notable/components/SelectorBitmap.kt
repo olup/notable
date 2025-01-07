@@ -79,27 +79,7 @@ fun SelectedBitmap(
                 .combinedClickable(
                     indication = null, interactionSource = remember { MutableInteractionSource() },
                     onClick = {},
-                    onDoubleClick = {
-                        // finish ongoing movement
-                        controlTower.applySelectionDisplace()
-                        // set operation to paste only
-                        selectionState.placementMode = PlacementMode.Paste
-                        // change the selected stokes' ids - it's a copy
-                        selectionState.selectedStrokes = selectionState.selectedStrokes!!.map {
-                            it.copy(
-                                id = UUID
-                                    .randomUUID()
-                                    .toString(),
-                                createdAt = Date()
-                            )
-                        }
-                        // move the selection a bit, to show the copy
-                        selectionState.selectionDisplaceOffset = IntOffset(
-                            x = selectionState.selectionDisplaceOffset!!.x + 50,
-                            y = selectionState.selectionDisplaceOffset!!.y + 50,
-                        )
-                        //TODO: implement coping for images
-                    }
+                    onDoubleClick = { controlTower.copySelection() }
                 )
         )
 
@@ -123,20 +103,20 @@ fun SelectedBitmap(
                         iconId = R.drawable.delete,
                         isSelected = false,
                         onSelect = {
-                           controlTower.deleteSelection()
+                            controlTower.deleteSelection()
                         },
                         modifier = Modifier.height(37.dp)
                     )
                     ToolbarButton(
                         iconId = R.drawable.plus,
                         isSelected = false,
-                        onSelect = { },
+                        onSelect = { controlTower.changeSizeOfSelection(10) },
                         modifier = Modifier.height(37.dp)
                     )
                     ToolbarButton(
                         iconId = R.drawable.minus,
                         isSelected = false,
-                        onSelect = { },
+                        onSelect = { controlTower.changeSizeOfSelection(-10) },
                         modifier = Modifier.height(37.dp)
                     )
                 }

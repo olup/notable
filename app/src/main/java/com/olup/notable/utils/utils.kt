@@ -321,6 +321,17 @@ fun imageBoundsInt(image: Image, padding: Int = 0): Rect {
     )
 }
 
+fun imageBoundsInt(images: List<Image>): Rect {
+    if (images.isEmpty()) return Rect()
+    val rect = imageBoundsInt(images[0])
+    images.forEach {
+        rect.union(
+            imageBoundsInt(it)
+        )
+    }
+    return rect
+}
+
 data class SimplePoint(val x: Int, val y: Int)
 data class SimplePointF(val x: Float, val y: Float)
 
