@@ -270,12 +270,10 @@ class PageView(
         activeCanvas.clipRect(area);
         activeCanvas.drawColor(Color.BLACK)
 
-        val timeToBg = measureTimeMillis {
-            drawBg(activeCanvas, pageFromDb?.nativeTemplate ?: "blank", scroll)
-        }
-        Log.i(TAG, "Took $timeToBg to draw the BG")
 
         val timeToDraw = measureTimeMillis {
+            drawBg(activeCanvas, pageFromDb?.nativeTemplate ?: "blank", scroll)
+
             // Trying to find what throws error when drawing quickly
             try {
                 strokes.forEach { stroke ->
