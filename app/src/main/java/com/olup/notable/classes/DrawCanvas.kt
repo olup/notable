@@ -348,6 +348,8 @@ class DrawCanvas(
                 strokeHistoryBatch.clear()
                 // give signal that commit was successful
                 commitCompletion.complete(Unit)
+                //testing if it will help with undo hiding strokes.
+                drawCanvasToView()
             }
         }
 

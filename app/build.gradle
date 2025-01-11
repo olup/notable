@@ -16,7 +16,7 @@ android {
         targetSdk 34
 
         versionCode 11
-        versionName '0.0.11g'
+        versionName '0.0.11h'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

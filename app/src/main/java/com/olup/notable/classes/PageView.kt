@@ -273,7 +273,13 @@ class PageView(
 
         val timeToDraw = measureTimeMillis {
             drawBg(activeCanvas, pageFromDb?.nativeTemplate ?: "blank", scroll)
-
+            // Draw the gray edge of the rectangle
+//            val redPaint = Paint().apply {
+//                color = Color.GRAY
+//                style = Paint.Style.STROKE
+//                strokeWidth = 1f // Adjust the width of the edge
+//            }
+//            activeCanvas.drawRect(area, redPaint)
             // Trying to find what throws error when drawing quickly
             try {
                 strokes.forEach { stroke ->

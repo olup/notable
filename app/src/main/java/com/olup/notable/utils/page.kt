@@ -74,12 +74,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContentProviderCompat.requireContext
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 
 suspend fun exportBook(context: Context, bookId: String): String {
     val book = BookRepository(context).getById(bookId) ?: return "Book ID not found"
     val pages = PageRepository(context)
     val message = exportPdf(context, "Notebooks", book.title) {
-        book.pageIds.forEachIndexed {i, pageId -> writePage(context, i + 1, pages, pageId) }
+        book.pageIds.forEachIndexed { i, pageId -> writePage(context, i + 1, pages, pageId) }
     }
     copyBookPdfLinkForObsidian(context, bookId, book.title)
     return message
@@ -98,13 +100,14 @@ fun copyBookPdfLinkForObsidian(context: Context, bookId: String, bookName: Strin
 suspend fun exportPage(context: Context, pageId: String): String {
     val pages = PageRepository(context)
     return exportPdf(context, "pages", "notable-page-${pageId}") {
-        writePage(context,1, pages, pageId)
+        writePage(context, 1, pages, pageId)
     }
 }
 
 fun exportPageToPng(context: Context, pageId: String): String {
     val pages = PageRepository(context)
     val (page, strokes) = pages.getWithStrokeById(pageId)
+    val (page2, images) = pages.getWithImageById(pageId)
 
     val strokeHeight = if (strokes.isEmpty()) 0 else strokes.maxOf(Stroke::bottom).toInt() + 50
     val strokeWidth = if (strokes.isEmpty()) 0 else strokes.maxOf(Stroke::right).toInt() + 50
@@ -122,8 +125,56 @@ fun exportPageToPng(context: Context, pageId: String): String {
     for (stroke in strokes) {
         drawStroke(canvas, stroke, IntOffset(0, 0))
     }
+    for (image in images) {
+        drawImage(context, canvas, image, IntOffset(0, 0))
+    }
 
     //TODO Draw images
+    if (true) {
+        val cachePath = File(context.cacheDir, "images")
+        Log.i(TAG, cachePath.toString())
+        cachePath.mkdirs()
+        try {
+            val stream =
+                FileOutputStream("$cachePath/share.png")
+            bitmap.compress(
+                Bitmap.CompressFormat.PNG,
+                100,
+                stream
+            )
+            stream.close()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+
+        val bitmapFile = File(cachePath, "share.png")
+        val contentUri = FileProvider.getUriForFile(
+            context,
+            "com.olup.notable.provider", //(use your app signature + ".provider" )
+            bitmapFile
+        );
+
+        val sendIntent = Intent().apply {
+            if (contentUri != null) {
+                action = Intent.ACTION_SEND
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // temp permission for receiving app to read this file
+                putExtra(Intent.EXTRA_STREAM, contentUri);
+                type = "image/png";
+            }
+
+            context.grantUriPermission(
+                "android",
+                contentUri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            );
+        }
+
+        ContextCompat.startActivity(
+            context,
+            Intent.createChooser(sendIntent, "Choose an app"),
+            null
+        )
+    }
     return try {
         // Save the bitmap as PNG
         val filePath = Environment.getExternalStorageDirectory().toPath() /
@@ -314,7 +365,7 @@ private fun PdfDocument.writePage(context: Context, number: Int, repo: PageRepos
     // todo do not rely on this anymore
     // I slightly modified it, should be better
     val contentHeight = strokeHeight.coerceAtLeast(SCREEN_HEIGHT)
-    val pageHeight = (contentHeight*scaleFactor).toInt()
+    val pageHeight = (contentHeight * scaleFactor).toInt()
     val contentWidth = strokeWidth.coerceAtLeast(SCREEN_WIDTH)
 
 
@@ -325,16 +376,15 @@ private fun PdfDocument.writePage(context: Context, number: Int, repo: PageRepos
     val offsetX = (A4_WIDTH - (contentWidth * scaleFactor)) / 2
     val offsetY = (A4_HEIGHT - (contentHeight * scaleFactor)) / 2
 
-    documentPage.canvas.scale( scaleFactor,scaleFactor)
+    documentPage.canvas.scale(scaleFactor, scaleFactor)
     drawBg(documentPage.canvas, page.nativeTemplate, 0, scaleFactor)
 
     for (stroke in strokes) {
         drawStroke(documentPage.canvas, stroke, IntOffset(0, 0))
     }
 
-    for(image in images)
-    {
-        drawImage(context,documentPage.canvas, image, IntOffset(0, 0))
+    for (image in images) {
+        drawImage(context, documentPage.canvas, image, IntOffset(0, 0))
     }
 
     finishPage(documentPage)
