@@ -20,7 +20,8 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:screenOrientation="nosensor"
+            android:configChanges="orientation|screenSize"
+            android:screenOrientation="unspecified"
             android:theme="@style/Theme.Inka">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

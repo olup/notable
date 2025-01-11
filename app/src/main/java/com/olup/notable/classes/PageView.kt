@@ -34,12 +34,12 @@ class PageView(
     val coroutineScope: CoroutineScope,
     val id: String,
     val width: Int,
-    val viewWidth: Int,
-    val viewHeight: Int
+    var viewWidth: Int,
+    var viewHeight: Int
 ) {
 
-    val windowedBitmap = Bitmap.createBitmap(viewWidth, viewHeight, Bitmap.Config.ARGB_8888)
-    val windowedCanvas = Canvas(windowedBitmap)
+    var windowedBitmap = Bitmap.createBitmap(viewWidth, viewHeight, Bitmap.Config.ARGB_8888)
+    var windowedCanvas = Canvas(windowedBitmap)
     var strokes = listOf<Stroke>()
     var strokesById: HashMap<String, Stroke> = hashMapOf()
     var images = listOf<Image>()
@@ -336,11 +336,26 @@ class PageView(
         saveToPersistLayer()
     }
 
+    // updates page setting in db, (for instance type of background)
+    // and redraws page to vew.
     fun updatePageSettings(page: Page) {
         AppRepository(context).pageRepository.update(page)
         pageFromDb = AppRepository(context).pageRepository.getById(id)
         drawArea(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
         persistBitmapDebounced()
+    }
+
+    fun updateDimensions(newWidth: Int, newHeight: Int) {
+        if (newWidth != viewWidth || newHeight != viewHeight) {
+            viewWidth = newWidth
+            viewHeight = newHeight
+
+            // Recreate bitmap and canvas with new dimensions
+            windowedBitmap = Bitmap.createBitmap(viewWidth, viewHeight, Bitmap.Config.ARGB_8888)
+            windowedCanvas = Canvas(windowedBitmap)
+            drawArea(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
+            persistBitmapDebounced()
+        }
     }
 
     private fun persistBitmapDebounced() {

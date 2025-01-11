@@ -52,6 +52,13 @@ fun EditorView(
                 viewHeight = height
             )
         }
+        // Dynamically update the page width when the Box constraints change
+        LaunchedEffect(width, height) {
+            if (page.width != width || page.viewHeight != height) {
+                page.updateDimensions(width,height)
+                DrawCanvas.refreshUi.emit(Unit)
+            }
+        }
 
         val editorState =
             remember { EditorState(bookId = _bookId, pageId = _pageId, pageView = page) }
