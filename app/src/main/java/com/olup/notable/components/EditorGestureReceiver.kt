@@ -167,73 +167,55 @@ fun EditorGestureReceiver(
                         val verticalDrag = lastPosition.y - initialPosition.y
                         val horizontalDrag = lastPosition.x - initialPosition.x
 
+                        // Determine if the movement is primarily vertical or horizontal
+                        val isVerticalMove = kotlin.math.abs(verticalDrag) > kotlin.math.abs(horizontalDrag)
+                        val isHorizontalMove = kotlin.math.abs(horizontalDrag) > kotlin.math.abs(verticalDrag)
 
-                        if (verticalDrag < -200) {
-                            if (inputsCount == 1) {
-                                coroutineScope.launch {
-                                    controlTower.onSingleFingerVerticalSwipe(
-                                        SimplePointF(
-                                            initialPosition.x, initialPosition.y
-                                        ), verticalDrag.toInt()
-                                    )
+                        // Handle vertical movements
+                        if (isVerticalMove && inputsCount == 1) {
+                            coroutineScope.launch {
+                                when {
+                                    verticalDrag < -200 -> {
+                                        controlTower.onSingleFingerVerticalSwipe(
+                                            SimplePointF(initialPosition.x, initialPosition.y),
+                                            verticalDrag.toInt()
+                                        )
+                                    }
+                                    verticalDrag > 200 -> {
+                                        controlTower.onSingleFingerVerticalSwipe(
+                                            SimplePointF(initialPosition.x, initialPosition.y),
+                                            verticalDrag.toInt()
+                                        )
+                                    }
                                 }
                             }
                         }
-                        if (verticalDrag > 200) {
-                            if (inputsCount == 1) {
-                                coroutineScope.launch {
-                                    controlTower.onSingleFingerVerticalSwipe(
-                                        SimplePointF(
-                                            initialPosition.x, initialPosition.y
-                                        ), verticalDrag.toInt()
+
+                        // Handle horizontal movements
+                        if (isHorizontalMove) {
+                            when {
+                                horizontalDrag < -200 -> {
+                                    resolveGesture(
+                                        settings = appSettings,
+                                        default = if (inputsCount == 1) AppSettings.defaultSwipeLeftAction else AppSettings.defaultTwoFingerSwipeLeftAction,
+                                        override = if (inputsCount == 1) AppSettings::swipeLeftAction else AppSettings::twoFingerSwipeLeftAction,
+                                        state = state,
+                                        scope = coroutineScope,
+                                        previousPage = goToPreviousPage,
+                                        nextPage = goToNextPage,
                                     )
                                 }
-                            }
-                        }
-                        if (horizontalDrag < -200) {
-                            if (inputsCount == 1) {
-                                resolveGesture(
-                                    settings = appSettings,
-                                    default = AppSettings.defaultSwipeLeftAction,
-                                    override = AppSettings::swipeLeftAction,
-                                    state = state,
-                                    scope = coroutineScope,
-                                    previousPage = goToPreviousPage,
-                                    nextPage = goToNextPage,
-                                )
-                            } else if (inputsCount == 2) {
-                                resolveGesture(
-                                    settings = appSettings,
-                                    default = AppSettings.defaultTwoFingerSwipeLeftAction,
-                                    override = AppSettings::twoFingerSwipeLeftAction,
-                                    state = state,
-                                    scope = coroutineScope,
-                                    previousPage = goToPreviousPage,
-                                    nextPage = goToNextPage,
-                                )
-                            }
-                        }
-                        if (horizontalDrag > 200) {
-                            if (inputsCount == 1) {
-                                resolveGesture(
-                                    settings = appSettings,
-                                    default = AppSettings.defaultSwipeRightAction,
-                                    override = AppSettings::swipeRightAction,
-                                    state = state,
-                                    scope = coroutineScope,
-                                    previousPage = goToPreviousPage,
-                                    nextPage = goToNextPage,
-                                )
-                            } else if (inputsCount == 2) {
-                                resolveGesture(
-                                    settings = appSettings,
-                                    default = AppSettings.defaultTwoFingerSwipeRightAction,
-                                    override = AppSettings::twoFingerSwipeRightAction,
-                                    state = state,
-                                    scope = coroutineScope,
-                                    previousPage = goToPreviousPage,
-                                    nextPage = goToNextPage,
-                                )
+                                horizontalDrag > 200 -> {
+                                    resolveGesture(
+                                        settings = appSettings,
+                                        default = if (inputsCount == 1) AppSettings.defaultSwipeRightAction else AppSettings.defaultTwoFingerSwipeRightAction,
+                                        override = if (inputsCount == 1) AppSettings::swipeRightAction else AppSettings::twoFingerSwipeRightAction,
+                                        state = state,
+                                        scope = coroutineScope,
+                                        previousPage = goToPreviousPage,
+                                        nextPage = goToNextPage,
+                                    )
+                                }
                             }
                         }
                     }
