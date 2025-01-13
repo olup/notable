@@ -1,7 +1,6 @@
 package com.olup.notable
 
 import android.graphics.Rect
-import android.util.Log
 import com.olup.notable.db.Image
 import com.olup.notable.db.Stroke
 import kotlinx.coroutines.CompletableDeferred
@@ -38,7 +37,7 @@ class History(coroutineScope: CoroutineScope, pageView: PageView) {
 
     private var undoList: OperationList = mutableListOf()
     private var redoList: OperationList = mutableListOf()
-    val pageModel = pageView
+    private val pageModel = pageView
 
     // TODO maybe not in a companion object ?
     companion object {
@@ -68,10 +67,12 @@ class History(coroutineScope: CoroutineScope, pageView: PageView) {
                             //moved to refresh after drawing
                             DrawCanvas.refreshUi.emit(Unit)
                         } else {
-                            SnackState.globalSnackFlow.emit(SnackConf(
-                                text = "Nothing to undo/redo",
-                                duration = 3000,
-                            ))
+                            SnackState.globalSnackFlow.emit(
+                                SnackConf(
+                                    text = "Nothing to undo/redo",
+                                    duration = 3000,
+                                )
+                            )
                         }
                     }
 

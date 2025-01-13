@@ -9,16 +9,20 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import com.olup.notable.db.Page
 import com.olup.notable.ui.theme.InkaTheme
 import com.olup.notable.views.FloatingEditorView
-import com.olup.notable.db.Page
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class FloatingEditorActivity : ComponentActivity() {
     private lateinit var appRepository: AppRepository
@@ -27,7 +31,7 @@ class FloatingEditorActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         val data = intent.data?.lastPathSegment
         if (data == null) {
             finish()
@@ -43,9 +47,9 @@ class FloatingEditorActivity : ComponentActivity() {
             return
         }
 
-        
+
         appRepository = AppRepository(this)
-        
+
         setContent {
             InkaTheme {
                 Surface(
@@ -54,7 +58,7 @@ class FloatingEditorActivity : ComponentActivity() {
                 ) {
                     val navController = rememberNavController()
                     var showEditor by remember { mutableStateOf(false) }
-                    
+
                     LaunchedEffect(Unit) {
                         if (!Settings.canDrawOverlays(this@FloatingEditorActivity)) {
                             val intent = Intent(
@@ -94,11 +98,11 @@ class FloatingEditorActivity : ComponentActivity() {
                 )
                 appRepository.pageRepository.create(page)
             }
-            
+
             FloatingEditorView(
                 navController = navController,
                 pageId = pageId,
-                onDismissRequest = { 
+                onDismissRequest = {
                     finish()
                 }
             )
@@ -107,12 +111,13 @@ class FloatingEditorActivity : ComponentActivity() {
             FloatingEditorView(
                 navController = navController,
                 bookId = bookId,
-                onDismissRequest = { 
+                onDismissRequest = {
                     finish()
                 }
             )
         }
-        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         pageId?.let { id ->

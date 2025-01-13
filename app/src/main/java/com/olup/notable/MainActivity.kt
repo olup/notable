@@ -1,15 +1,15 @@
 package com.olup.notable
 
-import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
-import io.shipbook.shipbooksdk.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.olup.notable.ui.theme.InkaTheme
 import com.onyx.android.sdk.api.device.epd.EpdController
+import io.shipbook.shipbooksdk.Log
 import io.shipbook.shipbooksdk.ShipBook
 import kotlinx.coroutines.launch
 
@@ -37,7 +38,7 @@ class MainActivity : ComponentActivity() {
         ShipBook.start(
             this.application, "648adf9364c9825976c1d57e",
             "7c53dffa949e3b55e37ab04672138feb"
-        );
+        )
 
         Log.i(TAG, "Notable started")
 
@@ -58,7 +59,7 @@ class MainActivity : ComponentActivity() {
         val intentData = intent.data?.lastPathSegment
         setContent {
             InkaTheme {
-                CompositionLocalProvider(SnackContext provides snackState) {
+                CompositionLocalProvider(LocalSnackContext provides snackState) {
                     Box(
                         Modifier
                             .background(Color.White)

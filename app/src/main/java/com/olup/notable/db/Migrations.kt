@@ -1,6 +1,5 @@
 package com.olup.notable.db
 
-import androidx.room.AutoMigration
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 

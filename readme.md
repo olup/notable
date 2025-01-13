@@ -36,10 +36,10 @@
 
 Notable is a **custom note-taking app designed specifically for BOOX e-ink devices.** It offers a clean, minimalist design, with a range of special features and optimizations to enhance the note-taking experience.
 
-*⚠️ This is alpha software with a couple of part time individuals pushing it further. We try to make it as stable as possible and to support a smooth update experience, but be prepared for the occasionnal bug and possible breaking changes.*
+*⚠️ This is alpha software with a couple of part time individuals pushing it further. We try to make it as stable as possible and to support a smooth update experience, but be prepared for the occasional bug and possible breaking changes.*
 
 ## Features
-* ⚡ **Fast Page Turn with Caching:** Notable leverages caching techniques to ensure smooth and swift page transitions, allowing you to navigate through your notes seamlessly. (next and previus pages are cached)
+* ⚡ **Fast Page Turn with Caching:** Notable leverages caching techniques to ensure smooth and swift page transitions, allowing you to navigate through your notes seamlessly. (next and previous pages are cached)
 * ↕️ **Infinite Vertical Scroll:** Enjoy a virtually endless canvas for your notes. Scroll vertically without limitations.
 * 📝 **Quick Pages:** Quickly create a new page using the Quick Pages feature.
 * 📒 **Notebooks:** Keep related notes together and easily switch between different noteboo︂︂ks based on your needs.
@@ -60,7 +60,7 @@ Select the projects <a href="https://github.com/olup/notable/tags" target="_blan
 </details>
 
 <details><summary title="Click to show/hide details">❓ What is a 'next' release?</summary><br/>
-The 'next' release is a pre-release, and will contain features imlemented but not yet released as part of a version - and sometimes experiments that could very well not be part a release.
+The 'next' release is a pre-release, and will contain features implemented but not yet released as part of a version - and sometimes experiments that could very well not be part a release.
 </details>
 
 ## Gestures
@@ -84,11 +84,11 @@ Notable features intuitive gestures controls within Editor's Mode, to optimize t
 The following table lists devices confirmed by users to be compatible with specific versions of Notable.  
 This does not imply any commitment from the developers. Feel free to add your device to the list if tested successfully.
 
-| Device Name                                     | v0.0.10 | v0.0.11dev |   |  |  |
-|------------------------------------------------|---------|-----------|---------|---------|---------|
-| [ONYX BOOX Go 10.3](https://onyxboox.com/boox_go103) | ✔       | ?         |       |        |        |
-| [Onyx Boox Note Air 4 C](https://onyxboox.pl/en/ebook-readers/onyx-boox-note-air-4-c) | ✘       | ✔         |        |        |        |
-| [Onyx Boox Note Air 3 C](https://onyxboox.pl/en/ebook-readers/onyx-boox-note-air-3-c) | ✘       | ✔         |        |        |        |
+| Device Name                                                                           | v0.0.10 | v0.0.11dev |        |        |        |
+|---------------------------------------------------------------------------------------|---------|------------|--------|--------|--------|
+| [ONYX BOOX Go 10.3](https://onyxboox.com/boox_go103)                                  | ✔       | ?          |        |        |        |
+| [Onyx Boox Note Air 4 C](https://onyxboox.pl/en/ebook-readers/onyx-boox-note-air-4-c) | ✘       | ✔          |        |        |        |
+| [Onyx Boox Note Air 3 C](https://onyxboox.pl/en/ebook-readers/onyx-boox-note-air-3-c) | ✘       | ✔          |        |        |        |
 
 
 

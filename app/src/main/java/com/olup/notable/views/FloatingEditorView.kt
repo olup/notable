@@ -2,22 +2,25 @@ package com.olup.notable.views
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import com.olup.notable.AppRepository
 import com.olup.notable.AppSettings
 import com.olup.notable.EditorView
-import com.olup.notable.R
 import com.olup.notable.db.Page
 import com.olup.notable.ui.theme.InkaTheme
 
@@ -29,6 +32,7 @@ fun FloatingEditorView(
     pageId: String? = null,
     onDismissRequest: () -> Unit
 ) {
+    // TODO:
     var isFullScreen by remember { mutableStateOf(false) } // State for full-screen mode
 
     Dialog(
@@ -58,7 +62,8 @@ fun FloatingEditorView(
                         } else if (bookId != null) {
                             // get first page of notebook and use it as pageId
                             val appRepository = AppRepository(LocalContext.current)
-                            val firstPageId = appRepository.bookRepository.getById(bookId)?.pageIds?.firstOrNull()
+                            val firstPageId =
+                                appRepository.bookRepository.getById(bookId)?.pageIds?.firstOrNull()
                             if (firstPageId == null) {
                                 // new page uuid
                                 val page = Page(
@@ -81,7 +86,7 @@ fun FloatingEditorView(
                                 )
                             }
 
-                            
+
                         }
                     }
                 }

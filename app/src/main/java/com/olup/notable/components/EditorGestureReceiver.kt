@@ -1,6 +1,5 @@
 package com.olup.notable
 
-import io.shipbook.shipbooksdk.Log
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
@@ -17,6 +16,7 @@ import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import io.shipbook.shipbooksdk.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -79,7 +79,7 @@ fun EditorGestureReceiver(
                             val eventReference =
                                 fingerChange.find { it.id.value == inputId.value } ?: break
                             inputsCount = fingerChange.size
-                            if (fingerChange.any { !it.pressed }){
+                            if (fingerChange.any { !it.pressed }) {
                                 lastTimestamp = System.currentTimeMillis()
                                 break
                             }
@@ -88,7 +88,7 @@ fun EditorGestureReceiver(
                         lastTimestamp = System.currentTimeMillis()
 
                         val elapsedTime = lastTimestamp - initialTimestamp
-                        if (elapsedTime >= 300 && inputsCount == 1  && !holdConsumed) {
+                        if (elapsedTime >= 300 && inputsCount == 1 && !holdConsumed) {
                             Log.i(TAG, "Held for ${elapsedTime}ms")
                             if (calculateTotalDelta(initialPositions, lastPositions) < 15f)
                                 resolveGesture(
@@ -110,7 +110,10 @@ fun EditorGestureReceiver(
                     // Calculate the total delta (movement distance) for all pointers
                     val totalDelta = calculateTotalDelta(initialPositions, lastPositions)
                     val gestureDuration = lastTimestamp - initialTimestamp
-                    Log.i(TAG, "Leaving gesture. totalDelta: ${totalDelta}, gestureDuration: ${gestureDuration} ")
+                    Log.i(
+                        TAG,
+                        "Leaving gesture. totalDelta: ${totalDelta}, gestureDuration: $gestureDuration "
+                    )
                     //Tolerance of 15 f for movement of fingers
                     if (totalDelta < 15f && gestureDuration < 150) {
                         // check how many fingers touched
@@ -168,8 +171,10 @@ fun EditorGestureReceiver(
                         val horizontalDrag = lastPosition.x - initialPosition.x
 
                         // Determine if the movement is primarily vertical or horizontal
-                        val isVerticalMove = kotlin.math.abs(verticalDrag) > kotlin.math.abs(horizontalDrag)
-                        val isHorizontalMove = kotlin.math.abs(horizontalDrag) > kotlin.math.abs(verticalDrag)
+                        val isVerticalMove =
+                            kotlin.math.abs(verticalDrag) > kotlin.math.abs(horizontalDrag)
+                        val isHorizontalMove =
+                            kotlin.math.abs(horizontalDrag) > kotlin.math.abs(verticalDrag)
 
                         // Handle vertical movements
                         if (isVerticalMove && inputsCount == 1) {
@@ -181,6 +186,7 @@ fun EditorGestureReceiver(
                                             verticalDrag.toInt()
                                         )
                                     }
+
                                     verticalDrag > 200 -> {
                                         controlTower.onSingleFingerVerticalSwipe(
                                             SimplePointF(initialPosition.x, initialPosition.y),
@@ -205,6 +211,7 @@ fun EditorGestureReceiver(
                                         nextPage = goToNextPage,
                                     )
                                 }
+
                                 horizontalDrag > 200 -> {
                                     resolveGesture(
                                         settings = appSettings,
@@ -268,7 +275,7 @@ private fun resolveGesture(
         AppSettings.GestureAction.Select -> {
             Log.i(TAG, "select")
             scope.launch {
-                DrawCanvas.imageCoordinateToSelect.emit(Pair<Int, Int>(x.toInt(), y.toInt()))
+                DrawCanvas.imageCoordinateToSelect.emit(Pair(x.toInt(), y.toInt()))
             }
         }
     }

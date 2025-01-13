@@ -2,7 +2,7 @@ package com.olup.notable
 
 import com.onyx.android.sdk.pen.style.StrokeStyle
 
-enum class Pen (val penName : String) {
+enum class Pen(val penName: String) {
     BALLPEN("BALLPEN"),
     REDBALLPEN("REDBALLPEN"),
     GREENBALLPEN("GREENBALLPEN"),

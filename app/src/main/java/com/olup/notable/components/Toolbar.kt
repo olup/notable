@@ -1,36 +1,41 @@
 package com.olup.notable
 
+
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import io.shipbook.shipbooksdk.Log
 import kotlinx.coroutines.launch
 
-
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.fillMaxHeight
-import com.olup.notable.db.Image
-import io.shipbook.shipbooksdk.Log
-
-fun PresentlyUsedToolIcon(mode: Mode, pen: Pen): Int {
+fun presentlyUsedToolIcon(mode: Mode, pen: Pen): Int {
     return when (mode) {
         Mode.Draw -> {
             when (pen) {
@@ -98,7 +103,7 @@ fun Toolbar(
                 context.contentResolver.takePersistableUriPermission(uri, flag)
                 // Set isImageLoaded to true
                 isImageLoaded = true
-                Log.i("InsertImage", "Hura! We have uri: ${uri}")
+                Log.i("InsertImage", "Hura! We have uri: $uri")
                 DrawCanvas.addImageByUri.value = uri
 
             }
@@ -124,6 +129,7 @@ fun Toolbar(
     fun handleSelection() {
         state.mode = Mode.Select
     }
+
     fun handleLine() {
         state.mode = Mode.Line
     }
@@ -350,7 +356,7 @@ fun Toolbar(
                     onSelect = {
                         // Call insertImage when the button is tapped
                         Log.i("InsertImage", "Launching image picker...")
-                        pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        pickMedia.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
                     }
                 )
                 Box(
@@ -403,7 +409,7 @@ fun Toolbar(
 
                     // TODO maybe have generic utils for this ?
                     val pageNumber = book!!.pageIds.indexOf(state.pageId) + 1
-                    val totalPageNumber = book!!.pageIds.size
+                    val totalPageNumber = book.pageIds.size
 
                     Box(
                         contentAlignment = Alignment.Center,
@@ -464,8 +470,12 @@ fun Toolbar(
     } else {
         ToolbarButton(
             onSelect = { state.isToolbarOpen = true },
-            iconId = PresentlyUsedToolIcon(state.mode, state.pen),
-            penColor = if(state.mode != Mode.Erase) state.penSettings[state.pen.penName]?.color?.let { Color(it) } else null,
+            iconId = presentlyUsedToolIcon(state.mode, state.pen),
+            penColor = if (state.mode != Mode.Erase) state.penSettings[state.pen.penName]?.color?.let {
+                Color(
+                    it
+                )
+            } else null,
             contentDescription = "open toolbar",
             modifier = Modifier.height(37.dp)
         )

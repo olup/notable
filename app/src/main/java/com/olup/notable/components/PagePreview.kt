@@ -4,23 +4,19 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import java.io.File
 
 @Composable
-fun PagePreview(modifier: Modifier, pageId: String){
+fun PagePreview(modifier: Modifier, pageId: String) {
     val context = LocalContext.current
-    val imgFile = remember() {
+    val imgFile = remember {
         File(context.filesDir, "pages/previews/thumbs/$pageId")
     }
 
@@ -36,11 +32,11 @@ fun PagePreview(modifier: Modifier, pageId: String){
                 Modifier.padding(10.dp)
             ))
     }else {*/
-        Image(
-            painter = rememberAsyncImagePainter(model = imgBitmap),
-            contentDescription = "Image",
-            contentScale = ContentScale.FillWidth,
-            modifier = modifier.then(Modifier.background(Color.LightGray))
-        )
+    Image(
+        painter = rememberAsyncImagePainter(model = imgBitmap),
+        contentDescription = "Image",
+        contentScale = ContentScale.FillWidth,
+        modifier = modifier.then(Modifier.background(Color.LightGray))
+    )
     //}
 }

@@ -1,14 +1,17 @@
 package com.olup.notable.db
 
 import android.content.Context
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.room.*
-import com.olup.notable.Pen
-import java.util.*
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.util.Log
-import androidx.compose.ui.graphics.asAndroidBitmap // To convert ImageBitmap to Bitmap
+import androidx.room.ColumnInfo
+import androidx.room.Dao
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Insert
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Update
+import java.util.Date
+import java.util.UUID
 
 
 // Entity class for images
@@ -73,7 +76,7 @@ interface ImageDao {
 
 // Repository for stroke operations
 class ImageRepository(context: Context) {
-    private val db = AppDatabase.getDatabase(context)?.ImageDao()!!
+    private val db = AppDatabase.getDatabase(context).ImageDao()
 
     fun create(image: Image): Long {
         return db.create(image)
@@ -120,7 +123,7 @@ class ImageRepository(context: Context) {
     }
 
     fun getImageAtPoint(x: Int, y: Int, pageId: String): Image? {
-        return db.getImageAtPoint(x, y,pageId)
+        return db.getImageAtPoint(x, y, pageId)
     }
 }
 

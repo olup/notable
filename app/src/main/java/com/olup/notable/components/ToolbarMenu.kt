@@ -2,9 +2,16 @@ package com.olup.notable
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,11 +34,11 @@ fun ToolbarMenu(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val snackManager = SnackContext.current
+    val snackManager = LocalSnackContext.current
     val page = AppRepository(context).pageRepository.getById(state.pageId)!!
     val parentFolder =
         if (page.notebookId != null)
-            AppRepository(context).bookRepository.getById(page.notebookId!!)!!
+            AppRepository(context).bookRepository.getById(page.notebookId)!!
                 .parentFolderId
         else page.parentFolderId
 
@@ -40,7 +47,7 @@ fun ToolbarMenu(
         onDismissRequest = { onClose() },
         offset =
         IntOffset(
-            convertDpToPixel(-10.dp, context).toInt(),
+            convertDpToPixel((-10).dp, context).toInt(),
             convertDpToPixel(50.dp, context).toInt()
         ),
         properties = PopupProperties(focusable = true)
@@ -157,7 +164,7 @@ fun ToolbarMenu(
                                     )
                                 delay(10L) // Why do I need this ?
 
-                                val message = exportBook(context, state.bookId ?: return@launch)
+                                val message = exportBook(context, state.bookId)
                                 removeSnack()
                                 snackManager.displaySnack(
                                     SnackConf(text = message, duration = 2000)
@@ -184,7 +191,7 @@ fun ToolbarMenu(
 
 
                                 val message =
-                                    exportBookToPng(context, state.bookId ?: return@launch)
+                                    exportBookToPng(context, state.bookId)
 
                                 removeSnack()
                                 snackManager.displaySnack(

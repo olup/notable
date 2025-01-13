@@ -2,10 +2,16 @@ package com.olup.notable
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.*
-import android.util.DisplayMetrics
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.PointF
+import android.graphics.Rect
+import android.graphics.RectF
+import android.graphics.Region
 import android.util.TypedValue
-import io.shipbook.shipbooksdk.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.remember
@@ -13,14 +19,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.graphics.toRect
 import androidx.core.graphics.toRegion
-import com.olup.notable.db.*
+import com.olup.notable.db.Image
+import com.olup.notable.db.Stroke
+import com.olup.notable.db.StrokePoint
 import com.onyx.android.sdk.data.note.TouchPoint
-import kotlinx.coroutines.CoroutineScope
+import io.shipbook.shipbooksdk.Log
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
@@ -33,15 +40,16 @@ import java.io.IOException
 fun Modifier.noRippleClickable(
     onClick: () -> Unit
 ): Modifier = composed {
-    clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) {
-        onClick()
-    }
+    this.then(
+        clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) {
+            onClick()
+        })
 }
 
 
 fun convertDpToPixel(dp: Dp, context: Context): Float {
     val resources = context.resources
-    val metrics: DisplayMetrics = resources.getDisplayMetrics()
+//    val metrics: DisplayMetrics = resources.displayMetrics
     return TypedValue.applyDimension(
         TypedValue.COMPLEX_UNIT_DIP,
         dp.value,
@@ -159,7 +167,7 @@ enum class SelectPointPosition {
     CENTER
 }
 
-// touchpoints is in wiew coordinates
+// touchpoints is in view coordinates
 fun handleDraw(
     page: PageView,
     historyBucket: MutableList<String>,
@@ -240,7 +248,7 @@ fun handleLine(
     fun lerp(start: Float, end: Float, fraction: Float) = start + (end - start) * fraction
 
     val numberOfPoints = 100 // Define how many points should line have
-    val points2 = List<TouchPoint>(numberOfPoints) { i ->
+    val points2 = List(numberOfPoints) { i ->
         val fraction = i.toFloat() / (numberOfPoints - 1)
         val x = lerp(startPoint.x, endPoint.x, fraction)
         val y = lerp(startPoint.y, endPoint.y, fraction)
@@ -297,7 +305,7 @@ fun imageBounds(image: Image): RectF {
 
 
 fun strokeBounds(strokes: List<Stroke>): Rect {
-    if (strokes.size == 0) return Rect()
+    if (strokes.isEmpty()) return Rect()
     val stroke = strokes[0]
     val rect = Rect(
         stroke.left.toInt(), stroke.top.toInt(), stroke.right.toInt(), stroke.bottom.toInt()
@@ -392,7 +400,7 @@ fun selectStrokesFromPath(strokes: List<Stroke>, path: Path): List<Stroke> {
 
     return strokes.filter {
         strokeBounds(it).intersect(bounds)
-    }.filter() { it.points.any { region.contains(it.x.toInt(), it.y.toInt()) } }
+    }.filter { it.points.any { region.contains(it.x.toInt(), it.y.toInt()) } }
 }
 
 fun offsetStroke(stroke: Stroke, offset: Offset): Stroke {
@@ -417,8 +425,7 @@ fun offsetImage(image: Image, offset: Offset): Image {
 }
 
 // Why it is needed? I try to removed it, and sharing bimap seems to work.
-public class Provider : FileProvider(R.xml.file_paths) {
-}
+class Provider : FileProvider(R.xml.file_paths)
 
 fun shareBitmap(context: Context, bitmap: Bitmap) {
     val bmpWithBackground =
@@ -448,17 +455,17 @@ fun shareBitmap(context: Context, bitmap: Bitmap) {
         context,
         "com.olup.notable.provider", //(use your app signature + ".provider" )
         bitmapFile
-    );
+    )
 
     val sendIntent = Intent().apply {
         if (contentUri != null) {
             action = Intent.ACTION_SEND
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // temp permission for receiving app to read this file
-            putExtra(Intent.EXTRA_STREAM, contentUri);
-            type = "image/png";
+            putExtra(Intent.EXTRA_STREAM, contentUri)
+            type = "image/png"
         }
 
-        context.grantUriPermission("android", contentUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        context.grantUriPermission("android", contentUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 
     ContextCompat.startActivity(context, Intent.createChooser(sendIntent, "Choose an app"), null)

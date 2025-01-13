@@ -1,81 +1,32 @@
 package com.olup.notable
 
+
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
-import android.graphics.pdf.PdfDocument
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.ImageDecoder
+import android.graphics.pdf.PdfDocument
+import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import com.olup.notable.db.BookRepository
 import com.olup.notable.db.PageRepository
 import com.olup.notable.db.Stroke
 import io.shipbook.shipbooksdk.Log
-import java.io.FileOutputStream
-import java.io.File
-import java.nio.file.Files
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.div
-import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import android.app.Activity
-import android.content.ContentResolver
-import android.content.Intent
-import android.graphics.BitmapFactory
-import android.graphics.ImageDecoder
-import android.net.Uri
-import android.os.Build
-import android.provider.OpenableColumns
-import android.widget.Toast
-import androidx.activity.compose.ManagedActivityResultLauncher
-import androidx.activity.compose.rememberLauncherForActivityResult
-
-
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
-import androidx.compose.foundation.Image
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import kotlinx.coroutines.launch
-import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-
-
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContentProviderCompat.requireContext
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import kotlin.io.path.div
 
 suspend fun exportBook(context: Context, bookId: String): String {
     val book = BookRepository(context).getById(bookId) ?: return "Book ID not found"
@@ -152,21 +103,21 @@ fun exportPageToPng(context: Context, pageId: String): String {
             context,
             "com.olup.notable.provider", //(use your app signature + ".provider" )
             bitmapFile
-        );
+        )
 
         val sendIntent = Intent().apply {
             if (contentUri != null) {
                 action = Intent.ACTION_SEND
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // temp permission for receiving app to read this file
-                putExtra(Intent.EXTRA_STREAM, contentUri);
-                type = "image/png";
+                putExtra(Intent.EXTRA_STREAM, contentUri)
+                type = "image/png"
             }
 
             context.grantUriPermission(
                 "android",
                 contentUri,
                 Intent.FLAG_GRANT_READ_URI_PERMISSION
-            );
+            )
         }
 
         ContextCompat.startActivity(
@@ -399,20 +350,12 @@ private fun PdfDocument.writePage(context: Context, number: Int, repo: PageRepos
  * @return The Bitmap representation of the image, or null if conversion fails.
  * https://medium.com/@munbonecci/how-to-display-an-image-loaded-from-the-gallery-using-pick-visual-media-in-jetpack-compose-df83c78a66bf
  */
-fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
+fun uriToBitmap(context: Context, uri: Uri): Bitmap {
     // Obtain the content resolver from the context
     val contentResolver: ContentResolver = context.contentResolver
 
-    // Check the API level to use the appropriate method for decoding the Bitmap
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-        // For Android P (API level 28) and higher, use ImageDecoder to decode the Bitmap
-        val source = ImageDecoder.createSource(contentResolver, uri)
-        ImageDecoder.decodeBitmap(source)
-    } else {
-        // For versions prior to Android P, use BitmapFactory to decode the Bitmap
-        val bitmap = context.contentResolver.openInputStream(uri)?.use { stream ->
-            Bitmap.createBitmap(BitmapFactory.decodeStream(stream))
-        }
-        bitmap
-    }
+    // Since the minimum SDK is 29, we can directly use ImageDecoder to decode the Bitmap
+    val source = ImageDecoder.createSource(contentResolver, uri)
+    return ImageDecoder.decodeBitmap(source)
+
 }

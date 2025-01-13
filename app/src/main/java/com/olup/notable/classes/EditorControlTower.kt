@@ -6,15 +6,16 @@ import android.graphics.Rect
 import android.util.Log
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.toOffset
-import com.olup.notable.db.Image
-import com.olup.notable.db.selectImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.UUID
 
 class EditorControlTower(
-    val scope: CoroutineScope, val page: PageView, val history: History, val state: EditorState
+    private val scope: CoroutineScope,
+    val page: PageView,
+    private val history: History,
+    val state: EditorState
 ) {
 
     fun onSingleFingerVerticalSwipe(startPosition: SimplePointF, delta: Int) {
@@ -32,9 +33,9 @@ class EditorControlTower(
 
     }
 
-    fun onOpenPageCut(offset: Int) {
+    private fun onOpenPageCut(offset: Int) {
         if (offset < 0) return
-        var cutLine = state.selectionState.firstPageCut!!
+        val cutLine = state.selectionState.firstPageCut!!
 
         val (_, previousStrokes) = divideStrokesFromCut(page.strokes, cutLine)
 
@@ -65,8 +66,8 @@ class EditorControlTower(
         )
     }
 
-    fun onPageScroll(delta: Int) {
-        page!!.updateScroll(delta)
+    private fun onPageScroll(delta: Int) {
+        page.updateScroll(delta)
     }
 
 
@@ -172,14 +173,15 @@ class EditorControlTower(
             state.selectionState.selectionRect = pageAreaToCanvasArea(pageBounds, page.scroll)
 
             state.selectionState.selectionDisplaceOffset =
-                state.selectionState.selectionDisplaceOffset?.let { it - sizeChange } ?: IntOffset.Zero
+                state.selectionState.selectionDisplaceOffset?.let { it - sizeChange }
+                    ?: IntOffset.Zero
 
             val selectedBitmap = Bitmap.createBitmap(
                 pageBounds.width(), pageBounds.height(),
                 Bitmap.Config.ARGB_8888
             )
             val selectedCanvas = Canvas(selectedBitmap)
-            selectedImages.forEach() {
+            selectedImages.forEach {
                 drawImage(
                     page.context,
                     selectedCanvas,
