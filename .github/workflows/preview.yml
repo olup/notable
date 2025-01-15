@@ -24,7 +24,7 @@ jobs:
 
       - uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: 7.5
+          gradle-version: 8.5
 
       - name: Decode Keystore
         id: decode_keystore
@@ -60,5 +60,5 @@ jobs:
           tag_name: next
           name: next
           prerelease: true
-          body: "Preview version corresponding to the latest build on main"
+          body: "Preview version built from branch: ${{ github.ref_name }}"
           token: ${{ secrets.TOKEN }}
