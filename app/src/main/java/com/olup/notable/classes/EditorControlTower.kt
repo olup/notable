@@ -138,10 +138,16 @@ class EditorControlTower(
         }
         val selectedStrokes = state.selectionState.selectedStrokes
         if (!selectedStrokes.isNullOrEmpty()) {
-            val imageIds: List<String> = selectedStrokes.map { it.id }
+            val strokeIds: List<String> = selectedStrokes.map { it.id }
             Log.i(TAG, "removing strokes")
-            page.removeStrokes(imageIds)
+            page.removeStrokes(strokeIds)
+            history.addOperationsToHistory(
+                operations = listOf(
+                    Operation.AddStroke(selectedStrokes)
+                )
+            )
         }
+
         state.selectionState.reset()
         state.isDrawing = true
         scope.launch {
