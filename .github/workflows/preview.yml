@@ -2,7 +2,7 @@ name: Build and Release Preview
 
 on:
   push:
-    branches: ["main"]
+    branches: ["dev"]
 
 env:
   MAVEN_OPTS: >-
