@@ -69,7 +69,7 @@ Notable features intuitive gestures controls within Editor's Mode, to optimize t
 * **Swipe up or down**: Scroll the page.
 * **Swipe left or right:** Change to the previous/next page (only available in notebooks).
 * **Double tap:** Show or hide the toolbar.
-* **Double tap bottom part of the screen:** Show quick navigation.
+* ~**Double tap bottom part of the screen:** Show quick navigation.~
 * **Hold** select image
 #### ✌️ 2 Fingers
 * **Swipe left or right:** Undo/redo your changes.
