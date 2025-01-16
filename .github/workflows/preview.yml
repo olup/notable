@@ -66,4 +66,4 @@ jobs:
           name: next
           prerelease: true
           body: "Preview version built from branch: ${{ github.ref_name }}"
-          token: ${{ secrets.TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
