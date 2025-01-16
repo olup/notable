@@ -1,5 +1,4 @@
 name: Build and Release Preview
-
 on:
   push:
     branches: ["dev"]
@@ -66,4 +65,4 @@ jobs:
           name: next
           prerelease: true
           body: "Preview version built from branch: ${{ github.ref_name }}"
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.TOKEN }}
