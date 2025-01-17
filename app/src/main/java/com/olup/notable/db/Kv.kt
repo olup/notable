@@ -72,7 +72,7 @@ class KvProxy(context: Context) {
     }
 
     fun <T> get(key: String, serializer: KSerializer<T>): T? {
-        val kv = kvRepository.get(key)
+        val kv = kvRepository.get(key) ?: return null
         val jsonValue = kv.value
         return Json.decodeFromString(serializer, jsonValue)
     }
