@@ -58,9 +58,11 @@ class History(coroutineScope: CoroutineScope, pageView: PageView) {
                 when (it) {
                     is HistoryBusActions.MoveHistory -> {
                         // Wait for commit to history to complete
-                        DrawCanvas.commitCompletion = CompletableDeferred()
-                        DrawCanvas.commitHistorySignal.emit(Unit)
-                        DrawCanvas.commitCompletion.await()
+                        if(it.type == UndoRedoType.Undo){
+                            DrawCanvas.commitCompletion = CompletableDeferred()
+                            DrawCanvas.commitHistorySignalImmediately.emit(Unit)
+                            DrawCanvas.commitCompletion.await()
+                        }
                         val zoneAffected = undoRedo(type = it.type)
                         if (zoneAffected != null) {
                             pageView.drawArea(pageAreaToCanvasArea(zoneAffected, pageView.scroll))

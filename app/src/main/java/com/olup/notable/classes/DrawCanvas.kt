@@ -62,6 +62,7 @@ class DrawCanvas(
 
         // before undo we need to commit changes
         val commitHistorySignal = MutableSharedFlow<Unit>()
+        val commitHistorySignalImmediately = MutableSharedFlow<Unit>()
 
         // used for checking if commit was completed
         var commitCompletion = CompletableDeferred<Unit>()
@@ -246,7 +247,7 @@ class DrawCanvas(
 
 
         coroutineScope.launch {
-            addImageByUri.collect { imageUri ->
+            addImageByUri.drop(1).collect { imageUri ->
                 Log.i(TAG + "Observer", "Received image!")
 
                 if (imageUri != null) {
@@ -256,36 +257,8 @@ class DrawCanvas(
             }
         }
         coroutineScope.launch {
-            imageCoordinateToSelect.collect { point ->
-                if (point != null) {
-                    Log.i(TAG + "Observer", "position of image $point")
-
-                    // Query the database to find an image that coincides with the point
-                    val imageToSelect = withContext(Dispatchers.IO) {
-                        ImageRepository(context).getImageAtPoint(
-                            point.first,
-                            point.second + page.scroll,
-                            page.id
-                        )
-                    }
-                    imageCoordinateToSelect.value = null
-                    if (imageToSelect != null) {
-                        selectImage(coroutineScope, page, state, imageToSelect)
-                        SnackState.globalSnackFlow.emit(
-                            SnackConf(
-                                text = "Image selected!",
-                                duration = 3000,
-                            )
-                        )
-                    } else {
-                        SnackState.globalSnackFlow.emit(
-                            SnackConf(
-                                text = "There is no image at this position",
-                                duration = 3000,
-                            )
-                        )
-                    }
-                }
+            imageCoordinateToSelect.drop(1).collect { point ->
+                SelectImage(point)
             }
         }
 
@@ -351,19 +324,59 @@ class DrawCanvas(
             //After 500ms add to history strokes
             commitHistorySignal.debounce(500).collect {
                 Log.i(TAG + "Observer", "Commiting to history")
-                if (strokeHistoryBatch.size > 0) history.addOperationsToHistory(
-                    operations = listOf(
-                        Operation.DeleteStroke(strokeHistoryBatch.map { it })
-                    )
-                )
-                strokeHistoryBatch.clear()
-                // give signal that commit was successful
+                commitToHistory()
+            }
+        }
+        coroutineScope.launch {
+            commitHistorySignalImmediately.collect() {
+                commitToHistory()
                 commitCompletion.complete(Unit)
-                //testing if it will help with undo hiding strokes.
-                drawCanvasToView()
             }
         }
 
+    }
+
+    private suspend fun SelectImage(point: Pair<Int, Int>?) {
+        if (point != null) {
+            Log.i(TAG + "Observer", "position of image $point")
+
+            // Query the database to find an image that coincides with the point
+            val imageToSelect = withContext(Dispatchers.IO) {
+                ImageRepository(context).getImageAtPoint(
+                    point.first,
+                    point.second + page.scroll,
+                    page.id
+                )
+            }
+            imageCoordinateToSelect.value = null
+            if (imageToSelect != null) {
+                selectImage(coroutineScope, page, state, imageToSelect)
+                SnackState.globalSnackFlow.emit(
+                    SnackConf(
+                        text = "Image selected!",
+                        duration = 3000,
+                    )
+                )
+            } else {
+                SnackState.globalSnackFlow.emit(
+                    SnackConf(
+                        text = "There is no image at this position",
+                        duration = 3000,
+                    )
+                )
+            }
+        }
+    }
+
+    private fun commitToHistory() {
+        if (strokeHistoryBatch.size > 0) history.addOperationsToHistory(
+            operations = listOf(
+                Operation.DeleteStroke(strokeHistoryBatch.map { it })
+            )
+        )
+        strokeHistoryBatch.clear()
+        //testing if it will help with undo hiding strokes.
+        drawCanvasToView()
     }
 
     fun refreshUi() {
