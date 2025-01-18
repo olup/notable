@@ -287,6 +287,16 @@ class PageView(
 //            activeCanvas.drawRect(area, redPaint)
             // Trying to find what throws error when drawing quickly
             try {
+                images.forEach { image ->
+                    if (ignoredImageIds.contains(image.id)) return@forEach
+                    Log.i(TAG, "PageView.kt: drawing image!")
+                    val bounds = imageBounds(image)
+                    // if stroke is not inside page section
+                    if (!bounds.toRect().intersect(pageArea)) return@forEach
+                    drawImage(context, activeCanvas, image, IntOffset(0, -scroll))
+
+                }
+
                 strokes.forEach { stroke ->
                     if (ignoredStrokeIds.contains(stroke.id)) return@forEach
                     val bounds = strokeBounds(stroke)
@@ -296,16 +306,6 @@ class PageView(
                     drawStroke(
                         activeCanvas, stroke, IntOffset(0, -scroll)
                     )
-                }
-
-                images.forEach { image ->
-                    if (ignoredImageIds.contains(image.id)) return@forEach
-                    Log.i(TAG, "PageView.kt: drawing image!")
-                    val bounds = imageBounds(image)
-                    // if stroke is not inside page section
-                    if (!bounds.toRect().intersect(pageArea)) return@forEach
-                    drawImage(context, activeCanvas, image, IntOffset(0, -scroll))
-
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "PageView.kt: Drawing strokes failed: ${e.message}")
