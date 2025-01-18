@@ -396,11 +396,15 @@ fun divideStrokesFromCut(
 fun selectStrokesFromPath(strokes: List<Stroke>, path: Path): List<Stroke> {
     val bounds = RectF()
     path.computeBounds(bounds, true)
-    val region = pathToRegion(path)
+
+    //region is only 16 bit, so we need to move our region
+    val translatedPath = Path(path)
+    translatedPath.offset(0f, - bounds.top)
+    val region = pathToRegion(translatedPath)
 
     return strokes.filter {
         strokeBounds(it).intersect(bounds)
-    }.filter { it.points.any { region.contains(it.x.toInt(), it.y.toInt()) } }
+    }.filter { it.points.any { region.contains(it.x.toInt(), (it.y-bounds.top).toInt()) } }
 }
 
 fun offsetStroke(stroke: Stroke, offset: Offset): Stroke {
