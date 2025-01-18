@@ -2,7 +2,13 @@ package com.olup.notable
 
 import android.content.Context
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -12,7 +18,9 @@ import kotlin.math.max
 
 @Composable
 fun ScrollIndicator(context: Context, state: EditorState) {
-    BoxWithConstraints(modifier = Modifier.width(5.dp).fillMaxHeight()) {
+    BoxWithConstraints(modifier = Modifier
+        .width(5.dp)
+        .fillMaxHeight()) {
         val height = convertDpToPixel(this.maxHeight, LocalContext.current).toInt()
         val page = state.pageView
         println(page.scroll + height)
@@ -29,7 +37,8 @@ fun ScrollIndicator(context: Context, state: EditorState) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .offset(y = indicatorPosition.dp
+                .offset(
+                    y = indicatorPosition.dp
                 )
                 .background(Color.Black)
                 .height(

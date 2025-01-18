@@ -4,10 +4,22 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -61,14 +73,14 @@ fun AppSettingsModal(onClose: () -> Unit) {
     LaunchedEffect(key1 = Unit, block = { thread { isLatestVersion = isLatestVersion(context) } })
 
     val settings by
-            kv.observeKv("APP_SETTINGS", AppSettings.serializer(), AppSettings(version = 1))
-                    .observeAsState()
+    kv.observeKv("APP_SETTINGS", AppSettings.serializer(), AppSettings(version = 1))
+        .observeAsState()
 
     if (settings == null) return
 
     Dialog(
-            onDismissRequest = { onClose() },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
+        onDismissRequest = { onClose() },
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Column(
             modifier = Modifier
@@ -78,9 +90,13 @@ fun AppSettingsModal(onClose: () -> Unit) {
                 .border(2.dp, Color.Black, RectangleShape)
         ) {
             Column(Modifier.padding(20.dp, 10.dp)) {
-                Text(text = "App setting - v${BuildConfig.VERSION_NAME}${if(isNext) " [NEXT]" else ""}")
+                Text(text = "App setting - v${BuildConfig.VERSION_NAME}${if (isNext) " [NEXT]" else ""}")
             }
-            Box(Modifier.height(0.5.dp).fillMaxWidth().background(Color.Black))
+            Box(
+                Modifier
+                    .height(0.5.dp)
+                    .fillMaxWidth()
+                    .background(Color.Black))
 
             Column(Modifier.padding(20.dp, 10.dp)) {
                 Row {

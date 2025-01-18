@@ -1,13 +1,21 @@
 package com.olup.notable
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Rect
 import android.util.Log
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.toOffset
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.util.Date
+import java.util.UUID
 
 class EditorControlTower(
-    val scope: CoroutineScope, val page: PageView, val history: History, val state: EditorState
+    private val scope: CoroutineScope,
+    val page: PageView,
+    private val history: History,
+    val state: EditorState
 ) {
 
     fun onSingleFingerVerticalSwipe(startPosition: SimplePointF, delta: Int) {
@@ -25,9 +33,9 @@ class EditorControlTower(
 
     }
 
-    fun onOpenPageCut(offset: Int) {
+    private fun onOpenPageCut(offset: Int) {
         if (offset < 0) return
-        var cutLine = state.selectionState.firstPageCut!!
+        val cutLine = state.selectionState.firstPageCut!!
 
         val (_, previousStrokes) = divideStrokesFromCut(page.strokes, cutLine)
 
@@ -58,8 +66,8 @@ class EditorControlTower(
         )
     }
 
-    fun onPageScroll(delta: Int) {
-        page!!.updateScroll(delta)
+    private fun onPageScroll(delta: Int) {
+        page.updateScroll(delta)
     }
 
 
@@ -94,7 +102,7 @@ class EditorControlTower(
                 history.addOperationsToHistory(operationList)
             }
         }
-        if(selectedImages!=null){
+        if (selectedImages != null) {
             val displacedImages = selectedImages.map {
                 offsetImage(it, offset = offset.toOffset())
             }
@@ -121,5 +129,104 @@ class EditorControlTower(
         }
     }
 
+    fun deleteSelection() {
+        val selectedImages = state.selectionState.selectedImages
+        if (!selectedImages.isNullOrEmpty()) {
+            val imageIds: List<String> = selectedImages.map { it.id }
+            Log.i(TAG, "removing images")
+            page.removeImage(imageIds)
+        }
+        val selectedStrokes = state.selectionState.selectedStrokes
+        if (!selectedStrokes.isNullOrEmpty()) {
+            val strokeIds: List<String> = selectedStrokes.map { it.id }
+            Log.i(TAG, "removing strokes")
+            page.removeStrokes(strokeIds)
+            history.addOperationsToHistory(
+                operations = listOf(
+                    Operation.AddStroke(selectedStrokes)
+                )
+            )
+        }
+
+        state.selectionState.reset()
+        state.isDrawing = true
+        scope.launch {
+            DrawCanvas.refreshUi.emit(Unit)
+        }
+    }
+
+    fun changeSizeOfSelection(scale: Int) {
+        val selectedImages = state.selectionState.selectedImages
+
+        // Ensure selected images are not null or empty
+        if (!selectedImages.isNullOrEmpty()) {
+            state.selectionState.selectedImages = selectedImages.map { image ->
+                image.copy(
+                    height = image.height + (image.height * scale / 100),
+                    width = image.width + (image.width * scale / 100)
+                )
+            }
+
+            // Adjust displacement offset by half the size change
+            val sizeChange = selectedImages.firstOrNull()?.let { image ->
+                IntOffset(
+                    x = (image.width * scale / 200),
+                    y = (image.height * scale / 200)
+                )
+            } ?: IntOffset.Zero
+
+            val pageBounds = imageBoundsInt(selectedImages)
+            state.selectionState.selectionRect = pageAreaToCanvasArea(pageBounds, page.scroll)
+
+            state.selectionState.selectionDisplaceOffset =
+                state.selectionState.selectionDisplaceOffset?.let { it - sizeChange }
+                    ?: IntOffset.Zero
+
+            val selectedBitmap = Bitmap.createBitmap(
+                pageBounds.width(), pageBounds.height(),
+                Bitmap.Config.ARGB_8888
+            )
+            val selectedCanvas = Canvas(selectedBitmap)
+            selectedImages.forEach {
+                drawImage(
+                    page.context,
+                    selectedCanvas,
+                    it,
+                    IntOffset(-it.x, -it.y)
+                )
+            }
+
+            // set state
+            state.selectionState.selectedBitmap = selectedBitmap
+
+            // Emit a refresh signal to update UI
+            scope.launch {
+                DrawCanvas.refreshUi.emit(Unit)
+            }
+        }
+    }
+
+
+    fun copySelection() {
+        // finish ongoing movement
+        applySelectionDisplace()
+        // set operation to paste only
+        state.selectionState.placementMode = PlacementMode.Paste
+        // change the selected stokes' ids - it's a copy
+        state.selectionState.selectedStrokes = state.selectionState.selectedStrokes!!.map {
+            it.copy(
+                id = UUID
+                    .randomUUID()
+                    .toString(),
+                createdAt = Date()
+            )
+        }
+        // move the selection a bit, to show the copy
+        state.selectionState.selectionDisplaceOffset = IntOffset(
+            x = state.selectionState.selectionDisplaceOffset!!.x + 50,
+            y = state.selectionState.selectionDisplaceOffset!!.y + 50,
+        )
+        //TODO: implement coping for images
+    }
 
 }

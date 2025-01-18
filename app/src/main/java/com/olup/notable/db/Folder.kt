@@ -2,7 +2,14 @@ package com.olup.notable.db
 
 import android.content.Context
 import androidx.lifecycle.LiveData
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Dao
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Insert
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.Update
 import java.util.Date
 import java.util.UUID
 
@@ -19,7 +26,7 @@ data class Folder(
     val id: String = UUID.randomUUID().toString(),
     val title: String = "New Folder",
 
-   @ColumnInfo(index = true)
+    @ColumnInfo(index = true)
     val parentFolderId: String? = null,
 
     val createdAt: Date = Date(),
@@ -30,10 +37,10 @@ data class Folder(
 @Dao
 interface FolderDao {
     @Query("SELECT * FROM folder WHERE parentFolderId IS :folderId")
-    fun getChildrenFolders(folderId:String?): LiveData<List<Folder>>
+    fun getChildrenFolders(folderId: String?): LiveData<List<Folder>>
 
     @Query("SELECT * FROM folder WHERE id IS :folderId")
-    fun get(folderId:String): Folder
+    fun get(folderId: String): Folder
 
 
     @Insert
@@ -47,13 +54,13 @@ interface FolderDao {
 }
 
 class FolderRepository(context: Context) {
-    var db = AppDatabase.getDatabase(context)?.folderDao()!!
+    var db = AppDatabase.getDatabase(context).folderDao()
 
     fun create(folder: Folder) {
         db.create(folder)
     }
 
-    fun update(folder : Folder) {
+    fun update(folder: Folder) {
         db.update(folder)
     }
 

@@ -1,9 +1,11 @@
 package com.olup.notable
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Rect
 import android.net.Uri
-import io.shipbook.shipbooksdk.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.compose.runtime.snapshotFlow
@@ -20,6 +22,7 @@ import com.onyx.android.sdk.data.note.TouchPoint
 import com.onyx.android.sdk.pen.RawInputCallback
 import com.onyx.android.sdk.pen.TouchHelper
 import com.onyx.android.sdk.pen.data.TouchPointList
+import io.shipbook.shipbooksdk.Log
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +43,7 @@ var referencedSurfaceView: String = ""
 
 
 class DrawCanvas(
-    val _context: Context,
+    _context: Context,
     val coroutineScope: CoroutineScope,
     val state: EditorState,
     val page: PageView,
@@ -59,6 +62,7 @@ class DrawCanvas(
 
         // before undo we need to commit changes
         val commitHistorySignal = MutableSharedFlow<Unit>()
+        val commitHistorySignalImmediately = MutableSharedFlow<Unit>()
 
         // used for checking if commit was completed
         var commitCompletion = CompletableDeferred<Unit>()
@@ -172,7 +176,7 @@ class DrawCanvas(
 
         val surfaceCallback: SurfaceHolder.Callback = object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) {
-                Log.i(TAG, "surface created ${holder}")
+                Log.i(TAG, "surface created $holder")
                 // set up the drawing surface
                 updateActiveSurface()
                 // This is supposed to let the ui update while the old surface is being unmounted
@@ -184,7 +188,7 @@ class DrawCanvas(
             override fun surfaceChanged(
                 holder: SurfaceHolder, format: Int, width: Int, height: Int
             ) {
-                Log.i(TAG, "surface changed ${holder}")
+                Log.i(TAG, "surface changed $holder")
                 drawCanvasToView()
                 updatePenAndStroke()
                 refreshUi()
@@ -194,8 +198,8 @@ class DrawCanvas(
                 Log.i(
                     TAG,
                     "surface destroyed ${
-                        this@DrawCanvas.hashCode().toString()
-                    } - ref ${referencedSurfaceView}"
+                        this@DrawCanvas.hashCode()
+                    } - ref $referencedSurfaceView"
                 )
                 holder.removeCallback(this)
                 if (referencedSurfaceView == this@DrawCanvas.hashCode().toString()) {
@@ -243,7 +247,7 @@ class DrawCanvas(
 
 
         coroutineScope.launch {
-            addImageByUri.collect { imageUri ->
+            addImageByUri.drop(1).collect { imageUri ->
                 Log.i(TAG + "Observer", "Received image!")
 
                 if (imageUri != null) {
@@ -253,28 +257,8 @@ class DrawCanvas(
             }
         }
         coroutineScope.launch {
-            imageCoordinateToSelect.collect { point ->
-                if(point!=null) {
-                    Log.i(TAG + "Observer", "position of image ${point}")
-
-                    // Query the database to find an image that coincides with the point
-                    val imageToSelect = withContext(Dispatchers.IO) {
-                        ImageRepository(context).getImageAtPoint(point.first, point.second+page.scroll, page.id)
-                    }
-                    imageCoordinateToSelect.value = null
-                    if (imageToSelect != null) {
-                        selectImage(  coroutineScope, page,state, imageToSelect)
-                        SnackState.globalSnackFlow.emit(SnackConf(
-                            text = "Image selected!",
-                            duration = 3000,
-                        ))
-                    } else {
-                        SnackState.globalSnackFlow.emit(SnackConf(
-                            text = "There is no image at this position",
-                            duration = 3000,
-                        ))
-                    }
-                }
+            imageCoordinateToSelect.drop(1).collect { point ->
+                SelectImage(point)
             }
         }
 
@@ -340,17 +324,59 @@ class DrawCanvas(
             //After 500ms add to history strokes
             commitHistorySignal.debounce(500).collect {
                 Log.i(TAG + "Observer", "Commiting to history")
-                if (strokeHistoryBatch.size > 0) history.addOperationsToHistory(
-                    operations = listOf(
-                        Operation.DeleteStroke(strokeHistoryBatch.map { it })
-                    )
-                )
-                strokeHistoryBatch.clear()
-                // give signal that commit was successful
+                commitToHistory()
+            }
+        }
+        coroutineScope.launch {
+            commitHistorySignalImmediately.collect() {
+                commitToHistory()
                 commitCompletion.complete(Unit)
             }
         }
 
+    }
+
+    private suspend fun SelectImage(point: Pair<Int, Int>?) {
+        if (point != null) {
+            Log.i(TAG + "Observer", "position of image $point")
+
+            // Query the database to find an image that coincides with the point
+            val imageToSelect = withContext(Dispatchers.IO) {
+                ImageRepository(context).getImageAtPoint(
+                    point.first,
+                    point.second + page.scroll,
+                    page.id
+                )
+            }
+            imageCoordinateToSelect.value = null
+            if (imageToSelect != null) {
+                selectImage(coroutineScope, page, state, imageToSelect)
+                SnackState.globalSnackFlow.emit(
+                    SnackConf(
+                        text = "Image selected!",
+                        duration = 3000,
+                    )
+                )
+            } else {
+                SnackState.globalSnackFlow.emit(
+                    SnackConf(
+                        text = "There is no image at this position",
+                        duration = 3000,
+                    )
+                )
+            }
+        }
+    }
+
+    private fun commitToHistory() {
+        if (strokeHistoryBatch.size > 0) history.addOperationsToHistory(
+            operations = listOf(
+                Operation.DeleteStroke(strokeHistoryBatch.map { it })
+            )
+        )
+        strokeHistoryBatch.clear()
+        //testing if it will help with undo hiding strokes.
+        drawCanvasToView()
     }
 
     fun refreshUi() {
@@ -371,7 +397,7 @@ class DrawCanvas(
         val softwareBitmap =
             imageBitmap?.asAndroidBitmap()?.copy(Bitmap.Config.ARGB_8888, true)
         if (softwareBitmap != null) {
-            DrawCanvas.addImageByUri.value = null
+            addImageByUri.value = null
 
             // Get the image dimensions
             val imageWidth = softwareBitmap.width
@@ -379,11 +405,10 @@ class DrawCanvas(
 
             // Calculate the center position for the image relative to the page dimensions
             val centerX = (page.viewWidth - imageWidth) / 2
-            val centerY = (page.viewHeight - imageHeight) / 2
-
+            val centerY = (page.viewHeight - imageHeight) / 2+ page.scroll
             val imageToSave = Image(
-                x = 0,
-                y = 0,
+                x = centerX,
+                y = centerY,
                 height = imageHeight,
                 width = imageWidth,
                 uri = imageUri.toString(),
@@ -394,7 +419,7 @@ class DrawCanvas(
             drawImage(
                 context, page.windowedCanvas, imageToSave, IntOffset(0, -page.scroll)
             )
-            selectImage(coroutineScope, page,state, imageToSave)
+            selectImage(coroutineScope, page, state, imageToSave)
         } else {
             // Handle cases where the bitmap could not be created
             Log.e("ImageProcessing", "Failed to create software bitmap from URI.")
@@ -402,10 +427,9 @@ class DrawCanvas(
     }
 
 
-
     fun drawCanvasToView() {
         val canvas = this.holder.lockCanvas() ?: return
-        canvas.drawBitmap(page.windowedBitmap, 0f, 0f, Paint());
+        canvas.drawBitmap(page.windowedBitmap, 0f, 0f, Paint())
         val timeToDraw = measureTimeMillis {
             if (getActualState().mode == Mode.Select) {
                 // render selection
@@ -425,7 +449,7 @@ class DrawCanvas(
         this.holder.unlockCanvasAndPost(canvas)
     }
 
-    fun updateIsDrawing() {
+    private fun updateIsDrawing() {
         Log.i(TAG, "Update is drawing : ${state.isDrawing}")
         if (state.isDrawing) {
             touchHelper.setRawDrawingEnabled(true)
@@ -473,11 +497,11 @@ class DrawCanvas(
 
         touchHelper.setLimitRect(
             mutableListOf(
-                android.graphics.Rect(
+                Rect(
                     0, 0, this.width, this.height
                 )
             )
-        ).setExcludeRect(listOf(android.graphics.Rect(0, 0, this.width, exclusionHeight)))
+        ).setExcludeRect(listOf(Rect(0, 0, this.width, exclusionHeight)))
             .openRawDrawing()
 
         touchHelper.setRawDrawingEnabled(true)

@@ -22,7 +22,8 @@ import io.shipbook.shipbooksdk.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-fun selectImage(    scope: CoroutineScope,
+fun selectImage(
+    scope: CoroutineScope,
     page: PageView,
     editorState: EditorState,
     imageToSelect: Image
@@ -45,20 +46,19 @@ fun selectImage(    scope: CoroutineScope,
         IntOffset(-imageToSelect.x, -imageToSelect.y)
     )
     // set state
-    editorState.selectionState.selectedImages = listOf<Image>(imageToSelect)
+    editorState.selectionState.selectedImages = listOf(imageToSelect)
     editorState.selectionState.selectedBitmap = selectedBitmap
     editorState.selectionState.selectionStartOffset = IntOffset(bounds.left, bounds.top)
     editorState.selectionState.selectionRect = bounds
     editorState.selectionState.selectionDisplaceOffset = IntOffset(0, 0)
     editorState.selectionState.placementMode = PlacementMode.Move
-    page.drawArea(bounds, ignoredImageIds = listOf<Image>(imageToSelect).map { it.id })
+    page.drawArea(bounds, ignoredImageIds = listOf(imageToSelect).map { it.id })
 
     scope.launch {
         DrawCanvas.refreshUi.emit(Unit)
         editorState.isDrawing = false
     }
 }
-
 
 
 /** Written by GPT:
@@ -94,7 +94,7 @@ fun selectImage(    scope: CoroutineScope,
  * @param page The `PageView` object representing the current page, including its strokes and dimensions.
  * @param editorState The `EditorState` object storing the current state of the editor, such as selected strokes.
  * @param points A list of `SimplePointF` objects defining the user's selection path in page coordinates.
- * points is in page coodinates
+ * points is in page coordinates
  */
 fun handleSelect(
     scope: CoroutineScope,

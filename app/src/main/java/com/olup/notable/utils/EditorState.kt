@@ -5,7 +5,6 @@ import android.graphics.Color
 import android.graphics.Rect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.IntOffset
 import com.olup.notable.db.Image
@@ -17,7 +16,7 @@ enum class Mode {
 
 class EditorState(val bookId: String? = null, val pageId: String, val pageView: PageView) {
 
-    val persistedEditorSettings = EditorSettingCacheManager.getEditorSettings()
+    private val persistedEditorSettings = EditorSettingCacheManager.getEditorSettings()
 
     var mode by mutableStateOf(persistedEditorSettings?.mode ?: Mode.Draw) // should save
     var pen by mutableStateOf(persistedEditorSettings?.pen ?: Pen.BALLPEN) // should save
@@ -26,8 +25,8 @@ class EditorState(val bookId: String? = null, val pageId: String, val pageView: 
     var isToolbarOpen by mutableStateOf(
         persistedEditorSettings?.isToolbarOpen ?: false
     ) // should save
-    var penSettings by mutableStateOf<NamedSettings>(
-        persistedEditorSettings?.penSettings ?: mapOf<String, PenSetting>(
+    var penSettings by mutableStateOf(
+        persistedEditorSettings?.penSettings ?: mapOf(
             Pen.BALLPEN.penName to PenSetting(5f, Color.BLACK),
             Pen.REDBALLPEN.penName to PenSetting(5f, Color.RED),
             Pen.BLUEBALLPEN.penName to PenSetting(5f, Color.BLUE),
@@ -42,6 +41,7 @@ class EditorState(val bookId: String? = null, val pageId: String, val pageView: 
     val selectionState = SelectionState()
 }
 
+// if state is Move then applySelectionDisplace() will delete original strokes(images in future)
 enum class PlacementMode {
     Move,
     Paste

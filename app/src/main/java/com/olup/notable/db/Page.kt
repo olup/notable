@@ -2,8 +2,19 @@ package com.olup.notable.db
 
 import android.content.Context
 import androidx.lifecycle.LiveData
-import androidx.room.*
-import java.util.*
+import androidx.room.ColumnInfo
+import androidx.room.Dao
+import androidx.room.Embedded
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Insert
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.Relation
+import androidx.room.Transaction
+import androidx.room.Update
+import java.util.Date
+import java.util.UUID
 
 @Entity(
     foreignKeys = [ForeignKey(
@@ -31,6 +42,7 @@ data class PageWithStrokes(
         parentColumn = "id", entityColumn = "pageId", entity = Stroke::class
     ) val strokes: List<Stroke>
 )
+
 data class PageWithImages(
     @Embedded val page: Page, @Relation(
         parentColumn = "id", entityColumn = "pageId", entity = Image::class
@@ -71,7 +83,7 @@ interface PageDao {
 }
 
 class PageRepository(context: Context) {
-    var db = AppDatabase.getDatabase(context)?.pageDao()!!
+    var db = AppDatabase.getDatabase(context).pageDao()
 
     fun create(page: Page): Long {
         return db.create(page)
@@ -88,6 +100,7 @@ class PageRepository(context: Context) {
     fun getWithStrokeById(pageId: String): PageWithStrokes {
         return db.getPageWithStrokesById(pageId)
     }
+
     fun getWithImageById(pageId: String): PageWithImages {
         return db.getPageWithImagesById(pageId)
     }

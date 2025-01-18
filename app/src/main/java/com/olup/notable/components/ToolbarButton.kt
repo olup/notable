@@ -1,6 +1,5 @@
 package com.olup.notable
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
@@ -17,14 +16,14 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ToolbarButton(
+    modifier: Modifier = Modifier,
     isSelected: Boolean = false,
     onSelect: () -> Unit = {},
     iconId: Int? = null,
     imageVector: ImageVector? = null,
     text: String? = null,
     penColor: Color? = null,
-    contentDescription: String = "",
-    modifier: Modifier = Modifier
+    contentDescription: String = ""
 ) {
     Box(
         Modifier
@@ -44,7 +43,7 @@ fun ToolbarButton(
                 painter = painterResource(id = iconId),
                 contentDescription,
                 Modifier,
-                if(penColor==Color.Black || penColor==Color.DarkGray) Color.White else if (isSelected) Color.White else Color.Black
+                if (penColor == Color.Black || penColor == Color.DarkGray) Color.White else if (isSelected) Color.White else Color.Black
             )
         }
 
