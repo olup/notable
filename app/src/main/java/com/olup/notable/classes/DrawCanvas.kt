@@ -404,12 +404,12 @@ class DrawCanvas(
             val imageHeight = softwareBitmap.height
 
             // Calculate the center position for the image relative to the page dimensions
-            val centerX = (page.viewWidth - imageWidth) / 2
+            val centerX = (page.viewWidth - imageWidth) / 2 + page.scroll
             val centerY = (page.viewHeight - imageHeight) / 2
 
             val imageToSave = Image(
-                x = 0,
-                y = 0,
+                x = centerX,
+                y = centerY,
                 height = imageHeight,
                 width = imageWidth,
                 uri = imageUri.toString(),
