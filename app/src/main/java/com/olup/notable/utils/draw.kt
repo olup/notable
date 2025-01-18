@@ -292,6 +292,22 @@ fun drawBg(canvas: Canvas, nativeTemplate: String, scroll: Int, scale: Float = 1
         "lined" -> drawLinedBg(canvas, scroll, scale)
         "squared" -> drawSquaredBg(canvas, scroll, scale)
     }
+
+    // in landscape orientation add margin to indicate what will be visible in vertical orientation.
+    if (SCREEN_WIDTH > SCREEN_HEIGHT) {
+        val paint = Paint().apply {
+            this.color = Color.MAGENTA
+            this.strokeWidth = 2f
+        }
+        // Draw vertical line with x= SCREEN_HEIGHT
+        canvas.drawLine(
+            SCREEN_HEIGHT.toFloat(),
+            padding.toFloat(),
+            SCREEN_HEIGHT.toFloat(),
+            (SCREEN_HEIGHT - padding).toFloat(),
+            paint
+        )
+    }
 }
 
 val selectPaint = Paint().apply {
