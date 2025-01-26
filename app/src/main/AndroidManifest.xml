@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <application
         android:name=".NotableApp"
         android:allowBackup="true"
@@ -13,22 +15,34 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Inka"
         tools:targetApi="31">
+
         <activity
             android:name=".MainActivity"
+            android:configChanges="orientation|screenSize"
             android:exported="true"
-            android:label="@string/app_name"
-            android:screenOrientation="nosensor"
             android:theme="@style/Theme.Inka">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="notable" />
+            </intent-filter>
         </activity>
+
         <provider
             android:name="com.olup.notable.Provider"
             android:authorities="com.olup.notable.provider"
             android:exported="false"
             android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
         </provider>
     </application>
 

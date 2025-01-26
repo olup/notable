@@ -2,8 +2,19 @@ package com.olup.notable.db
 
 import android.content.Context
 import androidx.lifecycle.LiveData
-import androidx.room.*
-import java.util.*
+import androidx.room.ColumnInfo
+import androidx.room.Dao
+import androidx.room.Embedded
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Insert
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.Relation
+import androidx.room.Transaction
+import androidx.room.Update
+import java.util.Date
+import java.util.UUID
 
 @Entity(
     foreignKeys = [ForeignKey(
@@ -32,6 +43,12 @@ data class PageWithStrokes(
     ) val strokes: List<Stroke>
 )
 
+data class PageWithImages(
+    @Embedded val page: Page, @Relation(
+        parentColumn = "id", entityColumn = "pageId", entity = Image::class
+    ) val images: List<Image>
+)
+
 // DAO
 @Dao
 interface PageDao {
@@ -44,6 +61,10 @@ interface PageDao {
     @Transaction
     @Query("SELECT * FROM page WHERE id =:pageId")
     fun getPageWithStrokesById(pageId: String): PageWithStrokes
+
+    @Transaction
+    @Query("SELECT * FROM page WHERE id =:pageId")
+    fun getPageWithImagesById(pageId: String): PageWithImages
 
     @Query("UPDATE page SET scroll=:scroll WHERE id =:pageId")
     fun updateScroll(pageId: String, scroll: Int)
@@ -62,7 +83,7 @@ interface PageDao {
 }
 
 class PageRepository(context: Context) {
-    var db = AppDatabase.getDatabase(context)?.pageDao()!!
+    var db = AppDatabase.getDatabase(context).pageDao()
 
     fun create(page: Page): Long {
         return db.create(page)
@@ -78,6 +99,10 @@ class PageRepository(context: Context) {
 
     fun getWithStrokeById(pageId: String): PageWithStrokes {
         return db.getPageWithStrokesById(pageId)
+    }
+
+    fun getWithImageById(pageId: String): PageWithImages {
+        return db.getPageWithImagesById(pageId)
     }
 
     fun getSinglePagesInFolder(folderId: String? = null): LiveData<List<Page>> {

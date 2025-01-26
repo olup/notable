@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 28,
-    "identityHash": "8075c4660d325bb60532e94fcc75ea1a",
+    "identityHash": "4fa832c706cf63132d83d26f9f00845e",
     "entities": [
       {
         "tableName": "Folder",
@@ -256,7 +256,7 @@
       },
       {
         "tableName": "Stroke",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `size` REAL NOT NULL, `pen` TEXT NOT NULL, `top` REAL NOT NULL, `bottom` REAL NOT NULL, `left` REAL NOT NULL, `right` REAL NOT NULL, `points` TEXT NOT NULL, `pageId` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`pageId`) REFERENCES `Page`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `size` REAL NOT NULL, `pen` TEXT NOT NULL, `color` INTEGER NOT NULL DEFAULT 0xFF000000, `top` REAL NOT NULL, `bottom` REAL NOT NULL, `left` REAL NOT NULL, `right` REAL NOT NULL, `points` TEXT NOT NULL, `pageId` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`pageId`) REFERENCES `Page`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -275,6 +275,13 @@
             "columnName": "pen",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "color",
+            "columnName": "color",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0xFF000000"
           },
           {
             "fieldPath": "top",
@@ -386,7 +393,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8075c4660d325bb60532e94fcc75ea1a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4fa832c706cf63132d83d26f9f00845e')"
     ]
   }
 }

@@ -1,10 +1,17 @@
 package com.olup.notable.db
 
 import android.content.Context
-import io.shipbook.shipbooksdk.Log
 import androidx.lifecycle.LiveData
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Dao
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Insert
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.Update
 import com.olup.notable.TAG
+import io.shipbook.shipbooksdk.Log
 import java.util.Date
 import java.util.UUID
 
@@ -62,12 +69,12 @@ interface NotebookDao {
 }
 
 class BookRepository(context: Context) {
-    var db = AppDatabase.getDatabase(context)?.notebookDao()!!
-    var pageDb = AppDatabase.getDatabase(context)?.pageDao()!!
+    var db = AppDatabase.getDatabase(context).notebookDao()
+    private var pageDb = AppDatabase.getDatabase(context).pageDao()
 
     fun create(notebook: Notebook) {
         db.create(notebook)
-        val page = Page(notebookId = notebook.id)
+        val page = Page(notebookId = notebook.id, nativeTemplate = notebook.defaultNativeTemplate)
         pageDb.create(page)
 
         db.setPageIds(notebook.id, listOf(page.id))
@@ -95,26 +102,26 @@ class BookRepository(context: Context) {
     }
 
     fun addPage(id: String, pageId: String, index: Int? = null) {
-        var pageIds = (db.getById(id) ?: return).pageIds.toMutableList()
+        val pageIds = (db.getById(id) ?: return).pageIds.toMutableList()
         if (index != null) pageIds.add(index, pageId)
         else pageIds.add(pageId)
         db.setPageIds(id, pageIds)
     }
 
     fun removePage(id: String, pageId: String) {
-        var notebook = db.getById(id) ?: return
-        var updatedNotebook = notebook.copy(
+        val notebook = db.getById(id) ?: return
+        val updatedNotebook = notebook.copy(
             // remove the page
             pageIds = notebook.pageIds.filterNot { it == pageId },
             // remove the "open page" if it's the one
             openPageId = if (notebook.openPageId == pageId) null else notebook.openPageId
         )
         db.update(updatedNotebook)
-        Log.i(TAG, "Cleaned ${id} ${pageId}")
+        Log.i(TAG, "Cleaned $id $pageId")
     }
 
-    fun changeePageIndex(id: String, pageId: String, index: Int) {
-        var pageIds = (db.getById(id) ?: return).pageIds.toMutableList()
+    fun changePageIndex(id: String, pageId: String, index: Int) {
+        val pageIds = (db.getById(id) ?: return).pageIds.toMutableList()
         var correctedIndex = index
         if (correctedIndex < 0) correctedIndex = 0
         if (correctedIndex > pageIds.size - 1) correctedIndex = pageIds.size - 1

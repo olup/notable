@@ -6,7 +6,17 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -19,7 +29,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.olup.notable.AppRepository
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Home
 import compose.icons.feathericons.Plus
@@ -74,9 +83,10 @@ fun QuickNav(navController: NavController, onClose: () -> Unit) {
                 ToolbarButton(
                     imageVector = FeatherIcons.Home,
                     onSelect = {
-                        val parentFolder = if(pageId != null) appRepository.pageRepository.getById(pageId)?.parentFolderId else null
+                        val parentFolder =
+                            if (pageId != null) appRepository.pageRepository.getById(pageId)?.parentFolderId else null
                         navController.navigate(
-                            route = if(parentFolder != null) "library?folderId=${parentFolder}" else "library"
+                            route = if (parentFolder != null) "library?folderId=${parentFolder}" else "library"
                         )
                         onClose()
                     }
@@ -97,10 +107,10 @@ fun QuickNav(navController: NavController, onClose: () -> Unit) {
                     )
                 }
             }
-            
-            if (!pages.isEmpty()) Spacer(modifier = Modifier.height(10.dp))
 
-            Row() {
+            if (pages.isNotEmpty()) Spacer(modifier = Modifier.height(10.dp))
+
+            Row {
                 LazyVerticalGrid(
                     modifier = Modifier.fillMaxWidth(),
                     columns = GridCells.Adaptive(minSize = 80.dp),

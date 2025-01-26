@@ -3,9 +3,12 @@ package com.olup.notable
 import android.content.Context
 import android.content.pm.PackageManager
 import io.shipbook.shipbooksdk.Log
-import java.net.URL
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import java.net.URL
 
 @kotlinx.serialization.Serializable
 data class ghVersion(val name: String, val prerelease: Boolean, val html_url: String)
@@ -70,20 +73,28 @@ fun isLatestVersion(context: Context, force: Boolean = false): Boolean {
     try {
         val version = getCurrentVersionName(context)
         val latestVersion = getLatestReleaseVersion("olup", "notable")
-        Log.i(TAG, "Version is ${version} and latest on repo is ${latestVersion}")
+        Log.i(TAG, "Version is $version and latest on repo is $latestVersion")
+        CoroutineScope(Dispatchers.Default).launch {
+            SnackState.globalSnackFlow.emit(
+                SnackConf(
+                    text = "Version is $version and latest on repo is $latestVersion",
+                    duration = 1000,
+                )
+            )
+        }
 
         // If either version is null, we can't compare them
         if (latestVersion == null || version == null) {
             throw Exception("One of the version is null - comparison is impossible")
         }
 
-        val versionVersion = Version.fromString(version!!)
-        val latestVersionVersion = Version.fromString(latestVersion!!)
+        val versionVersion = Version.fromString(version)
+        val latestVersionVersion = Version.fromString(latestVersion)
 
         // If either version does not fit simple semantic version don't compare
         if (latestVersionVersion == null || versionVersion == null) {
             throw Exception(
-                    "One of the version doesn't match simple semantic - comparison is impossible"
+                "One of the version doesn't match simple semantic - comparison is impossible"
             )
         }
 
@@ -96,4 +107,4 @@ fun isLatestVersion(context: Context, force: Boolean = false): Boolean {
     }
 }
 
-val isNext = BuildConfig.IS_NEXT
+const val isNext = BuildConfig.IS_NEXT

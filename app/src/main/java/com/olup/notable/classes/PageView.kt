@@ -1,16 +1,23 @@
 package com.olup.notable
 
+
 import android.content.Context
-import android.graphics.*
-import io.shipbook.shipbooksdk.Log
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Rect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.IntOffset
 import androidx.core.graphics.toRect
 import com.olup.notable.db.AppDatabase
+import com.olup.notable.db.Image
 import com.olup.notable.db.Page
 import com.olup.notable.db.Stroke
+import io.shipbook.shipbooksdk.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
@@ -20,33 +27,41 @@ import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Files
 import kotlin.io.path.Path
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.system.measureTimeMillis
+
 
 class PageView(
     val context: Context,
     val coroutineScope: CoroutineScope,
     val id: String,
     val width: Int,
-    val viewWidth: Int,
-    val viewHeight: Int
+    var viewWidth: Int,
+    var viewHeight: Int
 ) {
 
-    val windowedBitmap = Bitmap.createBitmap(viewWidth, viewHeight, Bitmap.Config.ARGB_8888)
-    val windowedCanvas = Canvas(windowedBitmap)
+    var windowedBitmap = Bitmap.createBitmap(viewWidth, viewHeight, Bitmap.Config.ARGB_8888)
+    var windowedCanvas = Canvas(windowedBitmap)
     var strokes = listOf<Stroke>()
-    var strokesById: HashMap<String, Stroke> = hashMapOf()
-    var scroll by mutableStateOf(0) // is observed by ui
-    val saveTopic = MutableSharedFlow<Unit>()
+    private var strokesById: HashMap<String, Stroke> = hashMapOf()
+    var images = listOf<Image>()
+    private var imagesById: HashMap<String, Image> = hashMapOf()
+    var scroll by mutableIntStateOf(0) // is observed by ui
+    private val saveTopic = MutableSharedFlow<Unit>()
 
-    var height by mutableStateOf(viewHeight) // is observed by ui
+    var height by mutableIntStateOf(viewHeight) // is observed by ui
 
     var pageFromDb = AppRepository(context).pageRepository.getById(id)
 
-    var db = AppDatabase.getDatabase(context)?.strokeDao()!!
+    private var dbStrokes = AppDatabase.getDatabase(context).strokeDao()
+    private var dbImages = AppDatabase.getDatabase(context).ImageDao()
+
 
     init {
         coroutineScope.launch {
+            // TODO:
+            // Warning:(63, 23) This declaration is in a preview state and can be changed in a backwards-incompatible manner with a best-effort migration. Its usage should be marked with '@kotlinx.coroutines.FlowPreview' or '@OptIn(kotlinx.coroutines.FlowPreview::class)' if you accept the drawback of relying on preview API
             saveTopic.debounce(1000).collect {
                 launch { persistBitmap() }
                 launch { persistBitmapThumbnail() }
@@ -60,9 +75,15 @@ class PageView(
         initFromPersistLayer(isCached)
     }
 
-    fun indexStrokes() {
+    private fun indexStrokes() {
         coroutineScope.launch {
             strokesById = hashMapOf(*strokes.map { s -> s.id to s }.toTypedArray())
+        }
+    }
+
+    private fun indexImages() {
+        coroutineScope.launch {
+            imagesById = hashMapOf(*images.map { img -> img.id to img }.toTypedArray())
         }
     }
 
@@ -73,19 +94,27 @@ class PageView(
         scroll = page!!.scroll
 
         coroutineScope.launch {
-            val pageWithStrokes = AppRepository(context).pageRepository.getWithStrokeById(id)
-            strokes = pageWithStrokes.strokes
-            indexStrokes()
-            computeHeight()
+            val timeToLoad = measureTimeMillis {
+                val pageWithStrokes = AppRepository(context).pageRepository.getWithStrokeById(id)
+                val pageWithImages = AppRepository(context).pageRepository.getWithImageById(id)
+                strokes = pageWithStrokes.strokes
+                images = pageWithImages.images
+                indexStrokes()
+                indexImages()
+                computeHeight()
 
-            if (!isCached) {
-                // we draw and cache
-                drawBg(windowedCanvas, page.nativeTemplate, scroll)
-                drawArea(Rect(0, 0, windowedCanvas.width, windowedCanvas.height))
-                persistBitmap()
-                persistBitmapThumbnail()
+                if (!isCached) {
+                    // we draw and cache
+                    drawBg(windowedCanvas, page.nativeTemplate, scroll)
+                    drawArea(Rect(0, 0, windowedCanvas.width, windowedCanvas.height))
+                    persistBitmap()
+                    persistBitmapThumbnail()
+                }
             }
+            Log.i(TAG, "initializing from persistent layer took ${timeToLoad}ms")
         }
+
+        //TODO: Images loading
     }
 
     fun addStrokes(strokesToAdd: List<Stroke>) {
@@ -115,15 +144,57 @@ class PageView(
     }
 
     private fun saveStrokesToPersistLayer(strokes: List<Stroke>) {
-        db.create(strokes)
+        dbStrokes.create(strokes)
     }
 
-    fun computeHeight() {
+    private fun saveImagesToPersistLayer(image: List<Image>) {
+        dbImages.create(image)
+    }
+
+
+    fun addImage(imageToAdd: Image) {
+        images += listOf(imageToAdd)
+        val bottomPlusPadding = imageToAdd.x + imageToAdd.height + 50
+        if (bottomPlusPadding > height) height = bottomPlusPadding
+
+        saveImagesToPersistLayer(listOf(imageToAdd))
+        indexImages()
+
+        persistBitmapDebounced()
+    }
+
+    fun addImage(imageToAdd: List<Image>) {
+        images += imageToAdd
+        imageToAdd.forEach {
+            val bottomPlusPadding = it.x + it.height + 50
+            if (bottomPlusPadding > height) height = bottomPlusPadding
+        }
+        saveImagesToPersistLayer(imageToAdd)
+        indexImages()
+
+        persistBitmapDebounced()
+    }
+
+    fun removeImage(imageIds: List<String>) {
+        images = images.filter { s -> !imageIds.contains(s.id) }
+        removeImagesFromPersistLayer(imageIds)
+        indexImages()
+        computeHeight()
+
+        persistBitmapDebounced()
+    }
+
+    fun getImage(imageId: String): Image? {
+        return imagesById[imageId]
+    }
+
+
+    private fun computeHeight() {
         if (strokes.isEmpty()) {
             height = viewHeight
             return
         }
-        val maxStrokeBottom = strokes.maxOf { it.bottom }.plus(50) ?: 0
+        val maxStrokeBottom = strokes.maxOf { it.bottom }.plus(50)
         height = max(maxStrokeBottom.toInt(), viewHeight)
     }
 
@@ -131,7 +202,7 @@ class PageView(
         if (strokes.isEmpty()) {
             return viewWidth
         }
-        val maxStrokeRight = strokes.maxOf { it.right }.plus(50) ?: 0
+        val maxStrokeRight = strokes.maxOf { it.right }.plus(50)
         return max(maxStrokeRight.toInt(), viewWidth)
     }
 
@@ -139,16 +210,20 @@ class PageView(
         AppRepository(context).strokeRepository.deleteAll(strokeIds)
     }
 
+    private fun removeImagesFromPersistLayer(imageIds: List<String>) {
+        AppRepository(context).imageRepository.deleteAll(imageIds)
+    }
+
     private fun loadBitmap(): Boolean {
         val imgFile = File(context.filesDir, "pages/previews/full/$id")
-        var imgBitmap: Bitmap? = null
+        val imgBitmap: Bitmap?
         if (imgFile.exists()) {
             imgBitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
             if (imgBitmap != null) {
-                windowedCanvas.drawBitmap(imgBitmap, 0f, 0f, Paint());
+                windowedCanvas.drawBitmap(imgBitmap, 0f, 0f, Paint())
                 Log.i(TAG, "Page rendered from cache")
                 // let's control that the last preview fits the present orientation. Otherwise we'll ask for a redraw.
-                if(imgBitmap.height == windowedCanvas.height && imgBitmap.width == windowedCanvas.width){
+                if (imgBitmap.height == windowedCanvas.height && imgBitmap.width == windowedCanvas.width) {
                     return true
                 } else {
                     Log.i(TAG, "Image preview does not fit canvas area - redrawing")
@@ -166,7 +241,7 @@ class PageView(
         val file = File(context.filesDir, "pages/previews/full/$id")
         Files.createDirectories(Path(file.absolutePath).parent)
         val os = BufferedOutputStream(FileOutputStream(file))
-        windowedBitmap.compress(Bitmap.CompressFormat.PNG, 100, os);
+        windowedBitmap.compress(Bitmap.CompressFormat.PNG, 100, os)
         os.close()
     }
 
@@ -176,11 +251,18 @@ class PageView(
         val os = BufferedOutputStream(FileOutputStream(file))
         val ratio = windowedBitmap.height.toFloat() / windowedBitmap.width.toFloat()
         Bitmap.createScaledBitmap(windowedBitmap, 500, (500 * ratio).toInt(), false)
-            .compress(Bitmap.CompressFormat.JPEG, 80, os);
+            .compress(Bitmap.CompressFormat.JPEG, 80, os)
         os.close()
     }
 
-    fun drawArea(area: Rect, ignoredStrokeIds: List<String> = listOf(), canvas: Canvas? = null) {
+    // ignored strokes are used in handleSelect
+    // TODO: find way for selecting images
+    fun drawArea(
+        area: Rect,
+        ignoredStrokeIds: List<String> = listOf(),
+        ignoredImageIds: List<String> = listOf(),
+        canvas: Canvas? = null
+    ) {
         val activeCanvas = canvas ?: windowedCanvas
         val pageArea = Rect(
             area.left,
@@ -189,30 +271,49 @@ class PageView(
             area.bottom + scroll
         )
 
-        activeCanvas.save();
-        activeCanvas.clipRect(area);
+        activeCanvas.save()
+        activeCanvas.clipRect(area)
         activeCanvas.drawColor(Color.BLACK)
 
-        val timeToBg = measureTimeMillis {
-            drawBg(activeCanvas, pageFromDb?.nativeTemplate ?: "blank", scroll)
-        }
-        Log.i(TAG, "Took $timeToBg to draw the BG")
 
         val timeToDraw = measureTimeMillis {
-            strokes.forEach { stroke ->
-                if (ignoredStrokeIds.contains(stroke.id)) return@forEach
-                val bounds = strokeBounds(stroke)
-                // if stroke is not inside page section
-                if (!bounds.toRect().intersect(pageArea)) return@forEach
+            drawBg(activeCanvas, pageFromDb?.nativeTemplate ?: "blank", scroll)
+            // Draw the gray edge of the rectangle
+//            val redPaint = Paint().apply {
+//                color = Color.GRAY
+//                style = Paint.Style.STROKE
+//                strokeWidth = 1f // Adjust the width of the edge
+//            }
+//            activeCanvas.drawRect(area, redPaint)
+            // Trying to find what throws error when drawing quickly
+            try {
+                images.forEach { image ->
+                    if (ignoredImageIds.contains(image.id)) return@forEach
+                    Log.i(TAG, "PageView.kt: drawing image!")
+                    val bounds = imageBounds(image)
+                    // if stroke is not inside page section
+                    if (!bounds.toRect().intersect(pageArea)) return@forEach
+                    drawImage(context, activeCanvas, image, IntOffset(0, -scroll))
 
-                drawStroke(
-                    activeCanvas, stroke, IntOffset(0, -scroll)
-                )
+                }
 
+                strokes.forEach { stroke ->
+                    if (ignoredStrokeIds.contains(stroke.id)) return@forEach
+                    val bounds = strokeBounds(stroke)
+                    // if stroke is not inside page section
+                    if (!bounds.toRect().intersect(pageArea)) return@forEach
+
+                    drawStroke(
+                        activeCanvas, stroke, IntOffset(0, -scroll)
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "PageView.kt: Drawing strokes failed: ${e.message}")
             }
+
         }
         Log.i(TAG, "Drew area in ${timeToDraw}ms")
-        activeCanvas.restore();
+        activeCanvas.restore()
     }
 
     fun updateScroll(_delta: Int) {
@@ -236,7 +337,7 @@ class PageView(
                 0,
                 canvasOffset,
                 windowedCanvas.width,
-                canvasOffset + Math.abs(delta)
+                canvasOffset + abs(delta)
             ),
         )
 
@@ -244,11 +345,26 @@ class PageView(
         saveToPersistLayer()
     }
 
+    // updates page setting in db, (for instance type of background)
+    // and redraws page to vew.
     fun updatePageSettings(page: Page) {
         AppRepository(context).pageRepository.update(page)
         pageFromDb = AppRepository(context).pageRepository.getById(id)
         drawArea(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
         persistBitmapDebounced()
+    }
+
+    fun updateDimensions(newWidth: Int, newHeight: Int) {
+        if (newWidth != viewWidth || newHeight != viewHeight) {
+            viewWidth = newWidth
+            viewHeight = newHeight
+
+            // Recreate bitmap and canvas with new dimensions
+            windowedBitmap = Bitmap.createBitmap(viewWidth, viewHeight, Bitmap.Config.ARGB_8888)
+            windowedCanvas = Canvas(windowedBitmap)
+            drawArea(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
+            persistBitmapDebounced()
+        }
     }
 
     private fun persistBitmapDebounced() {

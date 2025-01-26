@@ -2,10 +2,16 @@ package com.olup.notable
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.*
-import android.util.DisplayMetrics
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.PointF
+import android.graphics.Rect
+import android.graphics.RectF
+import android.graphics.Region
 import android.util.TypedValue
-import io.shipbook.shipbooksdk.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.remember
@@ -13,14 +19,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.graphics.toRect
 import androidx.core.graphics.toRegion
-import com.olup.notable.db.*
+import com.olup.notable.db.Image
+import com.olup.notable.db.Stroke
+import com.olup.notable.db.StrokePoint
 import com.onyx.android.sdk.data.note.TouchPoint
-import kotlinx.coroutines.CoroutineScope
+import io.shipbook.shipbooksdk.Log
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
@@ -33,16 +40,17 @@ import java.io.IOException
 fun Modifier.noRippleClickable(
     onClick: () -> Unit
 ): Modifier = composed {
-    clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) {
-        onClick()
-    }
+    this.then(
+        clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) {
+            onClick()
+        })
 }
 
 
 fun convertDpToPixel(dp: Dp, context: Context): Float {
     val resources = context.resources
-    val metrics: DisplayMetrics = resources.getDisplayMetrics()
-     return TypedValue.applyDimension(
+//    val metrics: DisplayMetrics = resources.displayMetrics
+    return TypedValue.applyDimension(
         TypedValue.COMPLEX_UNIT_DIP,
         dp.value,
         context.resources.displayMetrics
@@ -59,13 +67,17 @@ fun deletePage(context: Context, pageId: String) {
 
     runBlocking {
         // remove from book
-        if(page.notebookId != null){
+        if (page.notebookId != null) {
             appRepository.bookRepository.removePage(page.notebookId, pageId)
         }
 
         // remove from quick nav
-        if(settings != null && settings.quickNavPages.contains(pageId)){
-            proxy.setKv("APPS_SETTINGS", settings.copy(quickNavPages = settings.quickNavPages - pageId),AppSettings.serializer())
+        if (settings != null && settings.quickNavPages.contains(pageId)) {
+            proxy.setKv(
+                "APPS_SETTINGS",
+                settings.copy(quickNavPages = settings.quickNavPages - pageId),
+                AppSettings.serializer()
+            )
         }
 
         launch {
@@ -117,23 +129,23 @@ fun handleErase(
     points: List<SimplePointF>,
     eraser: Eraser
 ) {
-     val paint = Paint().apply {
-         this.strokeWidth = 30f
-         this.style = Paint.Style.STROKE
-         this.strokeCap = Paint.Cap.ROUND
-         this.strokeJoin = Paint.Join.ROUND
-         this.isAntiAlias = true
-     }
+    val paint = Paint().apply {
+        this.strokeWidth = 30f
+        this.style = Paint.Style.STROKE
+        this.strokeCap = Paint.Cap.ROUND
+        this.strokeJoin = Paint.Join.ROUND
+        this.isAntiAlias = true
+    }
     val path = pointsToPath(points)
     var outPath = Path()
 
-    if(eraser == Eraser.SELECT){
+    if (eraser == Eraser.SELECT) {
         path.close()
         outPath = path
     }
 
 
-    if(eraser == Eraser.PEN) {
+    if (eraser == Eraser.PEN) {
         paint.getFillPath(path, outPath)
     }
 
@@ -155,144 +167,101 @@ enum class SelectPointPosition {
     CENTER
 }
 
-// points is in page coodinates
-fun handleSelect(
-    scope: CoroutineScope,
-    page: PageView,
-    editorState: EditorState,
-    points: List<SimplePointF>
-) {
-    val state = editorState.selectionState
-
-    val firstPointPosition =
-        if (points.first().x < 50) SelectPointPosition.LEFT else if (points.first().x > page.width - 50) SelectPointPosition.RIGHT else SelectPointPosition.CENTER
-    val lastPointPosition =
-        if (points.last().x < 50) SelectPointPosition.LEFT else if (points.last().x > page.width - 50) SelectPointPosition.RIGHT else SelectPointPosition.CENTER
-
-    if (firstPointPosition != SelectPointPosition.CENTER && lastPointPosition != SelectPointPosition.CENTER && firstPointPosition != lastPointPosition) {
-        // Page cut situation
-        val correctedPoints =
-            if (firstPointPosition === SelectPointPosition.LEFT) points else points.reversed()
-        // lets make this end to end
-        val completePoints =
-            listOf(SimplePointF(0f, correctedPoints.first().y)) + correctedPoints + listOf(
-                SimplePointF(page.width.toFloat(), correctedPoints.last().y)
-            )
-        if (state.firstPageCut == null) {
-            // this is the first page cut
-            state.firstPageCut = completePoints
-            Log.i(TAG, "Registered first curt")
-        } else {
-            // this is the second page cut, we can also select the strokes
-            // first lets have the cuts in the right order
-            if (completePoints[0].y > state.firstPageCut!![0].y) state.secondPageCut =
-                completePoints
-            else {
-                state.secondPageCut = state.firstPageCut
-                state.firstPageCut = completePoints
-            }
-            // let's get stroke selection from that
-            val (_, after) = divideStrokesFromCut(page.strokes, state.firstPageCut!!)
-            val (middle, _) = divideStrokesFromCut(after, state.secondPageCut!!)
-            state.selectedStrokes = middle
-        }
-    } else {
-        // lasso selection
-        // padding inside the dashed selection square
-        val padding = 30
-
-        // rcreate the lasso selection
-        val selectionPath = pointsToPath(points)
-        selectionPath.close()
-
-        // get the selected strokes
-        val selectedStrokes = selectStrokesFromPath(page.strokes, selectionPath)
-        if (selectedStrokes.isEmpty()) return
-
-        // TODO collocate with control tower ?
-
-        state.selectedStrokes = selectedStrokes
-
-        // area of implication - in page and view reference
-        val pageBounds = strokeBounds(selectedStrokes)
-        pageBounds.inset(-padding, -padding)
-
-        val bounds = pageAreaToCanvasArea(pageBounds, page.scroll)
-
-        // create bitmap and draw strokes
-        val selectedBitmap =
-            Bitmap.createBitmap(bounds.width(), bounds.height(), Bitmap.Config.ARGB_8888)
-        val selectedCanvas = Canvas(selectedBitmap)
-        selectedStrokes.forEach {
-            drawStroke(
-                selectedCanvas,
-                it,
-                IntOffset(-pageBounds.left, -pageBounds.top)
-            )
-        }
-
-        // set state
-        state.selectedBitmap = selectedBitmap
-        state.selectionStartOffset = IntOffset(bounds.left, bounds.top)
-        state.selectionRect = bounds
-        state.selectionDisplaceOffset = IntOffset(0, 0)
-        state.placementMode = PlacementMode.Move
-
-//        page.removeStrokes(selectedStrokes.map{it.id})
-        page.drawArea(bounds, selectedStrokes.map { it.id })
-
-        scope.launch {
-            DrawCanvas.refreshUi.emit(Unit)
-            editorState.isDrawing = false
-        }
-    }
-}
-
-
-// touchpoints is in wiew coordinates
+// touchpoints is in view coordinates
 fun handleDraw(
     page: PageView,
     historyBucket: MutableList<String>,
     strokeSize: Float,
+    color: Int,
     pen: Pen,
     touchPoints: List<TouchPoint>
 ) {
-    val initialPoint = touchPoints[0]
-    val boundingBox = RectF(
-        initialPoint.x,
-        initialPoint.y + page.scroll,
-        initialPoint.x,
-        initialPoint.y + page.scroll
-    )
-
-    val points = touchPoints.map {
-        boundingBox.union(it.x, it.y + page.scroll)
-        StrokePoint(
-            x = it.x,
-            y = it.y + page.scroll,
-            pressure = it.pressure,
-            size = it.size,
-            tiltX = it.tiltX,
-            tiltY = it.tiltY,
-            timestamp = it.timestamp,
+    try {
+        val initialPoint = touchPoints[0]
+        val boundingBox = RectF(
+            initialPoint.x,
+            initialPoint.y + page.scroll,
+            initialPoint.x,
+            initialPoint.y + page.scroll
         )
+
+        val points = touchPoints.map {
+            boundingBox.union(it.x, it.y + page.scroll)
+            StrokePoint(
+                x = it.x,
+                y = it.y + page.scroll,
+                pressure = it.pressure,
+                size = it.size,
+                tiltX = it.tiltX,
+                tiltY = it.tiltY,
+                timestamp = it.timestamp,
+            )
+        }
+
+        boundingBox.inset(-strokeSize, -strokeSize)
+
+        val stroke = Stroke(
+            size = strokeSize,
+            pen = pen,
+            pageId = page.id,
+            top = boundingBox.top,
+            bottom = boundingBox.bottom,
+            left = boundingBox.left,
+            right = boundingBox.right,
+            points = points,
+            color = color
+        )
+        page.addStrokes(listOf(stroke))
+        // this is causing lagging and crushing, neo pens are not good
+        page.drawArea(pageAreaToCanvasArea(strokeBounds(stroke).toRect(), page.scroll))
+        historyBucket.add(stroke.id)
+    } catch (e: Exception) {
+        Log.e(TAG, "Handle Draw: An error occurred while handling the drawing: ${e.message}")
+    }
+}
+
+/*
+* Gets list of points, and return line from first point to last.
+* The line consist of 100 points, I do not know how it works (for 20 it want draw correctly)
+* Then it cals handle draw to make mark on canvas.
+ */
+fun handleLine(
+    page: PageView,
+    historyBucket: MutableList<String>,
+    strokeSize: Float,
+    color: Int,
+    pen: Pen,
+    touchPoints: List<TouchPoint>
+) {
+    val startPoint = touchPoints.first()
+    val endPoint = touchPoints.last()
+
+    // Setting intermediate values for tilt and pressure
+    startPoint.tiltX = touchPoints[touchPoints.size / 10].tiltX
+    startPoint.tiltY = touchPoints[touchPoints.size / 10].tiltY
+    startPoint.pressure = touchPoints[touchPoints.size / 10].pressure
+    endPoint.tiltX = touchPoints[9 * touchPoints.size / 10].tiltX
+    endPoint.tiltY = touchPoints[9 * touchPoints.size / 10].tiltY
+    endPoint.pressure = touchPoints[9 * touchPoints.size / 10].pressure
+
+    // Helper function to interpolate between two values
+    fun lerp(start: Float, end: Float, fraction: Float) = start + (end - start) * fraction
+
+    val numberOfPoints = 100 // Define how many points should line have
+    val points2 = List(numberOfPoints) { i ->
+        val fraction = i.toFloat() / (numberOfPoints - 1)
+        val x = lerp(startPoint.x, endPoint.x, fraction)
+        val y = lerp(startPoint.y, endPoint.y, fraction)
+        val pressure = lerp(startPoint.pressure, endPoint.pressure, fraction)
+        val size = lerp(startPoint.size, endPoint.size, fraction)
+        val tiltX = (lerp(startPoint.tiltX.toFloat(), endPoint.tiltX.toFloat(), fraction)).toInt()
+        val tiltY = (lerp(startPoint.tiltY.toFloat(), endPoint.tiltY.toFloat(), fraction)).toInt()
+        val timestamp = System.currentTimeMillis()
+
+        TouchPoint(x, y, pressure, size, tiltX, tiltY, timestamp)
     }
 
-    boundingBox.inset(-strokeSize, -strokeSize)
-
-    val stroke = Stroke(
-        size = strokeSize,
-        pen = pen,
-        pageId = page.id,
-        top = boundingBox.top,
-        bottom = boundingBox.bottom,
-        left = boundingBox.left,
-        right = boundingBox.right,
-        points = points
-    )
-    page.addStrokes(listOf(stroke))
-    page.drawArea(pageAreaToCanvasArea(strokeBounds(stroke).toRect(), page.scroll))
-    historyBucket.add(stroke.id)
+    handleDraw(page, historyBucket, strokeSize, color, pen, points2)
 }
 
 
@@ -325,8 +294,18 @@ fun strokeBounds(stroke: Stroke): RectF {
     )
 }
 
+fun imageBounds(image: Image): RectF {
+    return RectF(
+        image.x.toFloat(),
+        image.y.toFloat(),
+        image.x + image.width.toFloat(),
+        image.y + image.height.toFloat()
+    )
+}
+
+
 fun strokeBounds(strokes: List<Stroke>): Rect {
-    if (strokes.size == 0) return Rect()
+    if (strokes.isEmpty()) return Rect()
     val stroke = strokes[0]
     val rect = Rect(
         stroke.left.toInt(), stroke.top.toInt(), stroke.right.toInt(), stroke.bottom.toInt()
@@ -336,6 +315,26 @@ fun strokeBounds(strokes: List<Stroke>): Rect {
             Rect(
                 it.left.toInt(), it.top.toInt(), it.right.toInt(), it.bottom.toInt()
             )
+        )
+    }
+    return rect
+}
+
+fun imageBoundsInt(image: Image, padding: Int = 0): Rect {
+    return Rect(
+        image.x + padding,
+        image.y + padding,
+        image.x + image.width + padding,
+        image.y + image.height + padding
+    )
+}
+
+fun imageBoundsInt(images: List<Image>): Rect {
+    if (images.isEmpty()) return Rect()
+    val rect = imageBoundsInt(images[0])
+    images.forEach {
+        rect.union(
+            imageBoundsInt(it)
         )
     }
     return rect
@@ -397,11 +396,15 @@ fun divideStrokesFromCut(
 fun selectStrokesFromPath(strokes: List<Stroke>, path: Path): List<Stroke> {
     val bounds = RectF()
     path.computeBounds(bounds, true)
-    val region = pathToRegion(path)
+
+    //region is only 16 bit, so we need to move our region
+    val translatedPath = Path(path)
+    translatedPath.offset(0f, - bounds.top)
+    val region = pathToRegion(translatedPath)
 
     return strokes.filter {
         strokeBounds(it).intersect(bounds)
-    }.filter() { it.points.any { region.contains(it.x.toInt(), it.y.toInt()) } }
+    }.filter { it.points.any { region.contains(it.x.toInt(), (it.y-bounds.top).toInt()) } }
 }
 
 fun offsetStroke(stroke: Stroke, offset: Offset): Stroke {
@@ -411,11 +414,22 @@ fun offsetStroke(stroke: Stroke, offset: Offset): Stroke {
         bottom = stroke.bottom + offset.y,
         left = stroke.left + offset.x,
         right = stroke.right + offset.x,
-        )
+    )
 }
 
-public class Provider : FileProvider(R.xml.paths) {
+fun offsetImage(image: Image, offset: Offset): Image {
+    return image.copy(
+        x = image.x + offset.x.toInt(),
+        y = image.y + offset.y.toInt(),
+        height = image.height,
+        width = image.width,
+        uri = image.uri,
+        pageId = image.pageId
+    )
 }
+
+// Why it is needed? I try to removed it, and sharing bimap seems to work.
+class Provider : FileProvider(R.xml.file_paths)
 
 fun shareBitmap(context: Context, bitmap: Bitmap) {
     val bmpWithBackground =
@@ -427,7 +441,6 @@ fun shareBitmap(context: Context, bitmap: Bitmap) {
     val cachePath = File(context.cacheDir, "images")
     Log.i(TAG, cachePath.toString())
     cachePath.mkdirs()
-
     try {
         val stream =
             FileOutputStream("$cachePath/share.png")
@@ -446,17 +459,17 @@ fun shareBitmap(context: Context, bitmap: Bitmap) {
         context,
         "com.olup.notable.provider", //(use your app signature + ".provider" )
         bitmapFile
-    );
+    )
 
     val sendIntent = Intent().apply {
         if (contentUri != null) {
             action = Intent.ACTION_SEND
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // temp permission for receiving app to read this file
-            putExtra(Intent.EXTRA_STREAM, contentUri);
-            type = "image/png";
+            putExtra(Intent.EXTRA_STREAM, contentUri)
+            type = "image/png"
         }
 
-        context.grantUriPermission("android", contentUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        context.grantUriPermission("android", contentUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 
     ContextCompat.startActivity(context, Intent.createChooser(sendIntent, "Choose an app"), null)

@@ -1,7 +1,13 @@
 package com.olup.notable
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun PenToolbarButton(
@@ -16,7 +22,7 @@ fun PenToolbarButton(
 ) {
     var isStrokeMenuOpen by remember { mutableStateOf(false) }
 
-    if(onStrokeMenuOpenChange != null){
+    if (onStrokeMenuOpenChange != null) {
         LaunchedEffect(isStrokeMenuOpen) {
             onStrokeMenuOpenChange(isStrokeMenuOpen)
         }
@@ -31,12 +37,18 @@ fun PenToolbarButton(
                 if (isSelected) isStrokeMenuOpen = !isStrokeMenuOpen
                 else onSelect()
             },
+            penColor = Color(penSetting.color),
             iconId = icon,
             contentDescription = pen.penName
         )
 
         if (isStrokeMenuOpen) {
-            StrokeMenu(value = penSetting, onChange = { onChangeSetting(it) }, onClose = {isStrokeMenuOpen = false}, options = sizes)
+            StrokeMenu(
+                value = penSetting,
+                onChange = { onChangeSetting(it) },
+                onClose = { isStrokeMenuOpen = false },
+                options = sizes
+            )
         }
     }
 }

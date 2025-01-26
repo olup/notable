@@ -1,13 +1,12 @@
 package com.olup.notable
 
 import android.content.Context
-import com.olup.notable.AppRepository
 import com.olup.notable.db.Kv
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-val persistVersion = 2
+const val persistVersion = 2
 
 object EditorSettingCacheManager {
 
@@ -21,15 +20,15 @@ object EditorSettingCacheManager {
         val mode: Mode
     )
 
-    fun init(context: Context){
+    fun init(context: Context) {
         val settingsJSon = AppRepository(context).kvRepository.get("EDITOR_SETTINGS")
-        if(settingsJSon != null) {
+        if (settingsJSon != null) {
             val settings = Json.decodeFromString<EditorSettings>(settingsJSon.value)
-            if(settings.version == persistVersion) setEditorSettings(context, settings, false)
+            if (settings.version == persistVersion) setEditorSettings(context, settings, false)
         }
     }
 
-    fun persist(context: Context, settings : EditorSettings){
+    private fun persist(context: Context, settings: EditorSettings) {
         val settingsJson = Json.encodeToString(settings)
         AppRepository(context).kvRepository.set(Kv("EDITOR_SETTINGS", settingsJson))
     }
@@ -39,8 +38,12 @@ object EditorSettingCacheManager {
         return editorSettings
     }
 
-    fun setEditorSettings(context : Context, newEditorSettings: EditorSettings, shouldPersist : Boolean = true) {
+    fun setEditorSettings(
+        context: Context,
+        newEditorSettings: EditorSettings,
+        shouldPersist: Boolean = true
+    ) {
         editorSettings = newEditorSettings
-        if(shouldPersist) persist(context, newEditorSettings)
+        if (shouldPersist) persist(context, newEditorSettings)
     }
 }

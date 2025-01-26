@@ -2,9 +2,21 @@ package com.olup.notable
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -43,7 +55,7 @@ fun PageSettingsModal(pageView: PageView, onClose: () -> Unit) {
                 Modifier.padding(20.dp, 10.dp)
             ) {
 
-                Row() {
+                Row {
                     Text(text = "Background Template")
                     Spacer(Modifier.width(10.dp))
                     SelectMenu(
@@ -56,7 +68,7 @@ fun PageSettingsModal(pageView: PageView, onClose: () -> Unit) {
                         onChange = {
                             val updatedPage = pageView.pageFromDb!!.copy(nativeTemplate = it)
                             pageView.updatePageSettings(updatedPage)
-                            scope.launch {  DrawCanvas.refreshUi.emit(Unit) }
+                            scope.launch { DrawCanvas.refreshUi.emit(Unit) }
                             pageTemplate = pageView.pageFromDb!!.nativeTemplate
                         },
                         value = pageTemplate

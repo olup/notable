@@ -1,9 +1,18 @@
 package com.olup.notable.db
 
 import android.content.Context
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Dao
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Insert
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Update
 import com.olup.notable.Pen
-import java.util.*
+import java.util.Date
+import java.util.UUID
 
 @kotlinx.serialization.Serializable
 data class StrokePoint(
@@ -29,6 +38,8 @@ data class Stroke(
     val id: String = UUID.randomUUID().toString(),
     val size: Float,
     val pen: Pen,
+    @ColumnInfo(defaultValue = "0xFF000000")
+    val color: Int = 0xFF000000.toInt(),
 
     var top: Float,
     var bottom: Float,
@@ -65,7 +76,7 @@ interface StrokeDao {
 }
 
 class StrokeRepository(context: Context) {
-    var db = AppDatabase.getDatabase(context)?.strokeDao()!!
+    var db = AppDatabase.getDatabase(context).strokeDao()
 
     fun create(stroke: Stroke): Long {
         return db.create(stroke)

@@ -7,15 +7,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.IntOffset
+import com.olup.notable.db.Image
 import com.olup.notable.db.Stroke
 
 enum class Mode {
-    Draw, Erase, Select
+    Draw, Erase, Select, Line
 }
 
 class EditorState(val bookId: String? = null, val pageId: String, val pageView: PageView) {
 
-    val persistedEditorSettings = EditorSettingCacheManager.getEditorSettings()
+    private val persistedEditorSettings = EditorSettingCacheManager.getEditorSettings()
 
     var mode by mutableStateOf(persistedEditorSettings?.mode ?: Mode.Draw) // should save
     var pen by mutableStateOf(persistedEditorSettings?.pen ?: Pen.BALLPEN) // should save
@@ -24,9 +25,12 @@ class EditorState(val bookId: String? = null, val pageId: String, val pageView: 
     var isToolbarOpen by mutableStateOf(
         persistedEditorSettings?.isToolbarOpen ?: false
     ) // should save
-    var penSettings by mutableStateOf<NamedSettings>(
-        persistedEditorSettings?.penSettings ?: mapOf<String, PenSetting>(
+    var penSettings by mutableStateOf(
+        persistedEditorSettings?.penSettings ?: mapOf(
             Pen.BALLPEN.penName to PenSetting(5f, Color.BLACK),
+            Pen.REDBALLPEN.penName to PenSetting(5f, Color.RED),
+            Pen.BLUEBALLPEN.penName to PenSetting(5f, Color.BLUE),
+            Pen.GREENBALLPEN.penName to PenSetting(5f, Color.GREEN),
             Pen.PENCIL.penName to PenSetting(5f, Color.BLACK),
             Pen.BRUSH.penName to PenSetting(5f, Color.BLACK),
             Pen.MARKER.penName to PenSetting(40f, Color.LTGRAY),
@@ -37,6 +41,7 @@ class EditorState(val bookId: String? = null, val pageId: String, val pageView: 
     val selectionState = SelectionState()
 }
 
+// if state is Move then applySelectionDisplace() will delete original strokes(images in future)
 enum class PlacementMode {
     Move,
     Paste
@@ -46,6 +51,7 @@ class SelectionState {
     var firstPageCut by mutableStateOf<List<SimplePointF>?>(null)
     var secondPageCut by mutableStateOf<List<SimplePointF>?>(null)
     var selectedStrokes by mutableStateOf<List<Stroke>?>(null)
+    var selectedImages by mutableStateOf<List<Image>?>(null)
     var selectedBitmap by mutableStateOf<Bitmap?>(null)
     var selectionStartOffset by mutableStateOf<IntOffset?>(null)
     var selectionDisplaceOffset by mutableStateOf<IntOffset?>(null)
@@ -54,6 +60,7 @@ class SelectionState {
 
     fun reset() {
         selectedStrokes = null
+        selectedImages = null
         secondPageCut = null
         firstPageCut = null
         selectedBitmap = null

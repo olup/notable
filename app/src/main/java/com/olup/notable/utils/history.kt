@@ -1,7 +1,9 @@
 package com.olup.notable
 
 import android.graphics.Rect
+import com.olup.notable.db.Image
 import com.olup.notable.db.Stroke
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -10,6 +12,10 @@ import kotlinx.coroutines.launch
 sealed class Operation {
     data class DeleteStroke(val strokeIds: List<String>) : Operation()
     data class AddStroke(val strokes: List<Stroke>) : Operation()
+
+    // TODO
+    data class AddImage(val strokes: List<Image>) : Operation()
+
 }
 
 typealias OperationBlock = List<Operation>
@@ -21,7 +27,9 @@ enum class UndoRedoType {
 }
 
 sealed class HistoryBusActions {
-    data class RegisterHistoryOperationBlock(val operationBlock: OperationBlock) : HistoryBusActions()
+    data class RegisterHistoryOperationBlock(val operationBlock: OperationBlock) :
+        HistoryBusActions()
+
     data class MoveHistory(val type: UndoRedoType) : HistoryBusActions()
 }
 
@@ -29,15 +37,16 @@ class History(coroutineScope: CoroutineScope, pageView: PageView) {
 
     private var undoList: OperationList = mutableListOf()
     private var redoList: OperationList = mutableListOf()
-    val pageModel = pageView
+    private val pageModel = pageView
 
     // TODO maybe not in a companion object ?
     companion object {
         val historyBus = MutableSharedFlow<HistoryBusActions>()
-        suspend fun registerHistoryOperationBlock(operationBlock : OperationBlock){
+        suspend fun registerHistoryOperationBlock(operationBlock: OperationBlock) {
             historyBus.emit(HistoryBusActions.RegisterHistoryOperationBlock(operationBlock))
         }
-        suspend fun moveHistory(type: UndoRedoType){
+
+        suspend fun moveHistory(type: UndoRedoType) {
             historyBus.emit(HistoryBusActions.MoveHistory(type))
         }
     }
@@ -48,12 +57,31 @@ class History(coroutineScope: CoroutineScope, pageView: PageView) {
             historyBus.collect {
                 when (it) {
                     is HistoryBusActions.MoveHistory -> {
+                        // Wait for commit to history to complete
+                        if(it.type == UndoRedoType.Undo){
+                            DrawCanvas.commitCompletion = CompletableDeferred()
+                            DrawCanvas.commitHistorySignalImmediately.emit(Unit)
+                            DrawCanvas.commitCompletion.await()
+                        }
                         val zoneAffected = undoRedo(type = it.type)
-                        if(zoneAffected != null) {
+                        if (zoneAffected != null) {
                             pageView.drawArea(pageAreaToCanvasArea(zoneAffected, pageView.scroll))
+                            //moved to refresh after drawing
+                            DrawCanvas.refreshUi.emit(Unit)
+                        } else {
+                            SnackState.globalSnackFlow.emit(
+                                SnackConf(
+                                    text = "Nothing to undo/redo",
+                                    duration = 3000,
+                                )
+                            )
                         }
                     }
-                    is HistoryBusActions.RegisterHistoryOperationBlock -> { addOperationsToHistory(it.operationBlock)}
+
+                    is HistoryBusActions.RegisterHistoryOperationBlock -> {
+                        addOperationsToHistory(it.operationBlock)
+                    }
+
                     else -> {}
                 }
             }
@@ -64,13 +92,17 @@ class History(coroutineScope: CoroutineScope, pageView: PageView) {
         return when (operation) {
             is Operation.AddStroke -> {
                 pageModel.addStrokes(operation.strokes)
-                return Operation.DeleteStroke(strokeIds = operation.strokes.map{it.id}) to strokeBounds(operation.strokes)
+                return Operation.DeleteStroke(strokeIds = operation.strokes.map { it.id }) to strokeBounds(
+                    operation.strokes
+                )
             }
+
             is Operation.DeleteStroke -> {
                 val strokes = pageModel.getStrokes(operation.strokeIds).filterNotNull()
                 pageModel.removeStrokes(operation.strokeIds)
                 return Operation.AddStroke(strokes = strokes) to strokeBounds(strokes)
             }
+
             else -> {
                 throw (java.lang.Error("Unhandled history operation"))
             }
@@ -101,7 +133,7 @@ class History(coroutineScope: CoroutineScope, pageView: PageView) {
 
     fun addOperationsToHistory(operations: OperationBlock) {
         undoList.add(operations)
-        if(undoList.size > 5) undoList.removeFirst()
+        if (undoList.size > 5) undoList.removeFirst()
         redoList.clear()
     }
 }

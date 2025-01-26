@@ -1,22 +1,33 @@
 package com.olup.notable
 
-import io.shipbook.shipbooksdk.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-val SnackContext = staticCompositionLocalOf { SnackState() }
+val LocalSnackContext = staticCompositionLocalOf { SnackState() }
 
 data class SnackConf(
     val id: String = UUID.randomUUID().toString(),
@@ -29,14 +40,29 @@ data class SnackConf(
 class SnackState {
     val snackFlow = MutableSharedFlow<SnackConf?>()
     val cancelSnackFlow = MutableSharedFlow<String?>()
-    suspend fun displaySnack(conf: SnackConf) : suspend ()->Unit {
+    suspend fun displaySnack(conf: SnackConf): suspend () -> Unit {
         snackFlow.emit(conf)
         return suspend {
             removeSnack(conf.id)
         }
     }
 
-    suspend fun removeSnack(id: String) {
+    // TODO: check if this is a good approach,
+    // this does work, but I have doubts if it is a proper way for doing it
+    // Register Observers for Global Actions
+    companion object {
+        val globalSnackFlow = MutableSharedFlow<SnackConf>()
+    }
+
+    fun registerGlobalSnackObserver() {
+        CoroutineScope(Dispatchers.Main).launch {
+            globalSnackFlow.collect {
+                displaySnack(it)
+            }
+        }
+    }
+
+    private suspend fun removeSnack(id: String) {
         cancelSnackFlow.emit(id)
     }
 }
@@ -58,11 +84,11 @@ fun SnackBar(state: SnackState) {
         launch {
             state.snackFlow.collect { snack ->
                 if (snack != null) {
-                    getSnacks().add(snack!!)
-                    if (snack!!.duration != null) {
+                    getSnacks().add(snack)
+                    if (snack.duration != null) {
                         launch {
-                            delay(snack!!.duration!!.toLong())
-                            getSnacks().removeIf { it.id == snack!!.id }
+                            delay(snack.duration.toLong())
+                            getSnacks().removeIf { it.id == snack.id }
                         }
                     }
                 }
@@ -89,7 +115,7 @@ fun SnackBar(state: SnackState) {
                     contentAlignment = Alignment.Center
                 ) {
                     if (it.text != null) {
-                        Row() {
+                        Row {
                             Text(text = it.text, color = Color.White)
                             if (it.actions != null && it.actions.isEmpty().not()) {
                                 it.actions.map {
@@ -102,8 +128,8 @@ fun SnackBar(state: SnackState) {
                             }
                         }
 
-                    } else if (it.content != null) {
-                        it.content!!()
+                    } else it.content?.let { content ->
+                        content()
                     }
                 }
             }

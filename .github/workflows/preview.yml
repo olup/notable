@@ -1,8 +1,8 @@
 name: Build and Release Preview
-
 on:
   push:
-    branches: ["main"]
+    branches: ["dev"]
+  workflow_dispatch:
 
 env:
   MAVEN_OPTS: >-
@@ -23,7 +23,7 @@ jobs:
 
       - uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: 7.5
+          gradle-version: 8.5
 
       - name: Decode Keystore
         id: decode_keystore
@@ -35,13 +35,18 @@ jobs:
 
       - name: Execute Gradle build
         run: |
+          export DEBUG_STORE_FILE="../${{ steps.decode_keystore.outputs.filePath }}"
+          export DEBUG_STORE_PASSWORD="${{ secrets.KEYSTORE_PASSWORD }}"
+          export DEBUG_KEY_ALIAS="${{ secrets.KEY_ALIAS }}"
+          export DEBUG_KEY_PASSWORD="${{ secrets.KEY_PASSWORD }}"
+          
           ./gradlew \
-           -PDEBUG_STORE_FILE="../${{ steps.decode_keystore.outputs.filePath }}" \
-           -PDEBUG_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }} \
-           -PDEBUG_KEY_ALIAS=${{ secrets.KEY_ALIAS }} \
-           -PDEBUG_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }} \
-           -PIS_NEXT=true \
-           assembleDebug
+            -PDEBUG_STORE_FILE="$DEBUG_STORE_FILE" \
+            -PDEBUG_STORE_PASSWORD="$DEBUG_STORE_PASSWORD" \
+            -PDEBUG_KEY_ALIAS="$DEBUG_KEY_ALIAS" \
+            -PDEBUG_KEY_PASSWORD="$DEBUG_KEY_PASSWORD" \
+            -PIS_NEXT=true \
+            assembleDebug
 
       #   - name: Cache Gradle packages
       #     uses: actions/cache@v1
@@ -59,5 +64,5 @@ jobs:
           tag_name: next
           name: next
           prerelease: true
-          body: "Preview version corresponding to the latest build on main"
+          body: "Preview version built from branch: ${{ github.ref_name }}"
           token: ${{ secrets.TOKEN }}

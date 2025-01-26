@@ -1,8 +1,21 @@
 package com.olup.notable
 
-import io.shipbook.shipbooksdk.Log
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -13,9 +26,14 @@ import androidx.compose.material.Badge
 import androidx.compose.material.BadgedBox
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment.Companion.CenterVertically
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,14 +43,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.olup.notable.AppRepository
 import com.olup.notable.db.Folder
 import com.olup.notable.db.Notebook
 import com.olup.notable.db.Page
+import com.olup.notable.views.FloatingEditorView
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Folder
 import compose.icons.feathericons.Settings
-import java.net.URL
+import io.shipbook.shipbooksdk.Log
 import kotlin.concurrent.thread
 
 @ExperimentalFoundationApi
@@ -60,15 +78,22 @@ fun Library(navController: NavController, folderId: String? = null) {
         }
     })
 
+    var showFloatingEditor by remember { mutableStateOf(false) }
+    var floatingEditorPageId by remember { mutableStateOf<String?>(null) }
+
     Column(
         Modifier.fillMaxSize()
     ) {
-        Topbar(
-        ) {
+        Topbar {
             Row(Modifier.fillMaxWidth()) {
                 Spacer(modifier = Modifier.weight(1f))
                 BadgedBox(
-                    badge = { if(!isLatestVersion) Badge( backgroundColor = Color.Black, modifier = Modifier.offset(-12.dp, 10.dp) ) }
+                    badge = {
+                        if (!isLatestVersion) Badge(
+                            backgroundColor = Color.Black,
+                            modifier = Modifier.offset(-12.dp, 10.dp)
+                        )
+                    }
                 ) {
                     Icon(
                         imageVector = FeatherIcons.Settings,
@@ -79,7 +104,6 @@ fun Library(navController: NavController, folderId: String? = null) {
                                 isSettingsOpen = true
                             })
                 }
-
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 Text(text = "Add quick page",
@@ -103,7 +127,12 @@ fun Library(navController: NavController, folderId: String? = null) {
                     modifier = Modifier
                         .noRippleClickable {
                             appRepository.bookRepository.create(
-                                Notebook(parentFolderId = folderId)
+                                Notebook(
+                                    parentFolderId = folderId,
+                                    defaultNativeTemplate = appRepository.kvProxy.get(
+                                        "APP_SETTINGS", AppSettings.serializer()
+                                    )?.defaultNativeTemplate ?: "blank"
+                                )
                             )
                         }
                         .padding(10.dp))
@@ -114,6 +143,24 @@ fun Library(navController: NavController, folderId: String? = null) {
                         .noRippleClickable {
                             val folder = Folder(parentFolderId = folderId)
                             appRepository.folderRepository.create(folder)
+                        }
+                        .padding(10.dp))
+
+                // Add the new "Floating Editor" button here
+                Text(text = "Floating Editor",
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .noRippleClickable {
+                            val page = Page(
+                                notebookId = null,
+                                parentFolderId = folderId,
+                                nativeTemplate = appRepository.kvProxy.get(
+                                    "APP_SETTINGS", AppSettings.serializer()
+                                )?.defaultNativeTemplate ?: "blank"
+                            )
+                            appRepository.pageRepository.create(page)
+                            floatingEditorPageId = page.id
+                            showFloatingEditor = true
                         }
                         .padding(10.dp))
             }
@@ -227,17 +274,26 @@ fun Library(navController: NavController, folderId: String? = null) {
                                 .border(1.dp, Color.Black, RectangleShape)
                                 .background(Color.White)
                                 .clip(RoundedCornerShape(2))
-                                .combinedClickable(
-                                    onClick = {
-                                        val bookId = item.id
-                                        val pageId = item.openPageId ?: item.pageIds[0]
-                                        navController.navigate("books/$bookId/pages/$pageId")
-                                    },
-                                    onLongClick = {
-                                        isSettingsOpen = true
-                                    },
-                                )
                         ) {
+                            Box {
+                                val pageId = item.pageIds[0]
+                                PagePreview(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .aspectRatio(3f / 4f)
+                                        .border(1.dp, Color.Black, RectangleShape)
+                                        .combinedClickable(
+                                            onClick = {
+                                                val bookId = item.id
+                                                val pageId = item.openPageId ?: item.pageIds[0]
+                                                navController.navigate("books/$bookId/pages/$pageId")
+                                            },
+                                            onLongClick = {
+                                                isSettingsOpen = true
+                                            },
+                                        ), pageId
+                                )
+                            }
                             Text(
                                 text = item.pageIds.size.toString(),
                                 modifier = Modifier
@@ -245,17 +301,16 @@ fun Library(navController: NavController, folderId: String? = null) {
                                     .padding(5.dp),
                                 color = Color.White
                             )
-                            Row(Modifier.fillMaxSize()) {
-                                Text(
-                                    text = item.title,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier
-                                        .align(CenterVertically)
-                                        .fillMaxWidth()
-                                )
-                            }
+                            Text(
+                                text = item.title,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp) // Add some padding above the row
+                                    .background(Color.White)
+                            )
                         }
-
                         if (isSettingsOpen) NotebookConfigDialog(
                             bookId = item.id,
                             onClose = { isSettingsOpen = false })
@@ -266,6 +321,18 @@ fun Library(navController: NavController, folderId: String? = null) {
     }
 
     if (isSettingsOpen) AppSettingsModal(onClose = { isSettingsOpen = false })
+
+    // Add the FloatingEditorView here
+    if (showFloatingEditor && floatingEditorPageId != null) {
+        FloatingEditorView(
+            navController = navController,
+            pageId = floatingEditorPageId!!,
+            onDismissRequest = {
+                showFloatingEditor = false
+                floatingEditorPageId = null
+            }
+        )
+    }
 }
 
 
