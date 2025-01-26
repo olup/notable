@@ -97,6 +97,7 @@ This does not imply any commitment from the developers. Feel free to add your de
 | [ONYX BOOX Go 10.3](https://onyxboox.com/boox_go103)                                  | ✔       | ?          |        |        |        |
 | [Onyx Boox Note Air 4 C](https://onyxboox.pl/en/ebook-readers/onyx-boox-note-air-4-c) | ✘       | ✔          |        |        |        |
 | [Onyx Boox Note Air 3 C](https://onyxboox.pl/en/ebook-readers/onyx-boox-note-air-3-c) | ✘       | ✔          |        |        |        |
+| [Onyx Boox Note Max](https://shop.boox.com/products/notemax)                          | ✘       | ✔          |        |        |        |
 
 Feel free to add your device if tested successfully!
 
