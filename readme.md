@@ -1,3 +1,10 @@
+# ⚠️ Archive Notice
+**This repository is no longer actively maintained.** For the latest updates and features, please visit the actively maintained fork at: https://github.com/Ethran/notable
+
+Note that the Discord is still opened, and the best place to chat about the project, original or fork.
+
+---
+
 <!-- markdownlint-configure-file {
   "MD013": {
     "code_blocks": false,
@@ -31,7 +38,6 @@
 [Contribute](#contribute)
   
 </div>
-
 
 Notable is a **custom note-taking app designed specifically for BOOX e-ink devices.** It offers a clean, minimalist design, with a range of special features and optimizations to enhance the note-taking experience.
 
@@ -82,4 +88,4 @@ To start working with the project, see [the guide on how to start contributing](
 
 ***Important:*** Be sure to edit the `DEBUG_STORE_FILE` variable in the `/app/gradle.properties` file to the keystore on your own device. This is likely stored in the `.android` directory on your device.
 
-***Important:*** To use your BOOX device for debugging, an application will be required to enable developer mode on your BOOX device. [See a short guide here.](https://imgur.com/a/i1kb2UQ)  
+***Important:*** To use your BOOX device for debugging, an application will be required to enable developer mode on your BOOX device. [See a short guide here.](https://imgur.com/a/i1kb2UQ)
